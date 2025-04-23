@@ -52,6 +52,7 @@ import { setProject } from '@/features/project/project.slice';
 import { createPortal } from 'react-dom';
 import { evt_projects_page_visit, evt_projects_refresh_click, evt_projects_search } from '@/shared/worklenz-analytics-events';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
+import ProjectModal from '@/components/projects/project-modal/project-modal';
 
 const ProjectList: React.FC = () => {
   const [filteredInfo, setFilteredInfo] = useState<Record<string, FilterValue | null>>({});
@@ -260,6 +261,7 @@ const ProjectList: React.FC = () => {
       </Card>
 
       {createPortal(<ProjectDrawer onClose={handleDrawerClose} />, document.body, 'project-drawer')}
+      {createPortal(<ProjectModal />, document.body, 'project-modal')}
     </div>
   );
 };

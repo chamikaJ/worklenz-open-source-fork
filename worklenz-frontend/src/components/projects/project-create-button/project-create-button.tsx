@@ -14,6 +14,7 @@ import { IProjectViewModel } from '@/types/project/projectViewModel.types';
 import { projectTemplatesApiService } from '@/api/project-templates/project-templates.api.service';
 import { evt_projects_create_click } from '@/shared/worklenz-analytics-events';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
+import { toggleProjectModal } from '@/features/project/project-modal.slice';
 interface CreateProjectButtonProps {
   className?: string;
 }
@@ -113,12 +114,13 @@ const CreateProjectButton: React.FC<CreateProjectButtonProps> = ({ className }) 
   ];
 
   const handleCreateProject = () => {
-    trackMixpanelEvent(evt_projects_create_click);
-    dispatch(setProjectId(null));
-    dispatch(setProjectData({} as IProjectViewModel));
-    setTimeout(() => {
-      dispatch(toggleProjectDrawer());
-    }, 300);
+    // trackMixpanelEvent(evt_projects_create_click);
+    // dispatch(setProjectId(null));
+    // dispatch(setProjectData({} as IProjectViewModel));
+    // setTimeout(() => {
+    //   dispatch(toggleProjectDrawer());
+    // }, 300);
+    dispatch(toggleProjectModal());
   };
 
   return (
