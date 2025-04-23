@@ -1,11 +1,41 @@
-import { Progress, Tooltip } from 'antd';
+import { Progress, Tooltip, Spin } from 'antd';
 import './task-list-progress-cell.css';
 import { IProjectTask } from '@/types/project/projectTasksViewModel.types';
-import { useState, useEffect } from 'react';
-import TaskProgressEditor from '@/components/task-progress-editor/task-progress-editor';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { useTaskProgress } from '@/hooks/useTaskProgress';
 import SubtaskProgressCell from '../subtask-progress-cell/subtask-progress-cell';
 import { useAppSelector } from '@/hooks/useAppSelector';
+import { createPortal } from 'react-dom';
+
+// Lazy load the TaskProgressEditor component
+const TaskProgressEditor = lazy(() => import('@/components/task-progress-editor/task-progress-editor'));
+
+// Preload function to be called before showing the editor
+const preloadTaskProgressEditor = () => {
+  // Trigger the import but don't wait for it
+  import('@/components/task-progress-editor/task-progress-editor');
+};
+
+// Improved loading overlay component
+const LoadingOverlay = () => (
+  <div className="task-progress-editor-loading" style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backdropFilter: 'blur(1px)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+    opacity: 0.8,
+    animation: 'fadeIn 0.2s ease-in-out',
+  }}>
+    <Spin size="large" />
+  </div>
+);
 
 type TaskListProgressCellProps = {
   task: IProjectTask;
@@ -33,10 +63,14 @@ const TaskListProgressCell = ({ task }: TaskListProgressCellProps) => {
   const parentTask = task.parent_task_id ? findParentTask() : undefined;
   
   // Request the latest progress when the component mounts
+  // and preload the editor component
   useEffect(() => {
     if (task.id) {
       getTaskProgress(task.id);
     }
+    
+    // Preload the editor component
+    preloadTaskProgressEditor();
   }, [task.id, getTaskProgress]);
   
   // If it's a subtask, use the specialized subtask progress component
@@ -51,7 +85,11 @@ const TaskListProgressCell = ({ task }: TaskListProgressCellProps) => {
   return (
     <>
       <Tooltip title={tooltipTitle}>
-        <div onClick={() => setIsEditing(true)} style={{ cursor: 'pointer' }}>
+        <div 
+          onClick={() => setIsEditing(true)} 
+          onMouseEnter={preloadTaskProgressEditor}
+          style={{ cursor: 'pointer' }}
+        >
           <Progress
             percent={task.complete_ratio || 0}
             type="circle"
@@ -63,13 +101,28 @@ const TaskListProgressCell = ({ task }: TaskListProgressCellProps) => {
       </Tooltip>
       
       {isEditing && (
-        <TaskProgressEditor 
-          task={task} 
-          onClose={() => setIsEditing(false)} 
-        />
+        createPortal(
+          <Suspense fallback={<LoadingOverlay />}>
+            <TaskProgressEditor 
+              task={task} 
+              onClose={() => setIsEditing(false)} 
+            />
+          </Suspense>,
+          document.body
+        )
       )}
     </>
   );
 };
+
+// Add the animation to the global style
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 0.8; }
+  }
+`;
+document.head.appendChild(styleElement);
 
 export default TaskListProgressCell;

@@ -1,5 +1,5 @@
 import { Modal, Slider, Button, Alert, Segmented, theme, Tooltip } from 'antd';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SocketEvents } from '@/shared/socket-events';
 import { ITask } from '@/types/task/taskViewModel.types';
@@ -14,15 +14,24 @@ type TaskProgressEditorProps = {
   onClose: () => void;
 };
 
-const TaskProgressEditor = ({ task, onClose }: TaskProgressEditorProps) => {
+// Memoize the component to improve performance
+const TaskProgressEditor = memo(({ task, onClose }: TaskProgressEditorProps) => {
   const { t } = useTranslation('task-progress');
   const { setManualProgress } = useTaskProgress();
   const themeMode = useAppSelector(state => state.themeReducer.mode);
   const isDarkMode = themeMode === 'dark';
-  const [manualProgress, setManualProgressState] = useState(task.is_manual || false);
   const [progressValue, setProgressValue] = useState(task.complete_ratio || 0);
   const [hasSubtasks, setHasSubtasks] = useState((task.sub_tasks_count || 0) > 0);
   const [saving, setSaving] = useState(false);
+  
+  // Get the current project from the Redux store
+  const { project: currentProject } = useAppSelector(state => state.projectReducer);
+  
+  // Check if project uses manual progress
+  const useManualProgress = currentProject?.use_manual_progress || false;
+  
+  // Check if weighted progress should be used
+  const useWeightedProgress = currentProject?.use_weighted_progress || false;
   
   // Get all tasks from the Redux store to find subtasks
   const allTasks = useAppSelector(state => {
@@ -30,7 +39,7 @@ const TaskProgressEditor = ({ task, onClose }: TaskProgressEditorProps) => {
     return taskGroups.flatMap(group => group.tasks);
   });
 
-  // Calculate average progress from subtasks
+  // Calculate progress based on subtasks
   const calculateAverageProgress = () => {
     if (!task.id || !hasSubtasks) return progressValue;
     
@@ -38,26 +47,49 @@ const TaskProgressEditor = ({ task, onClose }: TaskProgressEditorProps) => {
     const subtasks = findSubtasks(task.id, allTasks);
     
     if (subtasks.length > 0) {
-      return calculateAverageSubtaskProgress(task, subtasks);
+      if (useWeightedProgress) {
+        // Calculate weighted progress based on estimation/effort
+        return calculateWeightedProgress(task, subtasks);
+      } else {
+        // Use simple average
+        return calculateAverageSubtaskProgress(task, subtasks);
+      }
     }
     
     return progressValue;
   };
 
+  // Calculate weighted progress based on subtask estimation
+  const calculateWeightedProgress = (task: ITask, subtasks: ITask[]) => {
+    let totalEstimation = 0;
+    let weightedSum = 0;
+    
+    subtasks.forEach(subtask => {
+      const estimation = subtask.estimation_points || 1; // Default to 1 if no estimation
+      totalEstimation += estimation;
+      weightedSum += (subtask.complete_ratio || 0) * estimation;
+    });
+    
+    if (totalEstimation === 0) {
+      return calculateAverageSubtaskProgress(task, subtasks); // Fallback to simple average
+    }
+    
+    return weightedSum / totalEstimation;
+  };
+
   // Update state when task props change
   useEffect(() => {
-    setManualProgressState(task.is_manual || false);
     setProgressValue(task.complete_ratio || 0);
     setHasSubtasks((task.sub_tasks_count || 0) > 0);
   }, [task]);
   
-  // When switching to manual mode, automatically calculate average from subtasks
+  // When component mounts or when manual mode is detected, calculate from subtasks
   useEffect(() => {
-    if (manualProgress && hasSubtasks) {
+    if (useManualProgress && hasSubtasks) {
       const avgProgress = calculateAverageProgress();
       setProgressValue(avgProgress);
     }
-  }, [manualProgress]);
+  }, []);
 
   const handleSave = async () => {
     if (!task.id) return;
@@ -66,7 +98,7 @@ const TaskProgressEditor = ({ task, onClose }: TaskProgressEditorProps) => {
     
     const success = await setManualProgress(
       task.id,
-      manualProgress,
+      useManualProgress, // Always use the project setting
       Math.round(progressValue)
     );
     
@@ -75,19 +107,6 @@ const TaskProgressEditor = ({ task, onClose }: TaskProgressEditorProps) => {
       onClose();
     }
   };
-  
-  const modeOptions = [
-    { 
-      label: t('modeAuto'), 
-      value: false,
-      icon: '🔄'
-    },
-    { 
-      label: t('modeManual'), 
-      value: true,
-      icon: '✋'
-    }
-  ];
 
   const roundedProgress = Math.round(progressValue);
   const isComplete = roundedProgress === 100;
@@ -158,29 +177,23 @@ const TaskProgressEditor = ({ task, onClose }: TaskProgressEditorProps) => {
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div>
-          <Segmented
-            options={modeOptions}
-            value={manualProgress}
-            onChange={value => setManualProgressState(value as boolean)}
-            block
-          />
-        </div>
-        
-        <div>
           <div className="progress-label">
-            {manualProgress ? t('manualProgressLabel') : t('autoProgressLabel')}
-            {manualProgress && hasSubtasks ? (
+            {useManualProgress ? t('manualProgressLabel') : t('autoProgressLabel')}
+            {useManualProgress && hasSubtasks ? (
               <div style={{ fontSize: '13px', color: isDarkMode ? '#a6a6a6' : '#666', fontWeight: 'normal', marginTop: '4px' }}>
-                {t('basedOnSubtaskAverage')}
+                {useWeightedProgress 
+                  ? t('basedOnWeightedSubtaskAverage') 
+                  : t('basedOnSubtaskAverage')
+                }
               </div>
-            ) : manualProgress ? null : (
+            ) : !useManualProgress ? (
               <div style={{ fontSize: '13px', color: isDarkMode ? '#a6a6a6' : '#666', fontWeight: 'normal', marginTop: '4px' }}>
                 {t('completedCount', { completed: task.completed_count || 0, total: task.total_tasks_count || 0 })}
               </div>
-            )}
+            ) : null}
           </div>
 
-          {manualProgress ? (
+          {useManualProgress ? (
             <div>
               <div className="progress-current" style={{ color: getProgressColor() }}>
                 {isComplete ? (
@@ -240,6 +253,8 @@ const TaskProgressEditor = ({ task, onClose }: TaskProgressEditorProps) => {
                   100%
                 </Button>
               </div>
+              
+              {hasSubtasks && <CustomWarning />}
             </div>
           ) : (
             <div className="progress-info-box">
@@ -250,11 +265,9 @@ const TaskProgressEditor = ({ task, onClose }: TaskProgressEditorProps) => {
             </div>
           )}
         </div>
-
-        {hasSubtasks && manualProgress && <CustomWarning />}
       </div>
     </Modal>
   );
-};
+});
 
 export default TaskProgressEditor; 

@@ -14,6 +14,7 @@ import {
   Popconfirm,
   Skeleton,
   Space,
+  Switch,
   Tooltip,
   Typography,
 } from 'antd';
@@ -51,6 +52,53 @@ import useIsProjectManager from '@/hooks/useIsProjectManager';
 import { useAuthService } from '@/hooks/useAuth';
 import { evt_projects_create } from '@/shared/worklenz-analytics-events';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
+
+// Add a new component for task progress settings
+const TaskProgressSettings = ({ disabled }: { disabled: boolean }) => {
+  const { t } = useTranslation('project-drawer');
+  
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <Typography.Title level={5} style={{ marginBottom: 16 }}>
+        Task Progress Settings
+      </Typography.Title>
+      
+      <Form.Item
+        name="use_manual_progress"
+        valuePropName="checked"
+      >
+        <Flex align="center" justify="space-between">
+          <div>
+            <Typography.Text strong>Use Manual Progress</Typography.Text>
+            <div>
+              <Typography.Text type="secondary">
+                If enabled, all tasks will use manual progress instead of automatic calculation
+              </Typography.Text>
+            </div>
+          </div>
+          <Switch disabled={disabled} />
+        </Flex>
+      </Form.Item>
+      
+      <Form.Item
+        name="use_weighted_progress"
+        valuePropName="checked"
+      >
+        <Flex align="center" justify="space-between">
+          <div>
+            <Typography.Text strong>Use Weighted Progress</Typography.Text>
+            <div>
+              <Typography.Text type="secondary">
+                Calculate parent task progress based on subtask effort/estimation
+              </Typography.Text>
+            </div>
+          </div>
+          <Switch disabled={disabled} />
+        </Flex>
+      </Form.Item>
+    </div>
+  );
+};
 
 const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
   const dispatch = useAppDispatch();
@@ -96,6 +144,8 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
       working_days: project?.working_days || 0,
       man_days: project?.man_days || 0,
       hours_per_day: project?.hours_per_day || 8,
+      use_manual_progress: project?.use_manual_progress || false,
+      use_weighted_progress: project?.use_weighted_progress || false,
     }),
     [project, projectStatuses, projectHealths]
   );
@@ -155,6 +205,8 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
         man_days: parseInt(values.man_days),
         hours_per_day: parseInt(values.hours_per_day),
         project_manager: selectedProjectManager,
+        use_manual_progress: values.use_manual_progress,
+        use_weighted_progress: values.use_weighted_progress,
       };
 
       const action =
@@ -429,15 +481,6 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
               </Form.Item>
             </Flex>
           </Form.Item>
-          {/* <Form.Item
-            name="working_days"
-            label={t('estimateWorkingDays')}
-          >
-            <Input
-              type="number"
-              disabled // Make it read-only since it's calculated
-            />
-          </Form.Item> */}
 
           <Form.Item name="working_days" label={t('estimateWorkingDays')}>
             <Input type="number" disabled={!isProjectManager && !isOwnerorAdmin} />
@@ -461,6 +504,11 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
           >
             <Input type="number" disabled={!isProjectManager && !isOwnerorAdmin} />
           </Form.Item>
+
+          <Divider />
+          
+          {/* Add the task progress settings component */}
+          <TaskProgressSettings disabled={!isProjectManager && !isOwnerorAdmin} />
         </Form>
 
         {editMode && (
