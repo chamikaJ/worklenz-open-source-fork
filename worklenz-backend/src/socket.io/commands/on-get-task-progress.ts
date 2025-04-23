@@ -13,6 +13,7 @@ export async function on_get_task_progress(_io: Server, socket: Socket, taskId?:
       task.complete_ratio = info.ratio;
       task.completed_count = info.total_completed;
       task.total_tasks_count = info.total_tasks;
+      task.is_manual = info.is_manual || false;
     }
 
     return socket.emit(SocketEvents.GET_TASK_PROGRESS.toString(), task);

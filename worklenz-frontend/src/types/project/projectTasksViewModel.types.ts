@@ -89,6 +89,7 @@ export interface IProjectTask {
   isVisible?: boolean;
   estimated_string?: string;
   custom_column_values?: Record<string, any>;
+  is_manual?: boolean;
 }
 
 export interface IProjectTasksViewModel {

@@ -14,7 +14,6 @@ export async function on_task_status_change(_io: Server, socket: Socket, data?: 
     const body = JSON.parse(data as string);
     const userId = getLoggedInUserIdFromSocket(socket);
     const taskData = await getTaskDetails(body.task_id, "status_id");
-
     const canContinue = await TasksControllerV2.checkForCompletedDependencies(body.task_id, body.status_id);
 
     if (!canContinue) {
@@ -59,6 +58,7 @@ export async function on_task_status_change(_io: Server, socket: Socket, data?: 
       complete_ratio: info?.ratio,
       completed_count: info?.total_completed,
       total_tasks_count: info?.total_tasks,
+      is_manual: info?.is_manual || false,
       status_id: body.status_id,
       completed_at: changeResponse.completed_at,
       statusCategory: changeResponse.status_category,
@@ -70,7 +70,8 @@ export async function on_task_status_change(_io: Server, socket: Socket, data?: 
       parent_task: body.parent_task,
       complete_ratio: info?.ratio,
       completed_count: info?.total_completed,
-      total_tasks_count: info?.total_tasks
+      total_tasks_count: info?.total_tasks,
+      is_manual: info?.is_manual || false
     });
 
     const isAlreadyAssigned = await TasksControllerV2.checkUserAssignedToTask(body.task_id, userId as string, body.team_id);

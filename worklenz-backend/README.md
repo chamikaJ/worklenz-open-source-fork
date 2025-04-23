@@ -94,3 +94,37 @@ npm test
 ## Docker Support
 
 The backend can be run in a Docker container. See the main project README for Docker setup instructions.
+
+## Database Migrations
+
+This project uses a database migration system to track and apply database schema changes. Migrations are automatically applied when the Docker container starts.
+
+### Creating a New Migration
+
+You can use the provided script to create a new migration file with the current timestamp:
+
+```bash
+# Navigate to the backend directory
+cd worklenz-backend
+
+# Create a new migration
+./scripts/create-migration.sh add-user-settings
+```
+
+This will create a new migration file in `database/sql/migrations` with a timestamp in the format `YYYYMMDDHHMMSS-description.sql` (e.g., `20250422143015-add-user-settings.sql`).
+
+### Migration Structure
+
+Migrations should:
+- Be wrapped in a transaction (BEGIN/COMMIT)
+- Use IF EXISTS/IF NOT EXISTS for idempotent operations
+- Include comments explaining the purpose of the migration
+
+### How Migrations Work
+
+1. The system maintains a table called `db_migrations` to track which migrations have been applied
+2. When the application starts, it checks for any new migrations and applies them in order
+3. Each migration is only applied once
+4. The timestamp in the filename ensures migrations are applied in the correct order
+
+See `database/sql/migrations/README.md` for more information about the migration system.

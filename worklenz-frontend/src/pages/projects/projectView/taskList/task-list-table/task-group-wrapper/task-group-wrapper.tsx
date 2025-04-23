@@ -47,6 +47,7 @@ import {
   updateTaskDescription,
   updateSubTasks,
   updateTaskProgress,
+  setManualProgress
 } from '@/features/tasks/tasks.slice';
 import { fetchLabels } from '@/features/taskAttributes/taskLabelSlice';
 import {
@@ -68,6 +69,7 @@ import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
 import { evt_project_task_list_drag_and_move } from '@/shared/worklenz-analytics-events';
 import { ALPHA_CHANNEL } from '@/shared/constants';
 import { checkTaskDependencyStatus } from '@/utils/check-task-dependency-status';
+import { useTaskProgress } from '@/hooks/useTaskProgress';
 
 interface TaskGroupWrapperProps {
   taskGroups: ITaskListGroup[];
@@ -82,6 +84,7 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
   const { socket } = useSocket();
   const currentSession = useAuthService().getCurrentSession();
   const { trackMixpanelEvent } = useMixpanelTracking();
+  const { bulkGetTaskProgress } = useTaskProgress();
 
   const themeMode = useAppSelector(state => state.themeReducer.mode);
   const loadingAssignees = useAppSelector(state => state.taskReducer.loadingAssignees);
@@ -96,6 +99,17 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
   useEffect(() => {
     setGroups(taskGroups);
   }, [taskGroups]);
+
+  // Fetch task progress information when task groups are loaded
+  useEffect(() => {
+    if (taskGroups.length > 0) {
+      // Collect all tasks from all groups
+      const allTasks = taskGroups.flatMap(group => group.tasks);
+      
+      // Get progress for all tasks
+      bulkGetTaskProgress(allTasks);
+    }
+  }, [taskGroups, bulkGetTaskProgress]);
 
   const resetTaskRowStyles = useCallback(() => {
     document.querySelectorAll<HTMLElement>('.task-row').forEach(row => {
@@ -197,6 +211,7 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
       completed_count: number;
       total_tasks_count: number;
       parent_task: string;
+      is_manual?: boolean;
     }) => {
       dispatch(
         updateTaskProgress({
@@ -204,16 +219,37 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
           progress: data.complete_ratio,
           totalTasksCount: data.total_tasks_count,
           completedCount: data.completed_count,
+          isManual: data.is_manual
         })
       );
     };
 
+    const handleManualProgress = (data: {
+      success: boolean;
+      task_id: string;
+      manual_progress: boolean;
+      complete_ratio: number;
+      is_manual: boolean;
+    }) => {
+      if (data.success) {
+        dispatch(
+          setManualProgress({
+            taskId: data.task_id,
+            enableManual: data.manual_progress,
+            progressValue: data.complete_ratio
+          })
+        );
+      }
+    };
+
     socket.on(SocketEvents.TASK_STATUS_CHANGE.toString(), handleTaskStatusChange);
     socket.on(SocketEvents.GET_TASK_PROGRESS.toString(), handleTaskProgress);
+    socket.on(SocketEvents.SET_MANUAL_PROGRESS.toString(), handleManualProgress);
 
     return () => {
       socket.off(SocketEvents.TASK_STATUS_CHANGE.toString(), handleTaskStatusChange);
       socket.off(SocketEvents.GET_TASK_PROGRESS.toString(), handleTaskProgress);
+      socket.off(SocketEvents.SET_MANUAL_PROGRESS.toString(), handleManualProgress);
     };
   }, [socket, dispatch]);
 

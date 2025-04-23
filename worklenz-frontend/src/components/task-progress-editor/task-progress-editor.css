@@ -1,0 +1,212 @@
+.task-progress-editor {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.task-progress-editor .ant-segmented {
+  background-color: #f5f5f5;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.task-progress-editor .ant-segmented-item {
+  transition: all 0.3s ease;
+}
+
+.task-progress-editor .ant-segmented-item:focus-within {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.task-progress-editor .ant-segmented-item-selected {
+  background-color: #ffffff;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.task-progress-editor .progress-info-box {
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #f0f6ff;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.task-progress-editor .progress-slider .ant-slider-rail {
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.task-progress-editor .progress-slider .ant-slider-track {
+  height: 8px;
+  background-color: #1677ff;
+  border-radius: 4px;
+}
+
+.task-progress-editor .progress-slider .ant-slider-handle {
+  width: 18px;
+  height: 18px;
+  margin-top: -5px;
+  background-color: #ffffff;
+  border: 2px solid #1677ff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.task-progress-editor .progress-slider .ant-slider-handle:hover {
+  transform: scale(1.1);
+}
+
+.task-progress-editor .progress-slider .ant-slider-handle:focus {
+  box-shadow: 0 0 0 5px rgba(22, 119, 255, 0.12);
+  outline: none;
+  transform: scale(1.1);
+}
+
+.task-progress-editor .progress-slider .ant-slider-mark-text {
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.task-progress-editor .progress-completion {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.task-progress-editor .progress-label {
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.task-progress-editor .progress-current {
+  font-size: 32px;
+  font-weight: 500;
+  color: #1677ff;
+  text-align: center;
+  margin: 12px 0;
+}
+
+/* Accessibility */
+.task-progress-editor *:focus {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+}
+
+.task-progress-editor button:focus {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .task-progress-editor .ant-modal-content {
+  background-color: #1f1f1f;
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.42), 0 9px 28px 8px rgba(0, 0, 0, 0.34);
+}
+
+[data-theme="dark"] .task-progress-editor .ant-modal-header {
+  background-color: #1f1f1f;
+  border-bottom: 1px solid #303030;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-modal-title {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-modal-close {
+  color: #999;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-modal-close:hover {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-segmented {
+  background-color: #141414;
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-segmented-item {
+  color: #bfbfbf;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-segmented-item-selected {
+  background-color: #1f1f1f;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .task-progress-editor .progress-info-box {
+  background-color: #141414;
+  border: 1px solid #303030;
+}
+
+[data-theme="dark"] .task-progress-editor .progress-slider .ant-slider-rail {
+  background-color: #141414;
+}
+
+[data-theme="dark"] .task-progress-editor .progress-slider .ant-slider-track {
+  background-color: #1677ff;
+}
+
+[data-theme="dark"] .task-progress-editor .progress-slider .ant-slider-handle {
+  background-color: #1f1f1f;
+  border-color: #1677ff;
+}
+
+[data-theme="dark"] .task-progress-editor .progress-slider .ant-slider-mark-text {
+  color: #bfbfbf;
+}
+
+[data-theme="dark"] .task-progress-editor .progress-current {
+  color: #1677ff;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-alert-warning {
+  background-color: rgba(255, 229, 143, 0.15);
+  border-color: rgba(255, 178, 14, 0.3);
+}
+
+[data-theme="dark"] .task-progress-editor .ant-alert-message {
+  color: #ffcf7f;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-alert-description {
+  color: #d9d9d9;
+}
+
+[data-theme="dark"] .task-progress-editor .progress-label {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-btn-default {
+  background-color: #141414;
+  border-color: #424242;
+  color: #bfbfbf;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-btn-default:hover {
+  background-color: #303030;
+  border-color: #1677ff;
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-btn-default:disabled {
+  background-color: #303030;
+  border-color: #424242;
+  color: #5c5c5c;
+}
+
+/* Match the design in the screenshot for dark mode */
+[data-theme="dark"] .task-progress-editor .ant-segmented-item-selected {
+  background-color: #0050b3;
+  color: white;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-segmented {
+  background-color: #141414;
+  padding: 2px;
+} 

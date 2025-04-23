@@ -1,0 +1,37 @@
+.subtask-progress {
+  transition: opacity 0.2s ease;
+}
+
+.subtask-progress .ant-progress-text {
+  font-size: 10px;
+}
+
+/* When in dimmed mode (parent task manual mode) */
+.subtask-progress.dimmed {
+  opacity: 0.5;
+}
+
+/* Show a special symbol/pattern for manual mode parent with subtasks */
+.subtask-progress.manual-parent::before {
+  content: 'M';
+  position: absolute;
+  font-size: 6px;
+  top: -2px;
+  right: -2px;
+  color: #999;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ccc;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .subtask-progress.manual-parent::before {
+  background-color: #333;
+  color: #bbb;
+  border-color: #555;
+} 

@@ -52,6 +52,7 @@ import { on_task_recurring_change } from "./commands/on-task-recurring-change";
 import { on_task_assignees_change } from "./commands/on-task-assignees-change";
 import { on_task_custom_column_update } from "./commands/on_custom_column_update";
 import { on_custom_column_pinned_change } from "./commands/on_custom_column_pinned_change";
+import { on_set_manual_progress } from "./commands/on-set-manual-progress";
 
 export function register(io: any, socket: Socket) {
   log(socket.id, "client registered");
@@ -69,9 +70,9 @@ export function register(io: any, socket: Socket) {
   socket.on(SocketEvents.TASK_TIME_ESTIMATION_CHANGE.toString(), data => on_time_estimation_change(io, socket, data));
   socket.on(SocketEvents.TASK_DESCRIPTION_CHANGE.toString(), data => on_task_description_change(io, socket, data));
   socket.on(SocketEvents.GET_TASK_PROGRESS.toString(), data => on_get_task_progress(io, socket, data));
-  socket.on(SocketEvents.GET_TASK_PROGRESS.toString(), data => on_get_task_progress(io, socket, data));
   socket.on(SocketEvents.TASK_TIMER_START.toString(), data => on_task_timer_start(io, socket, data));
   socket.on(SocketEvents.TASK_TIMER_STOP.toString(), data => on_task_timer_stop(io, socket, data));
+  socket.on(SocketEvents.SET_MANUAL_PROGRESS.toString(), data => on_set_manual_progress(io, socket, data));
   socket.on(SocketEvents.TASK_SORT_ORDER_CHANGE.toString(), data => on_task_sort_order_change(io, socket, data));
   socket.on(SocketEvents.JOIN_OR_LEAVE_PROJECT_ROOM.toString(), data => on_join_or_leave_project_room(io, socket, data));
   socket.on(SocketEvents.TASK_SUBSCRIBERS_CHANGE.toString(), data => on_task_subscriber_change(io, socket, data));

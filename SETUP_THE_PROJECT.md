@@ -33,12 +33,21 @@ Getting started with development is a breeze! Follow these steps and you'll be c
    npm install
    ```
    
-3. **Run the frontend:**
+3. **Run the frontend in development mode:**
    ```bash
    npm start
    ```
    
+   This will start the Vite development server.
+   
 4. Navigate to [http://localhost:5173](http://localhost:5173)
+
+5. **Building for production:**
+   ```bash
+   npm run build
+   ```
+   
+   The build output will be in the `dist` directory.
 
 ### Backend installation
    
@@ -126,7 +135,7 @@ For an easier setup, you can use Docker and Docker Compose:
    ```
 
 3. Access the application:
-   - Frontend: http://localhost:5000
+   - Frontend: http://localhost:5173
    - Backend API: http://localhost:3000
    - MinIO Console: http://localhost:9001 (login with minioadmin/minioadmin)
 
@@ -135,3 +144,17 @@ For an easier setup, you can use Docker and Docker Compose:
    ```bash
    docker-compose down
    ```
+
+## Project Scripts Overview
+
+### Frontend Scripts (worklenz-frontend)
+- `npm start` - Start the Vite development server
+- `npm run build` - Build the frontend for production
+- `npm run serve` - Preview the production build locally
+- `npm run format` - Format code using Prettier
+
+### Backend Scripts (worklenz-backend)
+- `npm run dev` - Start the development server with hot reload
+- `npm run build` - Build the backend for production
+- `npm start` - Start the production server
+- `npm test` - Run tests

@@ -1,0 +1,17 @@
+{
+  "modalTitle": "Edit Task Progress",
+  "modeAuto": "Auto",
+  "modeManual": "Manual",
+  "manualProgressLabel": "Manual progress",
+  "autoProgressLabel": "Automatic progress (based on subtasks)",
+  "completedCount": "Completed: {{completed}} / {{total}}",
+  "statusComplete": "Complete",
+  "autoProgressInfo": "Progress is automatically calculated based on the completion of subtasks.",
+  "warningTitle": "Warning",
+  "warningManualOverride": "Manual progress will override the calculated progress from subtasks.",
+  "cancelButton": "Cancel",
+  "saveButton": "Save",
+  "subtaskProgressHidden": "Subtask progress only visible when parent is in manual mode",
+  "basedOnSubtaskAverage": "Initialized from subtask average progress",
+  "contributesToParent": "Contributes to parent"
+} 

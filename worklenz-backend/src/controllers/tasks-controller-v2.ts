@@ -93,6 +93,7 @@ export default class TasksControllerV2 extends TasksControllerBase {
     ratio: number;
     total_completed: number;
     total_tasks: number;
+    is_manual?: boolean;
   } | null> {
     try {
       const result = await db.query("SELECT get_task_complete_ratio($1) AS info;", [taskId]);

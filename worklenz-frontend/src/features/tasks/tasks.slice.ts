@@ -568,9 +568,10 @@ const taskSlice = createSlice({
         progress: number;
         totalTasksCount: number;
         completedCount: number;
+        isManual?: boolean;
       }>
     ) => {
-      const { taskId, progress, totalTasksCount, completedCount } = action.payload;
+      const { taskId, progress, totalTasksCount, completedCount, isManual } = action.payload;
 
       for (const group of state.taskGroups) {
         const task = group.tasks.find(task => task.id === taskId);
@@ -578,6 +579,9 @@ const taskSlice = createSlice({
           task.complete_ratio = progress;
           task.total_tasks_count = totalTasksCount;
           task.completed_count = completedCount;
+          if (isManual !== undefined) {
+            task.is_manual = isManual;
+          }
           break;
         }
       }
@@ -975,6 +979,57 @@ const taskSlice = createSlice({
         column.pinned = isVisible;
       }
     },
+
+    setManualProgress: (
+      state,
+      action: PayloadAction<{
+        taskId: string;
+        enableManual: boolean;
+        progressValue: number;
+      }>
+    ) => {
+      const { taskId, enableManual, progressValue } = action.payload;
+
+      for (const group of state.taskGroups) {
+        const task = group.tasks.find(task => task.id === taskId);
+        if (task) {
+          task.is_manual = enableManual;
+          if (enableManual) {
+            task.complete_ratio = progressValue;
+          }
+          break;
+        }
+      }
+    },
+
+    updateSubtaskProgress: (
+      state,
+      action: PayloadAction<{
+        subtaskId: string;
+        parentTaskId: string;
+        progress: number;
+        totalTasksCount: number;
+        completedCount: number;
+      }>
+    ) => {
+      const { subtaskId, parentTaskId, progress, totalTasksCount, completedCount } = action.payload;
+
+      for (const group of state.taskGroups) {
+        // Find parent task
+        const parentTask = group.tasks.find(task => task.id === parentTaskId);
+        if (parentTask && parentTask.sub_tasks) {
+          // Find and update the subtask
+          const subtask = parentTask.sub_tasks.find(task => task.id === subtaskId);
+          if (subtask) {
+            subtask.complete_ratio = progress;
+            subtask.total_tasks_count = totalTasksCount;
+            subtask.completed_count = completedCount;
+            // Don't update is_manual for subtasks
+            break;
+          }
+        }
+      }
+    },
   },
 
   extraReducers: builder => {
@@ -1134,6 +1189,8 @@ export const {
   updateSubTasks,
   updateCustomColumnValue,
   updateCustomColumnPinned,
+  setManualProgress,
+  updateSubtaskProgress,
 } = taskSlice.actions;
 
 export default taskSlice.reducer;

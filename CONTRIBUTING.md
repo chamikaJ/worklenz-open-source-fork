@@ -15,13 +15,20 @@ We have adopted a Code of Conduct to ensure a welcoming and inclusive environmen
 4. Update the documentation if necessary.
 5. Commit your changes with descriptive commit messages.
 6. Push your changes to your forked repository.
-7. Create a pull request against the main repository's `main` branch.
+7. Create a pull request against the main repository's `development` branch.
 
 ## Coding Standards
 
 - Follow the [React Documentation](https://react.dev/learn) for best practices in React development.
 - Use [TypeScript](https://www.typescriptlang.org/) for both frontend and backend code.
 - Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for commit messages.
+- For frontend code, use Tailwind CSS following project style conventions.
+- Format your code using Prettier with the project's configuration.
+
+## Project Structure
+
+- **worklenz-frontend**: React frontend application using Vite, TypeScript, and Tailwind CSS
+- **worklenz-backend**: Node.js backend using Express, TypeScript, and PostgreSQL
 
 ## Issues
 
@@ -34,6 +41,7 @@ All contributions should be submitted as pull requests against the `development`
 - Follows our coding standards
 - Updates documentation, if necessary
 - Has descriptive commit messages
+- Includes unit tests for new functionality
 
 ## License
 

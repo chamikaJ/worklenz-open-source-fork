@@ -20,3 +20,25 @@
   font-size: 10px; /* Ensure the text size fits well */
   line-height: 1;
 }
+
+/* Style for manual progress indicators */
+.task-progress-manual .ant-progress-circle-path {
+  stroke: #1890ff !important; /* Blue color for manual progress */
+}
+
+/* Add a small "M" indicator for manual progress */
+.task-progress-manual::after {
+  content: "M";
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background-color: #1890ff;
+  color: white;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  font-size: 8px;
+  line-height: 12px;
+  text-align: center;
+  font-weight: bold;
+}

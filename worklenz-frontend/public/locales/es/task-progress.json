@@ -1,0 +1,14 @@
+{
+  "modalTitle": "Editar Progreso de Tarea",
+  "modeAuto": "Auto",
+  "modeManual": "Manual",
+  "manualProgressLabel": "Progreso manual",
+  "autoProgressLabel": "Progreso automático (basado en subtareas)",
+  "completedCount": "Completado: {{completed}} / {{total}}",
+  "statusComplete": "Completo",
+  "autoProgressInfo": "El progreso se calcula automáticamente según la finalización de las subtareas.",
+  "warningTitle": "Advertencia",
+  "warningManualOverride": "El progreso manual anulará el progreso calculado de las subtareas.",
+  "cancelButton": "Cancelar",
+  "saveButton": "Guardar"
+} 
