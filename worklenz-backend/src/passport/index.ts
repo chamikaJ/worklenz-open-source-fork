@@ -3,7 +3,7 @@ import {PassportStatic} from "passport";
 import {deserialize} from "./deserialize";
 import {serialize} from "./serialize";
 
-import GoogleLogin from "./passport-strategies/passport-google";
+import createGoogleStrategy from "./passport-strategies/passport-google";
 import LocalLogin from "./passport-strategies/passport-local-login";
 import LocalSignup from "./passport-strategies/passport-local-signup";
 
@@ -14,7 +14,12 @@ import LocalSignup from "./passport-strategies/passport-local-signup";
 export default (passport: PassportStatic) => {
   passport.use("local-login", LocalLogin);
   passport.use("local-signup", LocalSignup);
-  passport.use(GoogleLogin);
+  
+  // Only enable Google login if GOOGLE_LOGIN_ENABLED is set to 'true'
+  if (process.env.GOOGLE_LOGIN_ENABLED === 'true') {
+    passport.use(createGoogleStrategy());
+  }
+  
   passport.serializeUser(serialize);
   passport.deserializeUser(deserialize);
 };

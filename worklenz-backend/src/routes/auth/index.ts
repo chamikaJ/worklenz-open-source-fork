@@ -28,32 +28,43 @@ authRouter.post("/update-password", updatePasswordValidator, passwordValidator, 
 
 authRouter.post("/verify-captcha", safeControllerFunction(AuthController.verifyCaptcha));
 
-// Google authentication
-authRouter.get("/google", (req, res) => {
-  return passport.authenticate("google", {
-    scope: ["email", "profile"],
-    state: JSON.stringify({
-      teamMember: req.query.teamMember || null,
-      team: req.query.team || null,
-      teamName: req.query.teamName || null,
-      project: req.query.project || null
-    })
-  })(req, res);
-});
+// Google authentication - only register routes if GOOGLE_LOGIN_ENABLED is true
+if (process.env.GOOGLE_LOGIN_ENABLED === 'true') {
+  authRouter.get("/google", (req, res) => {
+    return passport.authenticate("google", {
+      scope: ["email", "profile"],
+      state: JSON.stringify({
+        teamMember: req.query.teamMember || null,
+        team: req.query.team || null,
+        teamName: req.query.teamName || null,
+        project: req.query.project || null
+      })
+    })(req, res);
+  });
 
-authRouter.get("/google/verify", (req, res) => {
-  let error = "";
-  if ((req.session as any).error) {
-    error = `?error=${encodeURIComponent((req.session as any).error as string)}`;
-    delete (req.session as any).error;
-  }
+  authRouter.get("/google/verify", (req, res) => {
+    let error = "";
+    if ((req.session as any).error) {
+      error = `?error=${encodeURIComponent((req.session as any).error as string)}`;
+      delete (req.session as any).error;
+    }
 
-  const failureRedirect = process.env.LOGIN_FAILURE_REDIRECT + error;
-  return passport.authenticate("google", {
-    failureRedirect,
-    successRedirect: process.env.LOGIN_SUCCESS_REDIRECT
-  })(req, res);
-});
+    const failureRedirect = process.env.LOGIN_FAILURE_REDIRECT + error;
+    return passport.authenticate("google", {
+      failureRedirect,
+      successRedirect: process.env.LOGIN_SUCCESS_REDIRECT
+    })(req, res);
+  });
+} else {
+  // Return 404 for Google auth routes when disabled
+  authRouter.get("/google", (req, res) => {
+    res.status(404).json({ error: "Google authentication is disabled" });
+  });
+  
+  authRouter.get("/google/verify", (req, res) => {
+    res.status(404).json({ error: "Google authentication is disabled" });
+  });
+}
 
 // Passport logout
 authRouter.get("/logout", AuthController.logout);

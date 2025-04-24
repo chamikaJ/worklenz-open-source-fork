@@ -46,6 +46,10 @@ const TaskListProgressCell = ({ task }: TaskListProgressCellProps) => {
   const { getTaskProgress } = useTaskProgress();
   const taskGroups = useAppSelector(state => state.taskReducer.taskGroups);
   
+  // Get the current project from the Redux store to check if manual progress is enabled
+  const { project: currentProject } = useAppSelector(state => state.projectReducer);
+  const useManualProgress = currentProject?.use_manual_progress || false;
+  
   // Helper to find parent task if this is a subtask
   const findParentTask = (): IProjectTask | undefined => {
     if (!task.parent_task_id) return undefined;
@@ -69,38 +73,57 @@ const TaskListProgressCell = ({ task }: TaskListProgressCellProps) => {
       getTaskProgress(task.id);
     }
     
-    // Preload the editor component
-    preloadTaskProgressEditor();
-  }, [task.id, getTaskProgress]);
+    // Preload the editor component if manual progress is enabled
+    if (useManualProgress) {
+      preloadTaskProgressEditor();
+    }
+  }, [task.id, getTaskProgress, useManualProgress]);
   
   // If it's a subtask, use the specialized subtask progress component
   if (task.is_sub_task || task.parent_task_id) {
     return <SubtaskProgressCell task={task} parentTask={parentTask} />;
   }
 
-  const tooltipTitle = task.is_manual 
-    ? `${task.complete_ratio || 0}% (Manual)`
-    : `${task.completed_count || 0} / ${task.total_tasks_count || 0}`;
+  // Handle click to open the editor if manual progress is enabled
+  const handleClick = () => {
+    if (useManualProgress) {
+      setIsEditing(true);
+    }
+  };
+
+  // Tooltip content based on task state and manual progress settings
+  const getTooltipTitle = () => {
+    if (!useManualProgress) {
+      return 'Manual progress disabled';
+    }
+    
+    return task.is_manual 
+      ? `${task.complete_ratio || 0}% (Manual)`
+      : `${task.completed_count || 0} / ${task.total_tasks_count || 0}`;
+  };
   
   return (
     <>
-      <Tooltip title={tooltipTitle}>
+      <Tooltip title={getTooltipTitle()}>
         <div 
-          onClick={() => setIsEditing(true)} 
-          onMouseEnter={preloadTaskProgressEditor}
-          style={{ cursor: 'pointer' }}
+          onClick={handleClick}
+          onMouseEnter={useManualProgress ? preloadTaskProgressEditor : undefined}
+          style={{ 
+            cursor: useManualProgress ? 'pointer' : 'default',
+            opacity: useManualProgress ? 1 : 0.7
+          }}
         >
           <Progress
             percent={task.complete_ratio || 0}
             type="circle"
             size={24}
             strokeWidth={(task.complete_ratio || 0) >= 100 ? 9 : 7}
-            className={task.is_manual ? 'task-progress-manual' : ''}
+            className={useManualProgress && task.is_manual ? 'task-progress-manual' : ''}
           />
         </div>
       </Tooltip>
       
-      {isEditing && (
+      {isEditing && useManualProgress && (
         createPortal(
           <Suspense fallback={<LoadingOverlay />}>
             <TaskProgressEditor 

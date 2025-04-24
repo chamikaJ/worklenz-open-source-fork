@@ -9,6 +9,7 @@ import {
   Drawer,
   Flex,
   Form,
+  FormInstance,
   Input,
   notification,
   Popconfirm,
@@ -47,26 +48,53 @@ import { ITeamMemberViewModel } from '@/types/teamMembers/teamMembersGetResponse
 import { calculateTimeDifference } from '@/utils/calculate-time-difference';
 import { formatDateTimeWithLocale } from '@/utils/format-date-time-with-locale';
 import logger from '@/utils/errorLogger';
-import { setProjectData, toggleProjectDrawer, setProjectId as setDrawerProjectId } from '@/features/project/project-drawer.slice';
+import {
+  setProjectData,
+  toggleProjectDrawer,
+  setProjectId as setDrawerProjectId,
+} from '@/features/project/project-drawer.slice';
 import useIsProjectManager from '@/hooks/useIsProjectManager';
 import { useAuthService } from '@/hooks/useAuth';
 import { evt_projects_create } from '@/shared/worklenz-analytics-events';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
 
 // Add a new component for task progress settings
-const TaskProgressSettings = ({ disabled }: { disabled: boolean }) => {
+const TaskProgressSettings = ({
+  disabled,
+  form,
+  project,
+}: {
+  disabled: boolean;
+  form: FormInstance;
+  project: IProjectViewModel | null;
+}) => {
   const { t } = useTranslation('project-drawer');
-  
+  const [manualProgress, setManualProgress] = useState(project?.use_manual_progress || false);
+  const [weightedProgress, setWeightedProgress] = useState(project?.use_weighted_progress || false);
+
+  // Make sure form values and state stay in sync
+  useEffect(() => {
+    setManualProgress(form.getFieldValue('use_manual_progress') || false);
+    setWeightedProgress(form.getFieldValue('use_weighted_progress') || false);
+  }, [form, project?.use_manual_progress, project?.use_weighted_progress]);
+
+  const handleManualProgressChange = (checked: boolean) => {
+    setManualProgress(checked);
+    form.setFieldsValue({ use_manual_progress: checked });
+  };
+
+  const handleWeightedProgressChange = (checked: boolean) => {
+    setWeightedProgress(checked);
+    form.setFieldsValue({ use_weighted_progress: checked });
+  };
+
   return (
     <div style={{ marginBottom: 16 }}>
       <Typography.Title level={5} style={{ marginBottom: 16 }}>
         Task Progress Settings
       </Typography.Title>
-      
-      <Form.Item
-        name="use_manual_progress"
-        valuePropName="checked"
-      >
+
+      <div style={{ marginBottom: 16 }}>
         <Flex align="center" justify="space-between">
           <div>
             <Typography.Text strong>Use Manual Progress</Typography.Text>
@@ -76,14 +104,18 @@ const TaskProgressSettings = ({ disabled }: { disabled: boolean }) => {
               </Typography.Text>
             </div>
           </div>
-          <Switch disabled={disabled} />
+          <Form.Item name="use_manual_progress" valuePropName="checked" hidden>
+            <input type="checkbox" />
+          </Form.Item>
+          <Switch 
+            disabled={disabled} 
+            checked={manualProgress}
+            onChange={handleManualProgressChange}
+          />
         </Flex>
-      </Form.Item>
-      
-      <Form.Item
-        name="use_weighted_progress"
-        valuePropName="checked"
-      >
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
         <Flex align="center" justify="space-between">
           <div>
             <Typography.Text strong>Use Weighted Progress</Typography.Text>
@@ -93,9 +125,16 @@ const TaskProgressSettings = ({ disabled }: { disabled: boolean }) => {
               </Typography.Text>
             </div>
           </div>
-          <Switch disabled={disabled} />
+          <Form.Item name="use_weighted_progress" valuePropName="checked" hidden>
+            <input type="checkbox" />
+          </Form.Item>
+          <Switch 
+            disabled={disabled} 
+            checked={weightedProgress}
+            onChange={handleWeightedProgressChange}
+          />
         </Flex>
-      </Form.Item>
+      </div>
     </div>
   );
 };
@@ -108,7 +147,7 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState<boolean>(true);
   const currentSession = useAuthService().getCurrentSession();
-  
+
   // State
   const [editMode, setEditMode] = useState<boolean>(false);
   const [selectedProjectManager, setSelectedProjectManager] = useState<ITeamMemberViewModel | null>(
@@ -208,6 +247,8 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
         use_manual_progress: values.use_manual_progress,
         use_weighted_progress: values.use_weighted_progress,
       };
+      console.log('values', values);
+      console.log('projectModel', projectModel);
 
       const action =
         editMode && projectId
@@ -236,8 +277,17 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
       logger.error('Error saving project', error);
     }
   };
-  const calculateWorkingDays = (startDate: dayjs.Dayjs | null, endDate: dayjs.Dayjs | null): number => {
-    if (!startDate || !endDate || !startDate.isValid() || !endDate.isValid() || startDate.isAfter(endDate)) {
+  const calculateWorkingDays = (
+    startDate: dayjs.Dayjs | null,
+    endDate: dayjs.Dayjs | null
+  ): number => {
+    if (
+      !startDate ||
+      !endDate ||
+      !startDate.isValid() ||
+      !endDate.isValid() ||
+      startDate.isAfter(endDate)
+    ) {
       return 0;
     }
 
@@ -265,7 +315,15 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
             ...project,
             start_date: project.start_date ? dayjs(project.start_date) : null,
             end_date: project.end_date ? dayjs(project.end_date) : null,
-            working_days: form.getFieldValue('start_date') && form.getFieldValue('end_date') ? calculateWorkingDays(form.getFieldValue('start_date'), form.getFieldValue('end_date')) : project.working_days || 0,
+            working_days:
+              form.getFieldValue('start_date') && form.getFieldValue('end_date')
+                ? calculateWorkingDays(
+                    form.getFieldValue('start_date'),
+                    form.getFieldValue('end_date')
+                  )
+                : project.working_days || 0,
+            use_manual_progress: project.use_manual_progress || false,
+            use_weighted_progress: project.use_weighted_progress || false,
           });
           setSelectedProjectManager(project.project_manager || null);
           setLoading(false);
@@ -381,12 +439,7 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
       }
     >
       {!isEditable && (
-        <Alert
-          message={t('noPermission')}
-          type="warning"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
+        <Alert message={t('noPermission')} type="warning" showIcon style={{ marginBottom: 16 }} />
       )}
       <Skeleton active paragraph={{ rows: 12 }} loading={projectLoading}>
         <Form
@@ -447,14 +500,11 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
 
           <Form.Item name="date" layout="horizontal">
             <Flex gap={8}>
-              <Form.Item
-                name="start_date"
-                label={t('startDate')}
-              >
+              <Form.Item name="start_date" label={t('startDate')}>
                 <DatePicker
                   disabledDate={disabledStartDate}
                   disabled={!isProjectManager && !isOwnerorAdmin}
-                  onChange={(date) => {
+                  onChange={date => {
                     const endDate = form.getFieldValue('end_date');
                     if (date && endDate) {
                       const days = calculateWorkingDays(date, endDate);
@@ -463,14 +513,11 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
                   }}
                 />
               </Form.Item>
-              <Form.Item
-                name="end_date"
-                label={t('endDate')}
-              >
+              <Form.Item name="end_date" label={t('endDate')}>
                 <DatePicker
                   disabledDate={disabledEndDate}
                   disabled={!isProjectManager && !isOwnerorAdmin}
-                  onChange={(date) => {
+                  onChange={date => {
                     const startDate = form.getFieldValue('start_date');
                     if (startDate && date) {
                       const days = calculateWorkingDays(startDate, date);
@@ -497,7 +544,9 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
                   if (value === undefined || (value >= 0 && value <= 24)) {
                     return Promise.resolve();
                   }
-                  return Promise.reject(new Error(t('hoursPerDayValidationMessage', { min: 0, max: 24 })));
+                  return Promise.reject(
+                    new Error(t('hoursPerDayValidationMessage', { min: 0, max: 24 }))
+                  );
                 },
               },
             ]}
@@ -506,9 +555,13 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
           </Form.Item>
 
           <Divider />
-          
+
           {/* Add the task progress settings component */}
-          <TaskProgressSettings disabled={!isProjectManager && !isOwnerorAdmin} />
+          <TaskProgressSettings
+            disabled={!isProjectManager && !isOwnerorAdmin}
+            form={form}
+            project={project}
+          />
         </Form>
 
         {editMode && (

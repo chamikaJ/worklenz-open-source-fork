@@ -43,15 +43,7 @@ export async function on_set_manual_progress(_io: Server, socket: Socket, data?:
     }
     
     const taskData = taskResult.rows[0];
-    
-    // Don't allow manual progress on subtasks
-    if (taskData.parent_task_id) {
-      socket.emit(SocketEvents.SET_MANUAL_PROGRESS.toString(), {
-        success: false,
-        error: "Manual progress cannot be set on subtasks"
-      });
-      return;
-    }
+    const isSubtask = !!taskData.parent_task_id;
     
     // Update the task
     await db.query(
@@ -61,6 +53,12 @@ export async function on_set_manual_progress(_io: Server, socket: Socket, data?:
     
     // Get updated task info
     const info = await TasksControllerV2.getTaskCompleteRatio(data.task_id);
+    
+    // If this is a subtask, also update the parent task's progress
+    if (isSubtask) {
+      // Notify that a parent task may need to refresh its progress calculation
+      await notifyParentTaskUpdate(socket, taskData.parent_task_id);
+    }
     
     // Send the response
     socket.emit(SocketEvents.SET_MANUAL_PROGRESS.toString(), {
@@ -88,5 +86,30 @@ export async function on_set_manual_progress(_io: Server, socket: Socket, data?:
       success: false,
       error: "Failed to update progress"
     });
+  }
+}
+
+/**
+ * Notifies parent task about subtask progress updates
+ */
+async function notifyParentTaskUpdate(socket: Socket, parentTaskId: string) {
+  if (!parentTaskId) return;
+  
+  try {
+    // Get updated parent task info
+    const parentInfo = await TasksControllerV2.getTaskCompleteRatio(parentTaskId);
+    
+    if (parentInfo) {
+      // Send progress update for the parent task
+      socket.emit(SocketEvents.GET_TASK_PROGRESS.toString(), {
+        id: parentTaskId,
+        complete_ratio: parentInfo.ratio || 0,
+        completed_count: parentInfo.total_completed || 0,
+        total_tasks_count: parentInfo.total_tasks || 0,
+        is_manual: parentInfo.is_manual || false
+      });
+    }
+  } catch (error) {
+    log_error(error);
   }
 } 

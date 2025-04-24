@@ -29,9 +29,37 @@
   border: 1px solid #ccc;
 }
 
+/* Styles for subtask with manual progress */
+.subtask-progress-manual .ant-progress-circle-path {
+  stroke: #1890ff !important; /* Blue color for manual progress */
+}
+
+/* Add a small "M" indicator for manual progress on subtasks */
+.subtask-progress-manual::after {
+  content: "M";
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background-color: #1890ff;
+  color: white;
+  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  font-size: 6px;
+  line-height: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
 /* Dark mode adjustments */
 [data-theme="dark"] .subtask-progress.manual-parent::before {
   background-color: #333;
   color: #bbb;
   border-color: #555;
+}
+
+/* Dark mode adjustments for manual progress on subtasks */
+[data-theme="dark"] .subtask-progress-manual::after {
+  background-color: #1890ff;
+  color: white;
 } 
