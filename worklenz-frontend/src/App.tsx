@@ -36,21 +36,24 @@ const App: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [language]);
 
   const LoadingOverlay = () => (
-    <div className="task-progress-editor-loading" style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.1)',
-      backdropFilter: 'blur(1px)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000,
-      opacity: 0.8,
-      animation: 'fadeIn 0.2s ease-in-out',
-    }}>
+    <div
+      className="task-progress-editor-loading"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        backdropFilter: 'blur(1px)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+        opacity: 0.8,
+        animation: 'fadeIn 0.2s ease-in-out',
+      }}
+    >
       <Spin size="large" />
     </div>
   );

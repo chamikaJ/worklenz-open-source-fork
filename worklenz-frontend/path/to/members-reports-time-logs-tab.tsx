@@ -15,7 +15,7 @@ const MembersReportsTimeLogsTab: React.FC = () => {
   return (
     <Flex vertical gap={24}>
       <BillableFilter billable={billable} onBillableChange={setBillable} />
-      
+
       <button onClick={exportTimeLogs} disabled={exporting}>
         {exporting ? t('exporting') : t('exportTimeLogs')}
       </button>
@@ -33,9 +33,12 @@ const MembersReportsTimeLogsTab: React.FC = () => {
       </Skeleton>
 
       {createPortal(<TaskDrawer />, document.body)}
-      <MembersReportsDrawer memberId={/* pass the memberId here */} exportTimeLogs={exportTimeLogs} />
+      <MembersReportsDrawer
+        memberId={/* pass the memberId here */}
+        exportTimeLogs={exportTimeLogs}
+      />
     </Flex>
   );
 };
 
-export default MembersReportsTimeLogsTab; 
+export default MembersReportsTimeLogsTab;

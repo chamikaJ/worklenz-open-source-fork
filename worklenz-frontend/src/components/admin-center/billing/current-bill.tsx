@@ -10,11 +10,11 @@ import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useMediaQuery } from 'react-responsive';
 import { useTranslation } from 'react-i18next';
+import { toggleDrawer, toggleUpgradeModal } from '@/features/admin-center/billing/billing.slice';
 import {
-  toggleDrawer,
-  toggleUpgradeModal,
-} from '@/features/admin-center/billing/billing.slice';
-import { fetchBillingInfo, fetchFreePlanSettings } from '@/features/admin-center/admin-center.slice';
+  fetchBillingInfo,
+  fetchFreePlanSettings,
+} from '@/features/admin-center/admin-center.slice';
 import RedeemCodeDrawer from './drawers/redeem-code-drawer/redeem-code-drawer';
 import CurrentPlanDetails from './current-plan-details/current-plan-details';
 import AccountStorage from './account-storage/account-storage';
@@ -67,7 +67,9 @@ const CurrentBill: React.FC = () => {
             </div>
           }
         >
-          <div style={{ display: 'flex', flexDirection: 'column', width: '50%', padding: '0 12px' }}>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', width: '50%', padding: '0 12px' }}
+          >
             <div style={{ marginBottom: '14px' }}>
               <Typography.Text style={{ fontWeight: 700 }}>{t('cardBodyText01')}</Typography.Text>
               <Typography.Text>{t('cardBodyText02')}</Typography.Text>
@@ -109,10 +111,7 @@ const CurrentBill: React.FC = () => {
       </div>
 
       <div style={{ marginTop: '1.5rem' }}>
-        <Card
-          title={<span style={titleStyle}>{t('invoices')}</span>}
-          style={{ marginTop: '16px' }}
-        >
+        <Card title={<span style={titleStyle}>{t('invoices')}</span>} style={{ marginTop: '16px' }}>
           <InvoicesTable />
         </Card>
       </div>
@@ -133,7 +132,8 @@ const CurrentBill: React.FC = () => {
       ) : (
         renderMobileView()
       )}
-      {currentSession?.subscription_type === ISUBSCRIPTION_TYPE.PADDLE && renderChargesAndInvoices()}
+      {currentSession?.subscription_type === ISUBSCRIPTION_TYPE.PADDLE &&
+        renderChargesAndInvoices()}
     </div>
   );
 };

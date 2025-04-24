@@ -1,3 +1,3 @@
 import TaskProgressEditor from './task-progress-editor';
 
-export default TaskProgressEditor; 
+export default TaskProgressEditor;

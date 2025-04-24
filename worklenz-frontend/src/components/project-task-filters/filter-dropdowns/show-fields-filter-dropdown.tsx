@@ -7,10 +7,7 @@ import Space from 'antd/es/space';
 
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
-import {
-  updateColumnVisibility,
-  updateCustomColumnPinned,
-} from '@/features/tasks/tasks.slice';
+import { updateColumnVisibility, updateCustomColumnPinned } from '@/features/tasks/tasks.slice';
 import { ITaskListColumn } from '@/types/tasks/taskList.types';
 import { useSocket } from '@/socket/socketContext';
 import { SocketEvents } from '@/shared/socket-events';
@@ -28,7 +25,7 @@ const ShowFieldsFilterDropdown = () => {
   const visibilityChangableColumnList = columnList.filter(
     column => column.key !== 'selector' && column.key !== 'TASK' && column.key !== 'customColumn'
   );
-  
+
   const themeMode = useAppSelector(state => state.themeReducer.mode);
 
   const handleColumnVisibilityChange = async (col: ITaskListColumn) => {

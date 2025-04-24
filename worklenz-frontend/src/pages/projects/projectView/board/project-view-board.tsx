@@ -31,7 +31,10 @@ import { useAuthService } from '@/hooks/useAuth';
 import { SocketEvents } from '@/shared/socket-events';
 import alertService from '@/services/alerts/alertService';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
-import { evt_project_board_visit, evt_project_task_list_drag_and_move } from '@/shared/worklenz-analytics-events';
+import {
+  evt_project_board_visit,
+  evt_project_task_list_drag_and_move,
+} from '@/shared/worklenz-analytics-events';
 import { ITaskStatusCreateRequest } from '@/types/tasks/task-status-create-request';
 import { statusApiService } from '@/api/taskAttributes/status/status.api.service';
 import logger from '@/utils/errorLogger';
@@ -45,9 +48,11 @@ const ProjectViewBoard = () => {
   const authService = useAuthService();
   const currentSession = authService.getCurrentSession();
   const { trackMixpanelEvent } = useMixpanelTracking();
-  const [ currentTaskIndex, setCurrentTaskIndex] = useState(-1);
+  const [currentTaskIndex, setCurrentTaskIndex] = useState(-1);
   const { projectId } = useAppSelector(state => state.projectReducer);
-  const { taskGroups, groupBy, loadingGroups, search, archived } = useAppSelector(state => state.boardReducer);
+  const { taskGroups, groupBy, loadingGroups, search, archived } = useAppSelector(
+    state => state.boardReducer
+  );
   const { statusCategories, loading: loadingStatusCategories } = useAppSelector(
     state => state.taskStatusReducer
   );
@@ -85,7 +90,7 @@ const ProjectViewBoard = () => {
     status: string;
     complete_ratio: number;
     completed_count: number;
-    total_tasks_count: number;  
+    total_tasks_count: number;
     parent_task: string;
   }) => {
     dispatch(updateTaskProgress(data));
@@ -215,7 +220,7 @@ const ProjectViewBoard = () => {
               targetIndex: currentTaskIndex !== -1 ? currentTaskIndex : 0, // Original position or append to end
             })
           );
-  
+
           setActiveItem(null);
           originalSourceGroupIdRef.current = null;
           return;
@@ -243,7 +248,8 @@ const ProjectViewBoard = () => {
         }
 
         // Calculate toPos similar to Angular implementation
-        const toPos = targetGroup.tasks[toIndex]?.sort_order ||
+        const toPos =
+          targetGroup.tasks[toIndex]?.sort_order ||
           targetGroup.tasks[targetGroup.tasks.length - 1]?.sort_order ||
           -1;
 
@@ -257,7 +263,7 @@ const ProjectViewBoard = () => {
           to_group: targetGroupId,
           group_by: groupBy || 'status',
           task,
-          team_id: currentSession?.team_id
+          team_id: currentSession?.team_id,
         };
 
         logger.error('Emitting socket event with payload (task not found in source):', body);
@@ -295,7 +301,8 @@ const ProjectViewBoard = () => {
       }
 
       // Calculate toPos similar to Angular implementation
-      const toPos = targetGroup.tasks[toIndex]?.sort_order ||
+      const toPos =
+        targetGroup.tasks[toIndex]?.sort_order ||
         targetGroup.tasks[targetGroup.tasks.length - 1]?.sort_order ||
         -1;
 
@@ -306,10 +313,10 @@ const ProjectViewBoard = () => {
         to_index: toPos,
         to_last_index: !toPos,
         from_group: sourceGroupId, // Use the direct IDs instead of group objects
-        to_group: targetGroupId,   // Use the direct IDs instead of group objects
+        to_group: targetGroupId, // Use the direct IDs instead of group objects
         group_by: groupBy || 'status', // Use the current groupBy value
         task,
-        team_id: currentSession?.team_id
+        team_id: currentSession?.team_id,
       };
 
       // Emit socket event
@@ -358,7 +365,7 @@ const ProjectViewBoard = () => {
         try {
           // Use the correct API endpoint based on the Angular code
           const requestBody: ITaskStatusCreateRequest = {
-            status_order: columnOrder
+            status_order: columnOrder,
           };
 
           const response = await statusApiService.updateStatusOrder(requestBody, projectId);
@@ -384,7 +391,7 @@ const ProjectViewBoard = () => {
     originalSourceGroupIdRef.current = null; // Reset the ref
   };
 
-  useEffect(() => {   
+  useEffect(() => {
     if (socket) {
       socket.on(SocketEvents.GET_TASK_PROGRESS.toString(), handleTaskProgress);
     }
@@ -405,7 +412,7 @@ const ProjectViewBoard = () => {
     <Flex vertical gap={16}>
       <TaskListFilters position={'board'} />
 
-      <Skeleton active loading={loadingGroups} className='mt-4 p-4'>
+      <Skeleton active loading={loadingGroups} className="mt-4 p-4">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}

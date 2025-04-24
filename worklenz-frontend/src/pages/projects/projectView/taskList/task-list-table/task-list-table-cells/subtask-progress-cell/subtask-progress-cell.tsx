@@ -8,7 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 
 // Lazy load the TaskProgressEditor component
-const TaskProgressEditor = lazy(() => import('@/components/task-progress-editor/task-progress-editor'));
+const TaskProgressEditor = lazy(
+  () => import('@/components/task-progress-editor/task-progress-editor')
+);
 
 // Preload function to be called before showing the editor
 const preloadTaskProgressEditor = () => {
@@ -55,65 +57,65 @@ const SubtaskProgressCell = ({ task, parentTask }: SubtaskProgressCellProps) => 
   const isParentManual = parentTask?.is_manual || false;
   const isDarkMode = useAppSelector(state => state.themeReducer.mode) === 'dark';
   const { t } = useTranslation('task-progress');
-  
+
   // Get the current project from the Redux store to check if manual progress is enabled
   const { project: currentProject } = useAppSelector(state => state.projectReducer);
   const useManualProgress = currentProject?.use_manual_progress || false;
-  
+
   // Request the latest progress when the component mounts
   useEffect(() => {
     if (task.id) {
       getTaskProgress(task.id);
     }
-    
+
     // Preload the editor component if manual progress is enabled
     if (useManualProgress) {
       preloadTaskProgressEditor();
     }
   }, [task.id, getTaskProgress, useManualProgress]);
-  
+
   // Simple tooltip title
   const getTooltipTitle = () => {
     if (!useManualProgress) {
       return t('manualProgressDisabled');
     }
-    
+
     if (task.is_manual) {
       return `${task.complete_ratio || 0}%`;
     }
     return `${task.completed_count || 0} / ${task.total_tasks_count || 0}`;
   };
-  
+
   // Determine styling based on manual progress setting and parent mode
   const progressStyle = {
     opacity: !useManualProgress ? 0.4 : isParentManual ? 1 : 0.7,
     cursor: useManualProgress ? 'pointer' : 'default',
   };
-  
+
   // Determine stroke color based on mode and theme
   const getStrokeColor = () => {
     if (!useManualProgress) {
       return isDarkMode ? '#444' : '#ddd';
     }
-    
+
     if (!isParentManual) {
       return isDarkMode ? '#555' : '#ccc';
     }
-    
+
     return undefined; // Use default color
   };
-  
+
   // Handle click only if manual progress is enabled
   const handleClick = () => {
     if (useManualProgress) {
       setIsEditing(true);
     }
   };
-  
+
   return (
     <>
       <Tooltip title={getTooltipTitle()} placement="top">
-        <div 
+        <div
           style={progressStyle}
           onClick={handleClick}
           onMouseEnter={useManualProgress ? preloadTaskProgressEditor : undefined}
@@ -121,27 +123,25 @@ const SubtaskProgressCell = ({ task, parentTask }: SubtaskProgressCellProps) => 
           <Progress
             percent={task.complete_ratio || 0}
             type="circle"
-            size={20}
+            size={24}
             strokeWidth={(task.complete_ratio || 0) >= 100 ? 8 : 6}
-            className={useManualProgress && task.is_manual ? 'subtask-progress-manual' : 'subtask-progress'}
-            strokeColor={getStrokeColor()}
+            className={
+              useManualProgress && task.is_manual ? 'subtask-progress-manual' : 'subtask-progress'
+            }
           />
         </div>
       </Tooltip>
-      
-      {isEditing && useManualProgress && (
+
+      {isEditing &&
+        useManualProgress &&
         createPortal(
           <Suspense fallback={<LoadingOverlay />}>
-            <TaskProgressEditor 
-              task={task} 
-              onClose={() => setIsEditing(false)} 
-            />
+            <TaskProgressEditor task={task} onClose={() => setIsEditing(false)} />
           </Suspense>,
           document.body
-        )
-      )}
+        )}
     </>
   );
 };
 
-export default SubtaskProgressCell; 
+export default SubtaskProgressCell;

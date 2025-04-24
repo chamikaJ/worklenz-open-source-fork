@@ -171,7 +171,7 @@ const projectSlice = createSlice({
       }
     },
     reset: () => initialState,
-    setRefreshTimestamp: (state) => {
+    setRefreshTimestamp: state => {
       state.refreshTimestamp = new Date().getTime().toString();
     },
     setProjectView: (state, action: PayloadAction<'list' | 'kanban'>) => {
@@ -215,7 +215,7 @@ export const {
   setCreateTaskTemplateDrawerOpen,
   setProjectView,
   updatePhaseLabel,
-  setRefreshTimestamp
+  setRefreshTimestamp,
 } = projectSlice.actions;
 
 export default projectSlice.reducer;

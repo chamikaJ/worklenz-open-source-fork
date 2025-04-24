@@ -84,27 +84,33 @@ const BoardViewTaskCard = ({ task, sectionId }: IBoardViewTaskCardProps) => {
     },
   });
 
-  const style = useMemo(() => ({
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }), [transform, transition, isDragging]);
+  const style = useMemo(
+    () => ({
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    }),
+    [transform, transition, isDragging]
+  );
 
-  const handleCardClick = useCallback((e: React.MouseEvent, id: string) => {
-    // Prevent the event from propagating to parent elements
-    e.stopPropagation();
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent, id: string) => {
+      // Prevent the event from propagating to parent elements
+      e.stopPropagation();
 
-    // Don't handle click if we're dragging
-    if (isDragging) return;
+      // Don't handle click if we're dragging
+      if (isDragging) return;
 
-    // Add a small delay to ensure it's a click and not the start of a drag
-    const clickTimeout = setTimeout(() => {
-      dispatch(setSelectedTaskId(id));
-      dispatch(setShowTaskDrawer(true));
-    }, 50);
+      // Add a small delay to ensure it's a click and not the start of a drag
+      const clickTimeout = setTimeout(() => {
+        dispatch(setSelectedTaskId(id));
+        dispatch(setShowTaskDrawer(true));
+      }, 50);
 
-    return () => clearTimeout(clickTimeout);
-  }, [dispatch, isDragging]);
+      return () => clearTimeout(clickTimeout);
+    },
+    [dispatch, isDragging]
+  );
 
   const handleAssignToMe = useCallback(async () => {
     if (!projectId || !task.id || updatingAssignToMe) return;
@@ -187,52 +193,58 @@ const BoardViewTaskCard = ({ task, sectionId }: IBoardViewTaskCardProps) => {
     setShowNewSubtaskCard(true);
   }, []);
 
-  const handleSubtaskButtonClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    handleSubTaskExpand();
-  }, [handleSubTaskExpand]);
+  const handleSubtaskButtonClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      handleSubTaskExpand();
+    },
+    [handleSubTaskExpand]
+  );
 
-  const items: MenuProps['items'] = useMemo(() => [
-    {
-      label: (
-        <span>
-          <UserAddOutlined />
-          &nbsp;
-          <Typography.Text>{t('assignToMe')}</Typography.Text>
-        </span>
-      ),
-      key: '1',
-      onClick: handleAssignToMe,
-      disabled: updatingAssignToMe,
-    },
-    {
-      label: (
-        <span>
-          <InboxOutlined />
-          &nbsp;
-          <Typography.Text>{t('archive')}</Typography.Text>
-        </span>
-      ),
-      key: '2',
-      onClick: handleArchive,
-    },
-    {
-      label: (
-        <Popconfirm
-          title={t('deleteConfirmationTitle')}
-          icon={<ExclamationCircleFilled style={{ color: colors.vibrantOrange }} />}
-          okText={t('deleteConfirmationOk')}
-          cancelText={t('deleteConfirmationCancel')}
-          onConfirm={handleDelete}
-        >
-          <DeleteOutlined />
-          &nbsp;
-          {t('delete')}
-        </Popconfirm>
-      ),
-      key: '3',
-    },
-  ], [t, handleAssignToMe, handleArchive, handleDelete, updatingAssignToMe]);
+  const items: MenuProps['items'] = useMemo(
+    () => [
+      {
+        label: (
+          <span>
+            <UserAddOutlined />
+            &nbsp;
+            <Typography.Text>{t('assignToMe')}</Typography.Text>
+          </span>
+        ),
+        key: '1',
+        onClick: handleAssignToMe,
+        disabled: updatingAssignToMe,
+      },
+      {
+        label: (
+          <span>
+            <InboxOutlined />
+            &nbsp;
+            <Typography.Text>{t('archive')}</Typography.Text>
+          </span>
+        ),
+        key: '2',
+        onClick: handleArchive,
+      },
+      {
+        label: (
+          <Popconfirm
+            title={t('deleteConfirmationTitle')}
+            icon={<ExclamationCircleFilled style={{ color: colors.vibrantOrange }} />}
+            okText={t('deleteConfirmationOk')}
+            cancelText={t('deleteConfirmationCancel')}
+            onConfirm={handleDelete}
+          >
+            <DeleteOutlined />
+            &nbsp;
+            {t('delete')}
+          </Popconfirm>
+        ),
+        key: '3',
+      },
+    ],
+    [t, handleAssignToMe, handleArchive, handleDelete, updatingAssignToMe]
+  );
 
   const priorityIcon = useMemo(() => {
     if (task.priority_value === 0) {
@@ -269,14 +281,12 @@ const BoardViewTaskCard = ({ task, sectionId }: IBoardViewTaskCardProps) => {
 
   const renderLabels = useMemo(() => {
     if (!task?.labels?.length) return null;
-    
+
     return (
       <>
         {task.labels.slice(0, 2).map((label: any) => (
           <Tag key={label.id} style={{ marginRight: '4px' }} color={label?.color_code}>
-            <span style={{ color: themeMode === 'dark' ? '#383838' : '' }}>
-              {label.name}
-            </span>
+            <span style={{ color: themeMode === 'dark' ? '#383838' : '' }}>{label.name}</span>
           </Tag>
         ))}
         {task.labels.length > 2 && <Tag>+ {task.labels.length - 2}</Tag>}
@@ -304,26 +314,26 @@ const BoardViewTaskCard = ({ task, sectionId }: IBoardViewTaskCardProps) => {
         className={`group outline-1 ${themeWiseColor('outline-[#edeae9]', 'outline-[#6a696a]', themeMode)} hover:outline board-task-card`}
         onClick={e => handleCardClick(e, task.id || '')}
         data-id={task.id}
-        data-dragging={isDragging ? "true" : "false"}
+        data-dragging={isDragging ? 'true' : 'false'}
       >
         {/* Labels and Progress */}
         <Flex align="center" justify="space-between">
-          <Flex>
-            {renderLabels}
-          </Flex>
+          <Flex>{renderLabels}</Flex>
 
           <Tooltip title={` ${task?.completed_count} / ${task?.total_tasks_count}`}>
-            <Progress type="circle" percent={task?.complete_ratio } size={26} strokeWidth={(task.complete_ratio || 0) >= 100 ? 9 : 7} />
+            <Progress
+              type="circle"
+              percent={task?.complete_ratio}
+              size={26}
+              strokeWidth={(task.complete_ratio || 0) >= 100 ? 9 : 7}
+            />
           </Tooltip>
         </Flex>
 
         {/* Action Icons */}
         <Flex gap={4}>
           {priorityIcon}
-          <Typography.Text 
-            style={{ fontWeight: 500 }}
-            ellipsis={{ tooltip: task.name }}
-          >
+          <Typography.Text style={{ fontWeight: 500 }} ellipsis={{ tooltip: task.name }}>
             {task.name}
           </Typography.Text>
         </Flex>
@@ -373,11 +383,17 @@ const BoardViewTaskCard = ({ task, sectionId }: IBoardViewTaskCardProps) => {
               <List>
                 {task.sub_tasks_loading && (
                   <List.Item>
-                    <Skeleton active paragraph={{ rows: 2 }} title={false} style={{ marginTop: 8 }} />
+                    <Skeleton
+                      active
+                      paragraph={{ rows: 2 }}
+                      title={false}
+                      style={{ marginTop: 8 }}
+                    />
                   </List.Item>
                 )}
-                
-                {!task.sub_tasks_loading && task?.sub_tasks &&
+
+                {!task.sub_tasks_loading &&
+                  task?.sub_tasks &&
                   task?.sub_tasks.map((subtask: any) => (
                     <BoardSubTaskCard key={subtask.id} subtask={subtask} sectionId={sectionId} />
                   ))}

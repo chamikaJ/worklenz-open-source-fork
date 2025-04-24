@@ -91,24 +91,24 @@ const TaskProgressSettings = ({
   return (
     <div style={{ marginBottom: 16 }}>
       <Typography.Title level={5} style={{ marginBottom: 16 }}>
-        Task Progress Settings
+        {t('taskProgressSettings')}
       </Typography.Title>
 
       <div style={{ marginBottom: 16 }}>
         <Flex align="center" justify="space-between">
           <div>
-            <Typography.Text strong>Use Manual Progress</Typography.Text>
+            <Typography.Text strong>{t('useManualProgress')}</Typography.Text>
             <div>
               <Typography.Text type="secondary">
-                If enabled, all tasks will use manual progress instead of automatic calculation
+                {t('useManualProgressDescription')}
               </Typography.Text>
             </div>
           </div>
           <Form.Item name="use_manual_progress" valuePropName="checked" hidden>
             <input type="checkbox" />
           </Form.Item>
-          <Switch 
-            disabled={disabled} 
+          <Switch
+            disabled={disabled}
             checked={manualProgress}
             onChange={handleManualProgressChange}
           />
@@ -118,18 +118,18 @@ const TaskProgressSettings = ({
       <div style={{ marginBottom: 16 }}>
         <Flex align="center" justify="space-between">
           <div>
-            <Typography.Text strong>Use Weighted Progress</Typography.Text>
+            <Typography.Text strong>{t('useWeightedProgress')}</Typography.Text>
             <div>
               <Typography.Text type="secondary">
-                Calculate parent task progress based on subtask effort/estimation
+                {t('useWeightedProgressDescription')}
               </Typography.Text>
             </div>
           </div>
           <Form.Item name="use_weighted_progress" valuePropName="checked" hidden>
             <input type="checkbox" />
           </Form.Item>
-          <Switch 
-            disabled={disabled} 
+          <Switch
+            disabled={disabled}
             checked={weightedProgress}
             onChange={handleWeightedProgressChange}
           />
@@ -247,8 +247,6 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
         use_manual_progress: values.use_manual_progress,
         use_weighted_progress: values.use_weighted_progress,
       };
-      console.log('values', values);
-      console.log('projectModel', projectModel);
 
       const action =
         editMode && projectId
@@ -262,7 +260,9 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
         dispatch(toggleProjectDrawer());
         if (!editMode) {
           trackMixpanelEvent(evt_projects_create);
-          navigate(`/worklenz/projects/${response.data.body.id}?tab=tasks-list&pinned_tab=tasks-list`);
+          navigate(
+            `/worklenz/projects/${response.data.body.id}?tab=tasks-list&pinned_tab=tasks-list`
+          );
         }
         refetchProjects();
         window.location.reload(); // Refresh the page

@@ -15,7 +15,7 @@ const renderAvatar = (member: InlineMember, index: number) => (
       <span onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <Avatar src={member.avatar_url} size={28} key={member.team_member_id || index} />
       </span>
-    ) : ( 
+    ) : (
       <span onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <Avatar
           size={28}

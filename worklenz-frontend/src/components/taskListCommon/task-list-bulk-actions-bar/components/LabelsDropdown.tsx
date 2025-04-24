@@ -50,32 +50,31 @@ const LabelsDropdown = ({
               overflow: 'auto',
               maxHeight: labelsList.length > 10 ? '200px' : 'auto', // Set max height if more than 10 labels
               maxWidth: 250,
-          }}
-        >
-          {labelsList.length > 0 && (
-            labelsList.map(label => (
-              <List.Item
-                className={themeMode === 'dark' ? 'custom-list-item dark' : 'custom-list-item'}
-                key={label.id}
-                style={{
-                  display: 'flex',
-                  gap: 8,
-                  justifyContent: 'flex-start',
-                  padding: '4px 8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <Checkbox
-                  id={label.id}
-                  checked={selectedLabels.some(l => l.id === label.id)}
-                  onChange={e => onLabelChange(e, label)}
+            }}
+          >
+            {labelsList.length > 0 &&
+              labelsList.map(label => (
+                <List.Item
+                  className={themeMode === 'dark' ? 'custom-list-item dark' : 'custom-list-item'}
+                  key={label.id}
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    justifyContent: 'flex-start',
+                    padding: '4px 8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
-                  <Badge color={label.color_code} text={label.name} />
-                </Checkbox>
-              </List.Item>
-            ))
-            )}
+                  <Checkbox
+                    id={label.id}
+                    checked={selectedLabels.some(l => l.id === label.id)}
+                    onChange={e => onLabelChange(e, label)}
+                  >
+                    <Badge color={label.color_code} text={label.name} />
+                  </Checkbox>
+                </List.Item>
+              ))}
           </List>
         )}
 

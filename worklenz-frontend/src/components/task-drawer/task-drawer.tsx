@@ -176,8 +176,8 @@ const TaskDrawer = () => {
   // Get conditional body style
   const getBodyStyle = () => {
     const baseStyle = {
-      padding: '24px', 
-      overflow: 'auto'
+      padding: '24px',
+      overflow: 'auto',
     };
 
     if (activeTab === 'timeLog' && timeLogEditing.isEditing) {

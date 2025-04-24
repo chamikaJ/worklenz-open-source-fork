@@ -29,6 +29,7 @@ When switching to manual mode for a parent task:
 ### Subtask Visibility and Contributions
 
 Subtask progress display follows these rules:
+
 - Subtask progress is only visible when the parent task is in manual mode
 - When visible, each subtask shows its contribution to the parent task's progress
 - Each subtask contributes equally to the parent task's progress (equal weighting)
@@ -36,6 +37,7 @@ Subtask progress display follows these rules:
 ## Implementation Details
 
 The aggregation logic is implemented in:
+
 - `task-progress-utils.ts` - Contains utility functions for calculating progress
 - `task-progress-editor.tsx` - Automatically applies subtask average when switching to manual mode
 - `subtask-progress-cell.tsx` - Shows/hides subtask progress based on parent's mode
@@ -48,5 +50,6 @@ The aggregation logic is implemented in:
 4. Individual subtask progress will now be visible in the task list
 
 The reversal of the traditional logic (showing subtasks only in manual mode instead of auto mode) allows for a clearer separation of responsibilities:
+
 - In auto mode, only the parent task's overall progress matters
-- In manual mode, you can see how individual subtasks contribute to the average 
+- In manual mode, you can see how individual subtasks contribute to the average

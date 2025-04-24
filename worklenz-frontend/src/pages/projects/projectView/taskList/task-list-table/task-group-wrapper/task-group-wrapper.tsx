@@ -47,7 +47,7 @@ import {
   updateTaskDescription,
   updateSubTasks,
   updateTaskProgress,
-  setManualProgress
+  setManualProgress,
 } from '@/features/tasks/tasks.slice';
 import { fetchLabels } from '@/features/taskAttributes/taskLabelSlice';
 import {
@@ -105,7 +105,7 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
     if (taskGroups.length > 0) {
       // Collect all tasks from all groups
       const allTasks = taskGroups.flatMap(group => group.tasks);
-      
+
       // Get progress for all tasks
       bulkGetTaskProgress(allTasks);
     }
@@ -219,7 +219,7 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
           progress: data.complete_ratio,
           totalTasksCount: data.total_tasks_count,
           completedCount: data.completed_count,
-          isManual: data.is_manual
+          isManual: data.is_manual,
         })
       );
     };
@@ -236,7 +236,7 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
           setManualProgress({
             taskId: data.task_id,
             enableManual: data.manual_progress,
-            progressValue: data.complete_ratio
+            progressValue: data.complete_ratio,
           })
         );
       }

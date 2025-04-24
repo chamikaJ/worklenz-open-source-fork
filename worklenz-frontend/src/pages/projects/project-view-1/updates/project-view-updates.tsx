@@ -1,4 +1,14 @@
-import { Button, ConfigProvider, Flex, Form, Mentions, Skeleton, Space, Tooltip, Typography } from 'antd';
+import {
+  Button,
+  ConfigProvider,
+  Flex,
+  Form,
+  Mentions,
+  Skeleton,
+  Space,
+  Tooltip,
+  Typography,
+} from 'antd';
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import DOMPurify from 'dompurify';
@@ -42,7 +52,14 @@ const ProjectViewUpdates = () => {
     if (!projectId) return;
     try {
       setIsLoading(true);
-      const res = await projectCommentsApiService.getMentionMembers(projectId, 1, 15, null, null, null);
+      const res = await projectCommentsApiService.getMentionMembers(
+        projectId,
+        1,
+        15,
+        null,
+        null,
+        null
+      );
       if (res.done) {
         setMembers(res.body as IMentionMemberViewModel[]);
       }
@@ -73,7 +90,7 @@ const ProjectViewUpdates = () => {
 
     try {
       setIsSubmitting(true);
-      
+
       if (!commentValue) {
         console.error('Comment content is empty');
         return;
@@ -83,7 +100,7 @@ const ProjectViewUpdates = () => {
         project_id: projectId,
         team_id: getUserSession()?.team_id,
         content: commentValue.trim(),
-        mentions: selectedMembers
+        mentions: selectedMembers,
       };
 
       const res = await projectCommentsApiService.createProjectComment(body);
@@ -96,15 +113,13 @@ const ProjectViewUpdates = () => {
     } finally {
       setIsSubmitting(false);
       setCommentValue('');
-
-
     }
   };
 
   useEffect(() => {
     void getMembers();
     void getComments();
-  }, [getMembers, getComments,refreshTimestamp]);
+  }, [getMembers, getComments, refreshTimestamp]);
 
   const handleCancel = useCallback(() => {
     form.resetFields(['comment']);
@@ -137,7 +152,7 @@ const ProjectViewUpdates = () => {
   }, []);
 
   const handleCommentChange = useCallback((value: string) => {
-    // Only update the value without trying to replace mentions    
+    // Only update the value without trying to replace mentions
     setCommentValue(value);
     setCharacterLength(value.trim().length);
   }, []);
@@ -160,53 +175,55 @@ const ProjectViewUpdates = () => {
   return (
     <Flex gap={24} vertical>
       <Flex vertical gap={16}>
-        {
-          isLoadingComments ? (
-            <Skeleton active />
-          ):
+        {isLoadingComments ? (
+          <Skeleton active />
+        ) : (
           comments.map(comment => (
-          <Flex key={comment.id} gap={8}>
-            <CustomAvatar avatarName={comment.created_by || ''} />
-            <Flex vertical flex={1}>
-              <Space>
-                <Typography.Text strong style={{ fontSize: 13, color: colors.lightGray }}>
-                  {comment.created_by || ''}
-                </Typography.Text>
-                <Tooltip title={comment.created_at}>
-                  <Typography.Text style={{ fontSize: 13, color: colors.deepLightGray }}>
-                    {calculateTimeDifference(comment.created_at || '')}
+            <Flex key={comment.id} gap={8}>
+              <CustomAvatar avatarName={comment.created_by || ''} />
+              <Flex vertical flex={1}>
+                <Space>
+                  <Typography.Text strong style={{ fontSize: 13, color: colors.lightGray }}>
+                    {comment.created_by || ''}
                   </Typography.Text>
-                </Tooltip>
-              </Space>
-              <Typography.Paragraph 
-                style={{ margin: '8px 0' }}
-                ellipsis={{ rows: 3, expandable: true }}
-              >
-                <div className={`mentions-${theme === 'dark' ? 'dark' : 'light'}`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.content || '') }} />
-              </Typography.Paragraph>
-              <ConfigProvider
-                wave={{ disabled: true }}
-
-                theme={{
-                  components: {
-                    Button: {
-                      defaultColor: colors.lightGray,
-                      defaultHoverColor: colors.darkGray,
+                  <Tooltip title={comment.created_at}>
+                    <Typography.Text style={{ fontSize: 13, color: colors.deepLightGray }}>
+                      {calculateTimeDifference(comment.created_at || '')}
+                    </Typography.Text>
+                  </Tooltip>
+                </Space>
+                <Typography.Paragraph
+                  style={{ margin: '8px 0' }}
+                  ellipsis={{ rows: 3, expandable: true }}
+                >
+                  <div
+                    className={`mentions-${theme === 'dark' ? 'dark' : 'light'}`}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.content || '') }}
+                  />
+                </Typography.Paragraph>
+                <ConfigProvider
+                  wave={{ disabled: true }}
+                  theme={{
+                    components: {
+                      Button: {
+                        defaultColor: colors.lightGray,
+                        defaultHoverColor: colors.darkGray,
+                      },
                     },
-                  },
-                }}
-              >
-                <Button
-                  icon={<DeleteOutlined />}
-                  shape="circle"
-                  type="text"
-                  size='small'
-                  onClick={() => handleDeleteComment(comment.id)}
-                />
-              </ConfigProvider>
+                  }}
+                >
+                  <Button
+                    icon={<DeleteOutlined />}
+                    shape="circle"
+                    type="text"
+                    size="small"
+                    onClick={() => handleDeleteComment(comment.id)}
+                  />
+                </ConfigProvider>
+              </Flex>
             </Flex>
-          </Flex>
-        ))}
+          ))
+        )}
       </Flex>
 
       <Form onFinish={handleAddComment}>

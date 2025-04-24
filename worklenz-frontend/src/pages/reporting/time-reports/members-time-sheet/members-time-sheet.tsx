@@ -44,10 +44,12 @@ const MembersTimeSheet = forwardRef<MembersTimeSheetRef>((_, ref) => {
   const [jsonData, setJsonData] = useState<IRPTTimeMember[]>([]);
 
   const labels = Array.isArray(jsonData) ? jsonData.map(item => item.name) : [];
-  const dataValues = Array.isArray(jsonData) ? jsonData.map(item => {
-    const loggedTimeInHours = parseFloat(item.logged_time || '0') / 3600;
-    return loggedTimeInHours.toFixed(2);
-  }) : [];
+  const dataValues = Array.isArray(jsonData)
+    ? jsonData.map(item => {
+        const loggedTimeInHours = parseFloat(item.logged_time || '0') / 3600;
+        return loggedTimeInHours.toFixed(2);
+      })
+    : [];
   const colors = Array.isArray(jsonData) ? jsonData.map(item => item.color_code) : [];
 
   const themeMode = useAppSelector(state => state.themeReducer.mode);
@@ -120,7 +122,7 @@ const MembersTimeSheet = forwardRef<MembersTimeSheetRef>((_, ref) => {
   const fetchChartData = async () => {
     try {
       setLoading(true);
-      
+
       const selectedTeams = teams.filter(team => team.selected);
       const selectedProjects = filterProjects.filter(project => project.selected);
       const selectedCategories = categories.filter(category => category.selected);
@@ -153,7 +155,7 @@ const MembersTimeSheet = forwardRef<MembersTimeSheetRef>((_, ref) => {
     if (chartRef.current) {
       // Get the canvas element
       const canvas = chartRef.current.canvas;
-      
+
       // Create a temporary canvas to draw with background
       const tempCanvas = document.createElement('canvas');
       const tempCtx = tempCanvas.getContext('2d');
@@ -179,7 +181,7 @@ const MembersTimeSheet = forwardRef<MembersTimeSheetRef>((_, ref) => {
   };
 
   useImperativeHandle(ref, () => ({
-    exportChart
+    exportChart,
   }));
 
   return (

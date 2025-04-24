@@ -42,26 +42,29 @@ const TaskDrawerHeader = ({ inputRef, t }: TaskDrawerHeaderProps) => {
 
   const handleDeleteTask = async () => {
     if (!selectedTaskId) return;
-    
+
     // Set flag to indicate we're deleting the task
     isDeleting.current = true;
-    
+
     const res = await tasksApiService.deleteTask(selectedTaskId);
     if (res.done) {
       // Explicitly clear the task parameter from URL
       clearTaskFromUrl();
-      
+
       dispatch(setShowTaskDrawer(false));
       dispatch(setSelectedTaskId(null));
       dispatch(deleteTask({ taskId: selectedTaskId }));
       dispatch(deleteBoardTask({ sectionId: '', taskId: selectedTaskId }));
-      
+
       // Reset the flag after a short delay
       setTimeout(() => {
         isDeleting.current = false;
       }, 100);
       if (taskFormViewModel?.task?.parent_task_id) {
-        socket?.emit(SocketEvents.GET_TASK_PROGRESS.toString(), taskFormViewModel?.task?.parent_task_id);
+        socket?.emit(
+          SocketEvents.GET_TASK_PROGRESS.toString(),
+          taskFormViewModel?.task?.parent_task_id
+        );
       }
     } else {
       isDeleting.current = false;
@@ -81,7 +84,11 @@ const TaskDrawerHeader = ({ inputRef, t }: TaskDrawerHeaderProps) => {
     },
   ];
 
-  const handleReceivedTaskNameChange = (data: { id: string; parent_task: string; name: string }) => {
+  const handleReceivedTaskNameChange = (data: {
+    id: string;
+    parent_task: string;
+    name: string;
+  }) => {
     if (data.id === selectedTaskId) {
       dispatch(updateTaskName({ task: data }));
     }
@@ -121,8 +128,8 @@ const TaskDrawerHeader = ({ inputRef, t }: TaskDrawerHeaderProps) => {
           onBlur={handleInputBlur}
           placeholder={t('taskHeader.taskNamePlaceholder')}
           className="task-name-input"
-          style={{ 
-            width: '100%', 
+          style={{
+            width: '100%',
             border: 'none',
           }}
           showCount={false}

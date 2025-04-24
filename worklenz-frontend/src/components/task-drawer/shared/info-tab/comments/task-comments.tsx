@@ -56,7 +56,7 @@ const processMentions = (content: string) => {
   return content.replace(/@(\w+)/g, '<span class="mentions">@$1</span>');
 };
 
-const TaskComments = ({ taskId, t }: { taskId?: string, t: TFunction }) => {
+const TaskComments = ({ taskId, t }: { taskId?: string; t: TFunction }) => {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<ITaskCommentViewModel[]>([]);
   const commentsViewRef = useRef<HTMLDivElement>(null);
@@ -263,9 +263,7 @@ const TaskComments = ({ taskId, t }: { taskId?: string, t: TFunction }) => {
                     key={item.id}
                     author={<span style={authorStyle}>{item.member_name}</span>}
                     datetime={<span style={dateStyle}>{fromNow(item.created_at || '')}</span>}
-                    avatar={
-                      <SingleAvatar name={item.member_name} avatarUrl={item.avatar_url}/>
-                    }
+                    avatar={<SingleAvatar name={item.member_name} avatarUrl={item.avatar_url} />}
                     content={
                       item.edit ? (
                         <TaskViewCommentEdit commentData={item} onUpdated={commentUpdated} />

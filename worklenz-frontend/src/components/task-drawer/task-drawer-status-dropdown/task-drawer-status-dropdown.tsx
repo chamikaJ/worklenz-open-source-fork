@@ -65,7 +65,6 @@ const TaskDrawerStatusDropdown = ({ statuses, task, teamId }: TaskDrawerStatusDr
         );
       }
     }
-
   };
 
   const options = useMemo(

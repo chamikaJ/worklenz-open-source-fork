@@ -114,8 +114,11 @@ export const tasksApiService = {
     return response.data;
   },
 
-  getTaskDependencyStatus: async (taskId: string, statusId: string): Promise<IServerResponse<{ can_continue: boolean }>> => {
-    const q = toQueryString({taskId, statusId});
+  getTaskDependencyStatus: async (
+    taskId: string,
+    statusId: string
+  ): Promise<IServerResponse<{ can_continue: boolean }>> => {
+    const q = toQueryString({ taskId, statusId });
     const response = await apiClient.get(`${rootUrl}/dependency-status${q}`);
     return response.data;
   },

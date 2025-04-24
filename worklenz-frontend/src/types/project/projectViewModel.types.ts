@@ -41,7 +41,7 @@ export interface IProjectViewModel extends IProject {
 
   team_member_default_view?: string;
   working_days?: number;
-  
+
   // Task progress settings
   use_manual_progress?: boolean;
   use_weighted_progress?: boolean;

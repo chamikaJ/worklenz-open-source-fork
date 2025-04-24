@@ -38,7 +38,11 @@ const mainRoutes: RouteObject[] = [
       { path: 'projects', element: <ProjectList /> },
       {
         path: 'schedule',
-        element: <AdminGuard><Schedule /></AdminGuard>
+        element: (
+          <AdminGuard>
+            <Schedule />
+          </AdminGuard>
+        ),
       },
       { path: `projects/:projectId`, element: <ProjectView /> },
       {
@@ -56,9 +60,7 @@ const mainRoutes: RouteObject[] = [
 export const licenseExpiredRoute: RouteObject = {
   path: '/worklenz',
   element: <MainLayout />,
-  children: [
-    { path: 'license-expired', element: <LicenseExpired /> }
-  ]
+  children: [{ path: 'license-expired', element: <LicenseExpired /> }],
 };
 
 export default mainRoutes;

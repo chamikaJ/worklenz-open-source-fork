@@ -90,6 +90,7 @@ export interface IProjectTask {
   estimated_string?: string;
   custom_column_values?: Record<string, any>;
   is_manual?: boolean;
+  weight?: number;
 }
 
 export interface IProjectTasksViewModel {

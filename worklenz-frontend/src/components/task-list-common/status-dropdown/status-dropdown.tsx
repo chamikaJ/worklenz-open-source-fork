@@ -63,11 +63,7 @@ const StatusDropdown = ({ task, teamId }: StatusDropdownProps) => {
             return status ? <span style={{ fontSize: 13 }}>{status.label}</span> : '';
           }}
           options={options}
-          optionRender={(option) => (
-            <Flex align="center">
-              {option.label}
-            </Flex>
-          )}
+          optionRender={option => <Flex align="center">{option.label}</Flex>}
         />
       )}
     </>

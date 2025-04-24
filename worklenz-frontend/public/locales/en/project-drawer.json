@@ -39,12 +39,12 @@
   "searchInputPlaceholder": "Search by name or email",
   "hoursPerDayValidationMessage": "Hours per day must be a number between 1 and 24",
   "noPermission": "No permission",
-  
-  "Task Progress Settings": "Task Progress Settings",
-  "Use Manual Progress": "Use Manual Progress",
-  "If enabled, all tasks will use manual progress instead of automatic calculation": "If enabled, all tasks will use manual progress instead of automatic calculation",
-  "Use Weighted Progress": "Use Weighted Progress",
-  "Calculate parent task progress based on subtask effort/estimation": "Calculate parent task progress based on subtask effort/estimation",
+
+  "taskProgressSettings": "Task Progress Settings",
+  "useManualProgress": "Use Manual Progress",
+  "useManualProgressDescription": "If enabled, all tasks will use manual progress instead of automatic calculation",
+  "useWeightedProgress": "Use Weighted Progress",
+  "useWeightedProgressDescription": "Calculate parent task progress based on subtask effort/estimation",
   "additionalInformation": "Additional Information",
   "projectStatus": "Project Status"
 }

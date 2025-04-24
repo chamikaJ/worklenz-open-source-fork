@@ -79,14 +79,16 @@ apiClient.interceptors.response.use(
     const errorResponse = error.response;
 
     // Handle CSRF token errors
-    if (errorResponse?.status === 403 && 
-        (typeof errorResponse.data === 'object' && 
-         errorResponse.data !== null && 
-         'message' in errorResponse.data && 
-         errorResponse.data.message === 'Invalid CSRF token' || 
-         (error as any).code === 'EBADCSRFTOKEN')) {
+    if (
+      errorResponse?.status === 403 &&
+      ((typeof errorResponse.data === 'object' &&
+        errorResponse.data !== null &&
+        'message' in errorResponse.data &&
+        errorResponse.data.message === 'Invalid CSRF token') ||
+        (error as any).code === 'EBADCSRFTOKEN')
+    ) {
       alertService.error('Security Error', 'Invalid security token. Refreshing your session...');
-      
+
       // Try to refresh the CSRF token and retry the request
       const newToken = await refreshCsrfToken();
       if (newToken && error.config) {

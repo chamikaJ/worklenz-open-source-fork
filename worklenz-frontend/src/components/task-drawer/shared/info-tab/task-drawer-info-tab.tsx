@@ -125,7 +125,7 @@ const TaskDrawerInfoTab = ({ t }: TaskDrawerInfoTabProps) => {
           <Button
             shape="circle"
             icon={<ReloadOutlined spin={loadingSubTasks} />}
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation(); // Prevent click from bubbling up
               fetchSubTasks();
             }}
@@ -182,17 +182,12 @@ const TaskDrawerInfoTab = ({ t }: TaskDrawerInfoTabProps) => {
       label: <Typography.Text strong>{t('taskInfoTab.comments.title')}</Typography.Text>,
       style: panelStyle,
       className: 'custom-task-drawer-info-collapse',
-      children: (
-        <TaskComments
-          taskId={selectedTaskId || ''}
-          t={t}
-        />
-      ),
+      children: <TaskComments taskId={selectedTaskId || ''} t={t} />,
     },
   ];
 
   // Filter out the 'subTasks' item if this task is a subtask
-  const infoItems = taskFormViewModel?.task?.parent_task_id 
+  const infoItems = taskFormViewModel?.task?.parent_task_id
     ? allInfoItems.filter(item => item.key !== 'subTasks')
     : allInfoItems;
 

@@ -1,4 +1,4 @@
-import { ITaskAssignee } from "../tasks/task.types";
+import { ITaskAssignee } from '../tasks/task.types';
 
 export interface ITask {
   id?: string;
@@ -20,4 +20,5 @@ export interface ITask {
   sub_tasks_count?: number;
   parent_task_id?: string;
   is_sub_task?: boolean;
-} 
+  weight?: number;
+}

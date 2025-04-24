@@ -6,7 +6,12 @@ import Tooltip from 'antd/es/tooltip';
 import Input, { InputRef } from 'antd/es/input';
 import Typography from 'antd/es/typography';
 import Flex from 'antd/es/flex';
-import { HolderOutlined, SettingOutlined, UsergroupAddOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  HolderOutlined,
+  SettingOutlined,
+  UsergroupAddOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -44,12 +49,21 @@ import TaskListReporterCell from './task-list-table-cells/task-list-reporter-cel
 import TaskListDueTimeCell from './task-list-table-cells/task-list-due-time-cell/task-list-due-time-cell';
 
 import { IProjectTask } from '@/types/project/projectTasksViewModel.types';
-import { CustomFieldsTypes, setCustomColumnModalAttributes, toggleCustomColumnModalOpen } from '@/features/projects/singleProject/task-list-custom-columns/task-list-custom-columns-slice';
+import {
+  CustomFieldsTypes,
+  setCustomColumnModalAttributes,
+  toggleCustomColumnModalOpen,
+} from '@/features/projects/singleProject/task-list-custom-columns/task-list-custom-columns-slice';
 import { selectTaskIds, selectTasks } from '@/features/projects/bulkActions/bulkActionSlice';
 import StatusDropdown from '@/components/task-list-common/status-dropdown/status-dropdown';
 import PriorityDropdown from '@/components/task-list-common/priorityDropdown/priority-dropdown';
 import AddCustomColumnButton from './custom-columns/custom-column-modal/add-custom-column-button';
-import { fetchSubTasks, reorderTasks, toggleTaskRowExpansion, updateCustomColumnValue } from '@/features/tasks/tasks.slice';
+import {
+  fetchSubTasks,
+  reorderTasks,
+  toggleTaskRowExpansion,
+  updateCustomColumnValue,
+} from '@/features/tasks/tasks.slice';
 import { useAuthService } from '@/hooks/useAuth';
 import ConfigPhaseButton from '@/features/projects/singleProject/phase/ConfigPhaseButton';
 import PhaseDropdown from '@/components/taskListCommon/phase-dropdown/phase-dropdown';
@@ -102,7 +116,10 @@ const DraggableRow = ({ task, children, groupId }: DraggableRowProps) => {
     borderStyle: isDragging ? 'solid' : undefined,
     borderWidth: isDragging ? '1px' : undefined,
     borderColor: isDragging ? 'var(--border-color)' : undefined,
-    borderBottomWidth: document.documentElement.getAttribute('data-theme') === 'light' && !isDragging ? '2px' : undefined
+    borderBottomWidth:
+      document.documentElement.getAttribute('data-theme') === 'light' && !isDragging
+        ? '2px'
+        : undefined,
   };
 
   return (
@@ -137,32 +154,34 @@ const CustomColumnHeader: React.FC<{
 };
 
 // Fix the CustomCell component to handle nullable column keys
-const CustomCell = React.memo(({ 
-  column, 
-  task, 
-  isSubtask, 
-  renderCustomColumnContent, 
-  renderColumnContent,
-  updateTaskCustomColumnValue
-}: { 
-  column: any; 
-  task: IProjectTask; 
-  isSubtask: boolean; 
-  renderCustomColumnContent: any; 
-  renderColumnContent: any;
-  updateTaskCustomColumnValue: (taskId: string, columnKey: string, value: string) => void;
-}) => {
-  if (column.custom_column && column.key && column.pinned) {
-    return renderCustomColumnContent(
-      column.custom_column_obj || {},
-      column.custom_column_obj?.fieldType,
-      task,
-      column.key,
-      updateTaskCustomColumnValue
-    );
+const CustomCell = React.memo(
+  ({
+    column,
+    task,
+    isSubtask,
+    renderCustomColumnContent,
+    renderColumnContent,
+    updateTaskCustomColumnValue,
+  }: {
+    column: any;
+    task: IProjectTask;
+    isSubtask: boolean;
+    renderCustomColumnContent: any;
+    renderColumnContent: any;
+    updateTaskCustomColumnValue: (taskId: string, columnKey: string, value: string) => void;
+  }) => {
+    if (column.custom_column && column.key && column.pinned) {
+      return renderCustomColumnContent(
+        column.custom_column_obj || {},
+        column.custom_column_obj?.fieldType,
+        task,
+        column.key,
+        updateTaskCustomColumnValue
+      );
+    }
+    return renderColumnContent(column.key || '', task, isSubtask);
   }
-  return renderColumnContent(column.key || '', task, isSubtask);
-});
+);
 
 // First, let's extract the custom column cell to a completely separate component
 // This component will be responsible for rendering the appropriate cell based on field type
@@ -201,64 +220,76 @@ const CustomColumnCell: React.FC<{
   // Create cell components based on field type
   switch (fieldType) {
     case 'people':
-      return <PeopleFieldCell 
-        selectedMemberIds={selectedMemberIds} 
-        task={task} 
-        columnKey={columnKey} 
-        updateValue={updateTaskCustomColumnValue} 
-      />;
+      return (
+        <PeopleFieldCell
+          selectedMemberIds={selectedMemberIds}
+          task={task}
+          columnKey={columnKey}
+          updateValue={updateTaskCustomColumnValue}
+        />
+      );
     case 'date':
-      return <DateFieldCell 
-        value={customValue} 
-        task={task} 
-        columnKey={columnKey} 
-        updateValue={updateTaskCustomColumnValue} 
-      />;
+      return (
+        <DateFieldCell
+          value={customValue}
+          task={task}
+          columnKey={columnKey}
+          updateValue={updateTaskCustomColumnValue}
+        />
+      );
     case 'checkbox':
-      return <CheckboxFieldCell 
-        value={customValue} 
-        task={task} 
-        columnKey={columnKey} 
-        updateValue={updateTaskCustomColumnValue} 
-      />;
+      return (
+        <CheckboxFieldCell
+          value={customValue}
+          task={task}
+          columnKey={columnKey}
+          updateValue={updateTaskCustomColumnValue}
+        />
+      );
     case 'key':
       return <KeyFieldCell taskId={task.id || ''} />;
     case 'number':
-      return <NumberFieldCell 
-        value={customValue} 
-        task={task} 
-        columnKey={columnKey} 
-        columnObj={columnObj} 
-        updateValue={updateTaskCustomColumnValue} 
-      />;
+      return (
+        <NumberFieldCell
+          value={customValue}
+          task={task}
+          columnKey={columnKey}
+          columnObj={columnObj}
+          updateValue={updateTaskCustomColumnValue}
+        />
+      );
     case 'formula':
       return <FormulaFieldCell columnObj={columnObj} />;
     case 'labels':
-      return <LabelsFieldCell 
-        labelsList={columnObj?.labelsList || []} 
-        selectedLabels={selectedMemberIds} 
-        task={task} 
-        columnKey={columnKey} 
-        updateValue={updateTaskCustomColumnValue} 
-      />;
+      return (
+        <LabelsFieldCell
+          labelsList={columnObj?.labelsList || []}
+          selectedLabels={selectedMemberIds}
+          task={task}
+          columnKey={columnKey}
+          updateValue={updateTaskCustomColumnValue}
+        />
+      );
     case 'selection':
-      return <SelectionFieldCell 
-        selectionsList={columnObj?.selectionsList || []} 
-        value={customValue || ''} 
-        task={task} 
-        columnKey={columnKey} 
-        updateValue={updateTaskCustomColumnValue} 
-      />;
+      return (
+        <SelectionFieldCell
+          selectionsList={columnObj?.selectionsList || []}
+          value={customValue || ''}
+          task={task}
+          columnKey={columnKey}
+          updateValue={updateTaskCustomColumnValue}
+        />
+      );
     default:
       return <span>Unsupported field type: {fieldType}</span>;
   }
 });
 
 // Define each field type component separately
-const PeopleFieldCell: React.FC<{ 
-  selectedMemberIds: string[]; 
-  task: IProjectTask; 
-  columnKey: string; 
+const PeopleFieldCell: React.FC<{
+  selectedMemberIds: string[];
+  task: IProjectTask;
+  columnKey: string;
   updateValue: (taskId: string, columnKey: string, value: string) => void;
 }> = ({ selectedMemberIds, task, columnKey, updateValue }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -293,14 +324,10 @@ const PeopleFieldCell: React.FC<{
     const newSelectedIds = selectedMemberIds.includes(memberId)
       ? selectedMemberIds.filter((id: string) => id !== memberId)
       : [...selectedMemberIds, memberId];
-    
+
     // Update the custom column value
     if (task.id) {
-      updateValue(
-        task.id,
-        columnKey,
-        JSON.stringify(newSelectedIds)
-      );
+      updateValue(task.id, columnKey, JSON.stringify(newSelectedIds));
     }
   };
 
@@ -330,8 +357,8 @@ const PeopleFieldCell: React.FC<{
                 }}
                 onClick={() => member.id && handleMemberSelection(member.id)}
               >
-                <Checkbox 
-                  checked={member.id ? selectedMemberIds.includes(member.id) : false} 
+                <Checkbox
+                  checked={member.id ? selectedMemberIds.includes(member.id) : false}
                   onClick={e => e.stopPropagation()}
                   onChange={() => member.id && handleMemberSelection(member.id)}
                 />
@@ -394,13 +421,10 @@ const PeopleFieldCell: React.FC<{
     >
       <Flex align="center" gap={4}>
         {selectedMembers.length > 0 ? (
-          <Avatar.Group max={{count: 3}} size="small">
+          <Avatar.Group max={{ count: 3 }} size="small">
             {selectedMembers.map(member => (
               <Tooltip key={member.id} title={member.name}>
-                <Avatar 
-                  src={member.avatar_url} 
-                  style={{ fontSize: '14px' }}
-                >
+                <Avatar src={member.avatar_url} style={{ fontSize: '14px' }}>
                   {!member.avatar_url && member.name ? member.name.charAt(0).toUpperCase() : null}
                 </Avatar>
               </Tooltip>
@@ -436,21 +460,17 @@ const DateFieldCell: React.FC<{
   updateValue: (taskId: string, columnKey: string, value: string) => void;
 }> = ({ value, task, columnKey, updateValue }) => {
   const dateValue = value ? dayjs(value) : undefined;
-  
+
   return (
     <DatePicker
       placeholder="Set Date"
       format="MMM DD, YYYY"
       suffixIcon={null}
       value={dateValue}
-      onChange={(date) => {
+      onChange={date => {
         if (task.id) {
           // Format as ISO string for storage
-          updateValue(
-            task.id,
-            columnKey,
-            date ? date.toISOString() : ''
-          );
+          updateValue(task.id, columnKey, date ? date.toISOString() : '');
         }
       }}
       style={{
@@ -469,17 +489,13 @@ const CheckboxFieldCell: React.FC<{
   updateValue: (taskId: string, columnKey: string, value: string) => void;
 }> = ({ value, task, columnKey, updateValue }) => {
   const isChecked = value === true || value === 'true';
-  
+
   return (
-    <Checkbox 
+    <Checkbox
       checked={isChecked}
-      onChange={(e) => {
+      onChange={e => {
         if (task.id) {
-          updateValue(
-            task.id,
-            columnKey,
-            e.target.checked.toString()
-          );
+          updateValue(task.id, columnKey, e.target.checked.toString());
         }
       }}
     />
@@ -504,34 +520,32 @@ const NumberFieldCell: React.FC<{
   const initialNumberValue = value !== undefined ? Number(value) : undefined;
   // This stores the raw input value for display during editing
   const [inputValue, setInputValue] = useState<string>(
-    initialNumberValue !== undefined ? 
-      initialNumberValue.toString() : 
-      ''
+    initialNumberValue !== undefined ? initialNumberValue.toString() : ''
   );
   // This stores the formatted value for display when not editing
   const [formattedValue, setFormattedValue] = useState<string>(
-    initialNumberValue !== undefined && !isNaN(initialNumberValue) ? 
-      formatNumberWithDecimals(initialNumberValue, columnObj?.decimals || 0) : 
-      ''
+    initialNumberValue !== undefined && !isNaN(initialNumberValue)
+      ? formatNumberWithDecimals(initialNumberValue, columnObj?.decimals || 0)
+      : ''
   );
   // Track if input is being edited
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // Track if this is the initial render to avoid unnecessary updates
   const isInitialMount = useRef(true);
-  
+
   // Function to format number with specified decimals
   function formatNumberWithDecimals(num: number, decimals: number): string {
     return num.toFixed(decimals);
   }
-  
+
   useEffect(() => {
     // Skip the first render to avoid unnecessary updates
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-    
+
     // Update values when the prop value changes (from external sources)
     if (value !== undefined && value !== null) {
       const numValue = Number(value);
@@ -544,29 +558,29 @@ const NumberFieldCell: React.FC<{
       setFormattedValue('');
     }
   }, [value, columnObj?.decimals]);
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    
+
     // Validate input to allow only numeric values
     // Allow: empty string, numbers, one decimal point, and minus sign at the beginning
     const isValidInput = /^-?\d*\.?\d*$/.test(newValue);
-    
+
     if (!isValidInput && newValue !== '') {
       return; // Reject invalid input
     }
-    
+
     // Only update the input value during editing, not the formatted value
     setInputValue(newValue);
   };
-  
+
   const handleInputFocus = () => {
     setIsEditing(true);
   };
-  
+
   const formatAndCommitValue = () => {
     setIsEditing(false);
-    
+
     // Don't format empty values
     if (inputValue.trim() === '') {
       setFormattedValue('');
@@ -575,17 +589,17 @@ const NumberFieldCell: React.FC<{
       }
       return;
     }
-    
+
     // Parse the input value
     const numValue = parseFloat(inputValue);
-    
+
     // Format the value with decimals
     if (!isNaN(numValue)) {
       const decimals = columnObj?.decimals || 0;
       const formatted = formatNumberWithDecimals(numValue, decimals);
       setFormattedValue(formatted);
       setInputValue(numValue.toString()); // Keep the raw value without trailing zeros
-      
+
       // Update the value in the task
       if (task.id) {
         updateValue(task.id, columnKey, numValue.toString());
@@ -597,18 +611,18 @@ const NumberFieldCell: React.FC<{
   const decimals = columnObj?.decimals || 0;
   const label = columnObj?.label || '';
   const labelPosition = columnObj?.labelPosition || 'left';
-  
+
   // Determine which value to display based on editing state
   const displayValue = isEditing ? inputValue : formattedValue;
-  
+
   // For percentage type, add % symbol when not editing
   const getDisplayValue = () => {
     if (displayValue === '') return '';
-    
+
     if (numberType === 'percentage' && !isEditing) {
       return `${displayValue}%`;
     }
-    
+
     return displayValue;
   };
 
@@ -630,7 +644,7 @@ const NumberFieldCell: React.FC<{
           onBlur={formatAndCommitValue}
           onPressEnter={formatAndCommitValue}
           style={commonInputStyle}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             // Allow: backspace, delete, tab, escape, enter, decimal point, minus sign
             if (
               ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', '.', '-'].includes(e.key) ||
@@ -641,7 +655,7 @@ const NumberFieldCell: React.FC<{
             ) {
               // Allow these keys
               // For decimal point, only allow one
-              if (e.key === '.' && (e.currentTarget.value.includes('.'))) {
+              if (e.key === '.' && e.currentTarget.value.includes('.')) {
                 e.preventDefault();
               }
               // For minus sign, only allow at the beginning
@@ -650,7 +664,7 @@ const NumberFieldCell: React.FC<{
               }
               return;
             }
-            
+
             // Block non-numeric keys
             if (!/^\d$/.test(e.key)) {
               e.preventDefault();
@@ -671,9 +685,9 @@ const NumberFieldCell: React.FC<{
             style={{
               ...commonInputStyle,
               width: '100%',
-              textAlign: labelPosition === 'right' ? 'right' : 'left' as const,
+              textAlign: labelPosition === 'right' ? 'right' : ('left' as const),
             }}
-            onKeyDown={(e) => {
+            onKeyDown={e => {
               // Allow: backspace, delete, tab, escape, enter, decimal point, minus sign
               if (
                 ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', '.', '-'].includes(e.key) ||
@@ -684,7 +698,7 @@ const NumberFieldCell: React.FC<{
               ) {
                 // Allow these keys
                 // For decimal point, only allow one
-                if (e.key === '.' && (e.currentTarget.value.includes('.'))) {
+                if (e.key === '.' && e.currentTarget.value.includes('.')) {
                   e.preventDefault();
                 }
                 // For minus sign, only allow at the beginning
@@ -693,7 +707,7 @@ const NumberFieldCell: React.FC<{
                 }
                 return;
               }
-              
+
               // Block non-numeric keys
               if (!/^\d$/.test(e.key)) {
                 e.preventDefault();
@@ -722,7 +736,7 @@ const NumberFieldCell: React.FC<{
             }
           }}
           style={commonInputStyle}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             // Allow: backspace, delete, tab, escape, enter, decimal point, minus sign
             if (
               ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', '.', '-'].includes(e.key) ||
@@ -733,7 +747,7 @@ const NumberFieldCell: React.FC<{
             ) {
               // Allow these keys
               // For decimal point, only allow one
-              if (e.key === '.' && (e.currentTarget.value.includes('.'))) {
+              if (e.key === '.' && e.currentTarget.value.includes('.')) {
                 e.preventDefault();
               }
               // For minus sign, only allow at the beginning
@@ -742,7 +756,7 @@ const NumberFieldCell: React.FC<{
               }
               return;
             }
-            
+
             // Block non-numeric keys
             if (!/^\d$/.test(e.key)) {
               e.preventDefault();
@@ -754,16 +768,19 @@ const NumberFieldCell: React.FC<{
       return (
         <Input
           value={getDisplayValue()}
-          onChange={(e) => {
+          onChange={e => {
             // Remove the % sign if present
             const value = e.target.value.replace('%', '');
-            handleInputChange({ ...e, target: { ...e.target, value } } as React.ChangeEvent<HTMLInputElement>);
+            handleInputChange({
+              ...e,
+              target: { ...e.target, value },
+            } as React.ChangeEvent<HTMLInputElement>);
           }}
           onFocus={handleInputFocus}
           onBlur={formatAndCommitValue}
           onPressEnter={formatAndCommitValue}
           style={commonInputStyle}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             // Allow: backspace, delete, tab, escape, enter, decimal point
             if (
               ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', '.'].includes(e.key) ||
@@ -774,12 +791,12 @@ const NumberFieldCell: React.FC<{
             ) {
               // Allow these keys
               // For decimal point, only allow one
-              if (e.key === '.' && (e.currentTarget.value.includes('.'))) {
+              if (e.key === '.' && e.currentTarget.value.includes('.')) {
                 e.preventDefault();
               }
               return;
             }
-            
+
             // Block non-numeric keys
             if (!/^\d$/.test(e.key)) {
               e.preventDefault();
@@ -818,32 +835,28 @@ const FormulaFieldCell: React.FC<{ columnObj: any }> = ({ columnObj }) => {
   return <Typography.Text>{calculateResult() ?? 'Invalid Formula'}</Typography.Text>;
 };
 
-const LabelsFieldCell: React.FC<{ 
-  labelsList: any[]; 
+const LabelsFieldCell: React.FC<{
+  labelsList: any[];
   selectedLabels: any[];
   task: IProjectTask;
   columnKey: string;
   updateValue: (taskId: string, columnKey: string, value: string) => void;
 }> = ({ labelsList, selectedLabels, task, columnKey, updateValue }) => {
   return (
-    <CustomColumnLabelCell 
-      labelsList={labelsList} 
+    <CustomColumnLabelCell
+      labelsList={labelsList}
       selectedLabels={selectedLabels}
-      onChange={(labels) => {
+      onChange={labels => {
         if (task.id) {
-          updateValue(
-            task.id,
-            columnKey,
-            JSON.stringify(labels)
-          );
+          updateValue(task.id, columnKey, JSON.stringify(labels));
         }
       }}
     />
   );
 };
 
-const SelectionFieldCell: React.FC<{ 
-  selectionsList: any[]; 
+const SelectionFieldCell: React.FC<{
+  selectionsList: any[];
   value: string;
   task: IProjectTask;
   columnKey: string;
@@ -863,16 +876,12 @@ const SelectionFieldCell: React.FC<{
   }, [columnKey, selectionsList, loggedInfo]);
 
   return (
-    <CustomColumnSelectionCell 
-      selectionsList={selectionsList} 
+    <CustomColumnSelectionCell
+      selectionsList={selectionsList}
       value={value}
-      onChange={(value) => {
+      onChange={value => {
         if (task.id) {
-          updateValue(
-            task.id,
-            columnKey,
-            value
-          );
+          updateValue(task.id, columnKey, value);
         }
       }}
     />
@@ -963,14 +972,10 @@ const renderCustomColumnContent = (
           const newSelectedIds = selectedMemberIds.includes(memberId)
             ? selectedMemberIds.filter((id: string) => id !== memberId)
             : [...selectedMemberIds, memberId];
-          
+
           // Update the custom column value
           if (task.id) {
-            updateTaskCustomColumnValue(
-              task.id,
-              columnKey,
-              JSON.stringify(newSelectedIds)
-            );
+            updateTaskCustomColumnValue(task.id, columnKey, JSON.stringify(newSelectedIds));
           }
         };
 
@@ -1000,8 +1005,8 @@ const renderCustomColumnContent = (
                       }}
                       onClick={() => member.id && handleMemberSelection(member.id)}
                     >
-                      <Checkbox 
-                        checked={member.id ? selectedMemberIds.includes(member.id) : false} 
+                      <Checkbox
+                        checked={member.id ? selectedMemberIds.includes(member.id) : false}
                         onClick={e => e.stopPropagation()}
                         onChange={() => member.id && handleMemberSelection(member.id)}
                       />
@@ -1064,14 +1069,13 @@ const renderCustomColumnContent = (
           >
             <Flex align="center" gap={4}>
               {selectedMembers.length > 0 ? (
-                <Avatar.Group max={{count: 3}} size="small">
+                <Avatar.Group max={{ count: 3 }} size="small">
                   {selectedMembers.map(member => (
                     <Tooltip key={member.id} title={member.name}>
-                      <Avatar 
-                        src={member.avatar_url} 
-                        style={{ fontSize: '14px' }}
-                      >
-                        {!member.avatar_url && member.name ? member.name.charAt(0).toUpperCase() : null}
+                      <Avatar src={member.avatar_url} style={{ fontSize: '14px' }}>
+                        {!member.avatar_url && member.name
+                          ? member.name.charAt(0).toUpperCase()
+                          : null}
                       </Avatar>
                     </Tooltip>
                   ))}
@@ -1102,21 +1106,17 @@ const renderCustomColumnContent = (
     },
     date: () => {
       const dateValue = customValue ? dayjs(customValue) : undefined;
-      
+
       return (
         <DatePicker
           placeholder="Set Date"
           format="MMM DD, YYYY"
           suffixIcon={null}
           value={dateValue}
-          onChange={(date) => {
+          onChange={date => {
             if (task.id) {
               // Format as ISO string for storage
-              updateTaskCustomColumnValue(
-                task.id,
-                columnKey,
-                date ? date.toISOString() : ''
-              );
+              updateTaskCustomColumnValue(task.id, columnKey, date ? date.toISOString() : '');
             }
           }}
           style={{
@@ -1129,17 +1129,13 @@ const renderCustomColumnContent = (
     },
     checkbox: () => {
       const isChecked = customValue === true || customValue === 'true';
-      
+
       return (
-        <Checkbox 
+        <Checkbox
           checked={isChecked}
-          onChange={(e) => {
+          onChange={e => {
             if (task.id) {
-              updateTaskCustomColumnValue(
-                task.id,
-                columnKey,
-                e.target.checked.toString()
-              );
+              updateTaskCustomColumnValue(task.id, columnKey, e.target.checked.toString());
             }
           }}
         />
@@ -1154,35 +1150,33 @@ const renderCustomColumnContent = (
     },
     number: () => {
       return (
-        <NumberFieldCell 
-          value={customValue} 
-          task={task} 
-          columnKey={columnKey} 
-          columnObj={columnObj} 
-          updateValue={updateTaskCustomColumnValue} 
+        <NumberFieldCell
+          value={customValue}
+          task={task}
+          columnKey={columnKey}
+          columnObj={columnObj}
+          updateValue={updateTaskCustomColumnValue}
         />
       );
     },
     formula: () => {
-      return (
-        <FormulaFieldCell columnObj={columnObj} />
-      );
+      return <FormulaFieldCell columnObj={columnObj} />;
     },
     labels: () => {
       return (
-        <LabelsFieldCell 
-          labelsList={columnObj?.labelsList || []} 
+        <LabelsFieldCell
+          labelsList={columnObj?.labelsList || []}
           selectedLabels={selectedLabels}
-          task={task} 
-          columnKey={columnKey} 
-          updateValue={updateTaskCustomColumnValue} 
+          task={task}
+          columnKey={columnKey}
+          updateValue={updateTaskCustomColumnValue}
         />
       );
     },
     selection: () => {
       // Debug the selectionsList data
       const [loggedInfo, setLoggedInfo] = useState(false);
-    
+
       useEffect(() => {
         if (!loggedInfo) {
           console.log('Selection column data:', {
@@ -1192,17 +1186,17 @@ const renderCustomColumnContent = (
           setLoggedInfo(true);
         }
       }, [columnKey, loggedInfo]);
-    
+
       return (
-        <SelectionFieldCell 
-          selectionsList={columnObj?.selectionsList || []} 
+        <SelectionFieldCell
+          selectionsList={columnObj?.selectionsList || []}
           value={memoizedValue}
-          task={task} 
-          columnKey={columnKey} 
-          updateValue={updateTaskCustomColumnValue} 
+          task={task}
+          columnKey={columnKey}
+          updateValue={updateTaskCustomColumnValue}
         />
       );
-    }
+    },
   };
 
   return customComponents[fieldType] ? customComponents[fieldType]() : null;
@@ -1503,11 +1497,11 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
                 data-task-cell
                 onContextMenu={e => handleContextMenu(e, task)}
               >
-                <CustomCell 
-                  column={column} 
-                  task={task} 
-                  isSubtask={isSubtask} 
-                  renderCustomColumnContent={renderCustomColumnContent} 
+                <CustomCell
+                  column={column}
+                  task={task}
+                  isSubtask={isSubtask}
+                  renderCustomColumnContent={renderCustomColumnContent}
                   renderColumnContent={renderColumnContent}
                   updateTaskCustomColumnValue={updateTaskCustomColumnValue}
                 />
@@ -1547,11 +1541,11 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
     }
   };
 
-  const handleCustomColumnSettings = (columnKey: string) => {   
+  const handleCustomColumnSettings = (columnKey: string) => {
     console.log('columnKey', columnKey);
     if (!columnKey) return;
     setEditColumnKey(columnKey);
-    dispatch(setCustomColumnModalAttributes({modalType: 'edit', columnId: columnKey}));
+    dispatch(setCustomColumnModalAttributes({ modalType: 'edit', columnId: columnKey }));
     dispatch(toggleCustomColumnModalOpen(true));
   };
 
@@ -1592,7 +1586,7 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
                         </Flex>
                       )}
                       {column.key !== 'PHASE' &&
-                        ((column.custom_column && column.pinned) ? (
+                        (column.custom_column && column.pinned ? (
                           <CustomColumnHeader
                             column={column}
                             onSettingsClick={() => handleCustomColumnSettings(column.id || '')}
@@ -1621,11 +1615,11 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
                       {updatedTask.show_sub_tasks && (
                         <>
                           {updatedTask?.sub_tasks?.map(subtask => renderTaskRow(subtask, true))}
-                            <tr>
+                          <tr>
                             <td colSpan={visibleColumns.length + 1}>
                               <AddTaskListRow groupId={tableId} parentTask={updatedTask.id} />
                             </td>
-                            </tr>
+                          </tr>
                         </>
                       )}
                     </React.Fragment>

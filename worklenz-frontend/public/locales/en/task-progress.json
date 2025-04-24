@@ -19,5 +19,14 @@
   "cancelButton": "Cancel",
   "saveButton": "Save",
   "subtaskProgressHidden": "Subtask progress only visible when parent is in manual mode",
-  "contributesToParent": "Contributes to parent"
-} 
+  "contributesToParent": "Contributes to parent",
+  "manualProgressDisabledTitle": "Manual Progress Disabled",
+  "manualProgressDisabledDescription": "Manual progress is disabled for this project. You can enable it in the project settings.",
+  "parentTaskProgressTitle": "Parent Task Progress",
+  "parentTaskProgressDescription": "This task has subtasks. Its progress is automatically calculated based on the progress of its subtasks.",
+  "weightedProgressEnabledTitle": "Weighted Progress Enabled",
+  "weightedProgressEnabledDescription": "Parent task progress is calculated based on the weights of subtasks. Higher weight subtasks will have more impact on the parent's progress.",
+  "taskWeightLabel": "Task Weight",
+  "taskWeightTooltip": "Higher values give this task more influence on parent progress calculation",
+  "taskWeightDescription": "Determine how much this subtask contributes to the parent task's progress. Higher values have more impact."
+}

@@ -50,7 +50,11 @@ import { fetchProjectHealth } from '@/features/projects/lookups/projectHealth/pr
 import { setProjectId, setStatuses } from '@/features/project/project.slice';
 import { setProject } from '@/features/project/project.slice';
 import { createPortal } from 'react-dom';
-import { evt_projects_page_visit, evt_projects_refresh_click, evt_projects_search } from '@/shared/worklenz-analytics-events';
+import {
+  evt_projects_page_visit,
+  evt_projects_refresh_click,
+  evt_projects_search,
+} from '@/shared/worklenz-analytics-events';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
 
 const ProjectList: React.FC = () => {
@@ -90,12 +94,12 @@ const ProjectList: React.FC = () => {
   } = useGetProjectsQuery(requestParams);
 
   const filters = useMemo(() => Object.values(IProjectFilter), []);
-  
+
   // Create translated segment options for the filters
   const segmentOptions = useMemo(() => {
     return filters.map(filter => ({
       value: filter,
-      label: t(filter.toLowerCase())
+      label: t(filter.toLowerCase()),
     }));
   }, [filters, t]);
 
@@ -194,7 +198,9 @@ const ProjectList: React.FC = () => {
   };
   const navigateToProject = (project_id: string | undefined, default_view: string | undefined) => {
     if (project_id) {
-      navigate(`/worklenz/projects/${project_id}?tab=${default_view === 'BOARD' ? 'board' : 'tasks-list'}&pinned_tab=${default_view === 'BOARD' ? 'board' : 'tasks-list'}`); // Update the route as per your project structure
+      navigate(
+        `/worklenz/projects/${project_id}?tab=${default_view === 'BOARD' ? 'board' : 'tasks-list'}&pinned_tab=${default_view === 'BOARD' ? 'board' : 'tasks-list'}`
+      ); // Update the route as per your project structure
     }
   };
 
@@ -238,7 +244,7 @@ const ProjectList: React.FC = () => {
         }
       />
       <Card className="project-card">
-        <Skeleton active loading={isLoading} className='mt-4 p-4'>
+        <Skeleton active loading={isLoading} className="mt-4 p-4">
           <Table<IProjectViewModel>
             columns={TableColumns({
               navigate,
@@ -256,7 +262,6 @@ const ProjectList: React.FC = () => {
             })}
           />
         </Skeleton>
-
       </Card>
 
       {createPortal(<ProjectDrawer onClose={handleDrawerClose} />, document.body, 'project-drawer')}

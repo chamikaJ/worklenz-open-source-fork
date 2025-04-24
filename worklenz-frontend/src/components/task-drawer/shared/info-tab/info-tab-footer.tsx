@@ -51,7 +51,9 @@ const InfoTabFooter = () => {
   const [members, setMembers] = useState<ITeamMember[]>([]);
   const [membersLoading, setMembersLoading] = useState<boolean>(false);
 
-  const [selectedMembers, setSelectedMembers] = useState<{ team_member_id: string; name: string }[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<
+    { team_member_id: string; name: string }[]
+  >([]);
   const [commentValue, setCommentValue] = useState<string>('');
   const [uploading, setUploading] = useState<boolean>(false);
 
@@ -152,7 +154,7 @@ const InfoTabFooter = () => {
         setAttachmentComment(false);
         setIsCommentBoxExpand(false);
         setCommentValue('');
-        
+
         // Dispatch event to notify that a comment was created
         // This will trigger scrolling to the new comment
         document.dispatchEvent(new Event('task-comment-create'));

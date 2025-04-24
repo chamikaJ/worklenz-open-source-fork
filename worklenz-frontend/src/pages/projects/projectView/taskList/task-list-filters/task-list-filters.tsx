@@ -15,13 +15,27 @@ import {
 import { getTeamMembers } from '@/features/team-members/team-members.slice';
 import useTabSearchParam from '@/hooks/useTabSearchParam';
 
-const SearchDropdown = React.lazy(() => import('@components/project-task-filters/filter-dropdowns/search-dropdown'));
-const SortFilterDropdown = React.lazy(() => import('@components/project-task-filters/filter-dropdowns/sort-filter-dropdown'));
-const LabelsFilterDropdown = React.lazy(() => import('@components/project-task-filters/filter-dropdowns/labels-filter-dropdown'));
-const MembersFilterDropdown = React.lazy(() => import('@components/project-task-filters/filter-dropdowns/members-filter-dropdown'));
-const GroupByFilterDropdown = React.lazy(() => import('@components/project-task-filters/filter-dropdowns/group-by-filter-dropdown'));
-const ShowFieldsFilterDropdown = React.lazy(() => import('@components/project-task-filters/filter-dropdowns/show-fields-filter-dropdown'));
-const PriorityFilterDropdown = React.lazy(() => import('@components/project-task-filters/filter-dropdowns/priority-filter-dropdown'));
+const SearchDropdown = React.lazy(
+  () => import('@components/project-task-filters/filter-dropdowns/search-dropdown')
+);
+const SortFilterDropdown = React.lazy(
+  () => import('@components/project-task-filters/filter-dropdowns/sort-filter-dropdown')
+);
+const LabelsFilterDropdown = React.lazy(
+  () => import('@components/project-task-filters/filter-dropdowns/labels-filter-dropdown')
+);
+const MembersFilterDropdown = React.lazy(
+  () => import('@components/project-task-filters/filter-dropdowns/members-filter-dropdown')
+);
+const GroupByFilterDropdown = React.lazy(
+  () => import('@components/project-task-filters/filter-dropdowns/group-by-filter-dropdown')
+);
+const ShowFieldsFilterDropdown = React.lazy(
+  () => import('@components/project-task-filters/filter-dropdowns/show-fields-filter-dropdown')
+);
+const PriorityFilterDropdown = React.lazy(
+  () => import('@components/project-task-filters/filter-dropdowns/priority-filter-dropdown')
+);
 
 interface TaskListFiltersProps {
   position: 'board' | 'list';
@@ -46,7 +60,9 @@ const TaskListFilters: React.FC<TaskListFiltersProps> = ({ position }) => {
         await dispatch(fetchLabelsByProject(projectId));
         await dispatch(fetchTaskAssignees(projectId));
       }
-      dispatch(getTeamMembers({ index: 0, size: 100, field: null, order: null, search: null, all: true }));
+      dispatch(
+        getTeamMembers({ index: 0, size: 100, field: null, order: null, search: null, all: true })
+      );
     };
 
     fetchInitialData();

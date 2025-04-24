@@ -62,7 +62,7 @@ const taskDrawerSlice = createSlice({
       if (state.taskFormViewModel?.task && state.taskFormViewModel.task.id === taskId) {
         state.taskFormViewModel.task.status_id = status_id;
         state.taskFormViewModel.task.status_color = color_code;
-        state.taskFormViewModel.task.status_color_dark = color_code_dark
+        state.taskFormViewModel.task.status_color_dark = color_code_dark;
       }
     },
     setStartDate: (state, action: PayloadAction<IProjectTask>) => {
@@ -99,10 +99,13 @@ const taskDrawerSlice = createSlice({
     setTaskSubscribers: (state, action: PayloadAction<InlineMember[]>) => {
       state.subscribers = action.payload;
     },
-    setTimeLogEditing: (state, action: PayloadAction<{
-      isEditing: boolean;
-      logBeingEdited: ITaskLogViewModel | null;
-    }>) => {
+    setTimeLogEditing: (
+      state,
+      action: PayloadAction<{
+        isEditing: boolean;
+        logBeingEdited: ITaskLogViewModel | null;
+      }>
+    ) => {
       state.timeLogEditing = action.payload;
     },
   },

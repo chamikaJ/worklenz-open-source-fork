@@ -12,9 +12,7 @@ import { SuspenseFallback } from '@/components/suspense-fallback/suspense-fallba
 const authRoutes = [
   {
     path: '/auth',
-    element: (
-      <AuthLayout />
-    ),
+    element: <AuthLayout />,
     children: [
       {
         path: '',

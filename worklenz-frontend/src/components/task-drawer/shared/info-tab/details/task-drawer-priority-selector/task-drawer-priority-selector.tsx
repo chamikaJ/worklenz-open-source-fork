@@ -28,7 +28,7 @@ const PriorityDropdown = ({ task }: PriorityDropdownProps) => {
   const currentSession = useAuthService().getCurrentSession();
   const dispatch = useAppDispatch();
   const { tab } = useTabSearchParam();
-  
+
   const handlePriorityChange = (priorityId: string) => {
     if (!task.id || !priorityId) return;
 
@@ -92,7 +92,7 @@ const PriorityDropdown = ({ task }: PriorityDropdownProps) => {
 
   return (
     <>
-      {(
+      {
         <Select
           value={task?.priority_id}
           onChange={handlePriorityChange}
@@ -104,10 +104,9 @@ const PriorityDropdown = ({ task }: PriorityDropdownProps) => {
                 ? selectedPriority?.color_code_dark
                 : selectedPriority?.color_code + ALPHA_CHANNEL,
           }}
-
           options={options}
         />
-      )}
+      }
     </>
   );
 };

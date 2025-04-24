@@ -34,15 +34,18 @@ const Navbar = () => {
   const authService = useAuthService();
   const [navRoutesList, setNavRoutesList] = useState<NavRoutesType[]>(navRoutes);
   const [isOwnerOrAdmin, setIsOwnerOrAdmin] = useState<boolean>(authService.isOwnerOrAdmin());
-  const showUpgradeTypes = [ISUBSCRIPTION_TYPE.TRIAL]
+  const showUpgradeTypes = [ISUBSCRIPTION_TYPE.TRIAL];
 
   useEffect(() => {
-    authApiService.verify().then(authorizeResponse => {
+    authApiService
+      .verify()
+      .then(authorizeResponse => {
         if (authorizeResponse.authenticated) {
           authService.setCurrentSession(authorizeResponse.user);
           setIsOwnerOrAdmin(!!(authorizeResponse.user.is_admin || authorizeResponse.user.owner));
         }
-      }).catch(error => {
+      })
+      .catch(error => {
         logger.error('Error during authorization', error);
       });
   }, []);
@@ -66,9 +69,13 @@ const Navbar = () => {
     () =>
       navRoutesList
         .filter(route => {
-          if (!route.freePlanFeature && currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE) return false;
-          if (route.adminOnly && !isOwnerOrAdmin) return false;       
-          
+          if (
+            !route.freePlanFeature &&
+            currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE
+          )
+            return false;
+          if (route.adminOnly && !isOwnerOrAdmin) return false;
+
           return true;
         })
         .map((route, index) => ({
@@ -101,14 +108,20 @@ const Navbar = () => {
         justifyContent: 'space-between',
       }}
     >
-      {daysUntilExpiry !== null && ((daysUntilExpiry <= 3 && daysUntilExpiry > 0) || (daysUntilExpiry >= -7 && daysUntilExpiry < 0)) && (
-        <Alert
-          message={daysUntilExpiry > 0 ? `Your license will expire in ${daysUntilExpiry} days` : `Your license has expired ${Math.abs(daysUntilExpiry)} days ago`}
-          type="warning"
-          showIcon
-          style={{ width: '100%', marginTop: 12 }}
-        />
-      )}
+      {daysUntilExpiry !== null &&
+        ((daysUntilExpiry <= 3 && daysUntilExpiry > 0) ||
+          (daysUntilExpiry >= -7 && daysUntilExpiry < 0)) && (
+          <Alert
+            message={
+              daysUntilExpiry > 0
+                ? `Your license will expire in ${daysUntilExpiry} days`
+                : `Your license has expired ${Math.abs(daysUntilExpiry)} days ago`
+            }
+            type="warning"
+            showIcon
+            style={{ width: '100%', marginTop: 12 }}
+          />
+        )}
       <Flex
         style={{
           width: '100%',
@@ -145,9 +158,10 @@ const Navbar = () => {
             <ConfigProvider wave={{ disabled: true }}>
               {isDesktop && (
                 <Flex gap={20} align="center">
-                  {isOwnerOrAdmin && showUpgradeTypes.includes(currentSession?.subscription_type as ISUBSCRIPTION_TYPE) && (
-                    <UpgradePlanButton />
-                  )}
+                  {isOwnerOrAdmin &&
+                    showUpgradeTypes.includes(
+                      currentSession?.subscription_type as ISUBSCRIPTION_TYPE
+                    ) && <UpgradePlanButton />}
                   {isOwnerOrAdmin && <InviteButton />}
                   <Flex align="center">
                     <SwitchTeamButton />

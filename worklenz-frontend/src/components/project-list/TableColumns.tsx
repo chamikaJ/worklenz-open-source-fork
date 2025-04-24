@@ -34,9 +34,7 @@ const TableColumns = ({
 
   const { projectStatuses } = useAppSelector(state => state.projectStatusesReducer);
   const { projectCategories } = useAppSelector(state => state.projectCategoriesReducer);
-  const { filteredCategories, filteredStatuses } = useAppSelector(
-    state => state.projectsReducer
-  );
+  const { filteredCategories, filteredStatuses } = useAppSelector(state => state.projectsReducer);
   const columns = useMemo(
     () => [
       {

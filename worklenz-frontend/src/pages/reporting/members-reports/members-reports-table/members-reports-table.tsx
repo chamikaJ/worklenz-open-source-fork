@@ -6,7 +6,10 @@ import { useAppDispatch } from '@/hooks/useAppDispatch';
 import CustomTableTitle from '@/components/CustomTableTitle';
 import TasksProgressCell from './tablesCells/tasksProgressCell/TasksProgressCell';
 import MemberCell from './tablesCells/memberCell/MemberCell';
-import { fetchMembersData, toggleMembersReportsDrawer } from '@/features/reporting/membersReports/membersReportsSlice';
+import {
+  fetchMembersData,
+  toggleMembersReportsDrawer,
+} from '@/features/reporting/membersReports/membersReportsSlice';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import MembersReportsDrawer from '@/features/reporting/membersReports/membersReportsDrawer/members-reports-drawer';
 
@@ -16,7 +19,9 @@ const MembersReportsTable = () => {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { duration, dateRange } = useAppSelector(state => state.reportingReducer);
-  const { membersList, isLoading, total, archived, searchQuery } = useAppSelector(state => state.membersReportsReducer);
+  const { membersList, isLoading, total, archived, searchQuery } = useAppSelector(
+    state => state.membersReportsReducer
+  );
 
   // function to handle drawer toggle
   const handleDrawerOpen = (id: string) => {
@@ -40,7 +45,7 @@ const MembersReportsTable = () => {
       title: <CustomTableTitle title={t('tasksProgressColumn')} />,
       render: record => {
         const { todo, doing, done } = record.tasks_stat;
-        return (todo || doing || done) ? <TasksProgressCell tasksStat={record.tasks_stat} /> : '-';
+        return todo || doing || done ? <TasksProgressCell tasksStat={record.tasks_stat} /> : '-';
       },
     },
     {

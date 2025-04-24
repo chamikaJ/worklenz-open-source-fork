@@ -61,10 +61,7 @@ const MainLayout = () => {
         </Layout.Header>
 
         <Layout.Content>
-          <Col
-            xxl={{ span: 18, offset: 3, flex: '100%' }}
-            style={contentStyles}
-          >
+          <Col xxl={{ span: 18, offset: 3, flex: '100%' }} style={contentStyles}>
             <Outlet />
           </Col>
         </Layout.Content>

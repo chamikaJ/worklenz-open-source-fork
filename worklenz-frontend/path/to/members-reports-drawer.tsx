@@ -46,4 +46,4 @@ const MembersReportsDrawer = ({ memberId, exportTimeLogs }: MembersReportsDrawer
   );
 };
 
-export default MembersReportsDrawer; 
+export default MembersReportsDrawer;
