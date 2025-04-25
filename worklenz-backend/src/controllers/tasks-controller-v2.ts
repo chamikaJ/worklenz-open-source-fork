@@ -193,6 +193,7 @@ export default class TasksControllerV2 extends TasksControllerBase {
              t.archived,
              t.description,
              t.sort_order,
+             t.progress_value,
 
              (SELECT phase_id FROM task_phase WHERE task_id = t.id) AS phase_id,
              (SELECT name

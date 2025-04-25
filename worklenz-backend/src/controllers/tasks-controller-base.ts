@@ -75,7 +75,7 @@ export default class TasksControllerBase extends WorklenzControllerBase {
 
     const totalCompleted = (+task.completed_sub_tasks + +task.parent_task_completed) || 0;
     const totalTasks = +task.sub_tasks_count || 0; // if needed add +1 for parent
-    task.complete_ratio = TasksControllerBase.calculateTaskCompleteRatio(totalCompleted, totalTasks);
+    task.complete_ratio = task.is_sub_task ? task.progress_value : TasksControllerBase.calculateTaskCompleteRatio(totalCompleted, totalTasks);
     task.completed_count = totalCompleted;
     task.total_tasks_count = totalTasks;
 
