@@ -359,3 +359,132 @@ docker-compose up -d
 ```bash
 docker-compose down
 ```
+
+## MinIO Integration
+
+The project uses MinIO as an S3-compatible object storage service, which provides an open-source alternative to AWS S3 for development and production.
+
+### Working with MinIO
+
+MinIO provides an S3-compatible API, so any code that works with S3 will work with MinIO by simply changing the endpoint URL. The backend has been configured to use MinIO by default, with no additional configuration required.
+
+- **MinIO Console**: http://localhost:9001
+  - Username: minioadmin
+  - Password: minioadmin
+
+- **Default Bucket**: worklenz-bucket (created automatically when the containers start)
+
+### Backend Storage Configuration
+
+The backend is pre-configured to use MinIO with the following settings:
+
+```javascript
+// S3 credentials with MinIO defaults
+export const REGION = process.env.AWS_REGION || "us-east-1";
+export const BUCKET = process.env.AWS_BUCKET || "worklenz-bucket";
+export const S3_URL = process.env.S3_URL || "http://minio:9000/worklenz-bucket";
+export const S3_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || "minioadmin";
+export const S3_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || "minioadmin";
+```
+
+The S3 client is initialized with special MinIO configuration:
+
+```javascript
+const s3Client = new S3Client({
+  region: REGION,
+  credentials: {
+    accessKeyId: S3_ACCESS_KEY_ID || "",
+    secretAccessKey: S3_SECRET_ACCESS_KEY || "",
+  },
+  endpoint: getEndpointFromUrl(), // Extracts endpoint from S3_URL
+  forcePathStyle: true, // Required for MinIO
+});
+```
+
+### Environment Configuration
+
+The project uses the following environment file structure:
+
+- **Frontend**:
+  - `worklenz-frontend/.env.development` - Development environment variables
+  - `worklenz-frontend/.env.production` - Production build variables
+  
+- **Backend**:
+  - `worklenz-backend/.env` - Backend environment variables
+
+### Setting Up Environment Files
+
+The Docker environment script will create or overwrite all environment files:
+
+```bash
+# For HTTP/WS
+./update-docker-env.sh your-hostname
+
+# For HTTPS/WSS
+./update-docker-env.sh your-hostname true
+```
+
+This script generates properly configured environment files for both development and production environments.
+
+## Docker Deployment
+
+### Local Development with Docker
+
+1. Set up the environment files:
+   ```bash
+   # For HTTP/WS
+   ./update-docker-env.sh
+   
+   # For HTTPS/WSS
+   ./update-docker-env.sh localhost true
+   ```
+
+2. Run the application using Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+
+3. Access the application:
+   - Frontend: http://localhost:5000
+   - Backend API: http://localhost:3000 (or https://localhost:3000 with SSL)
+
+### Remote Server Deployment
+
+When deploying to a remote server:
+
+1. Set up the environment files with your server's hostname:
+   ```bash
+   # For HTTP/WS
+   ./update-docker-env.sh your-server-hostname
+   
+   # For HTTPS/WSS
+   ./update-docker-env.sh your-server-hostname true
+   ```
+   
+   This ensures that the frontend correctly connects to the backend API.
+
+2. Pull and run the latest Docker images:
+   ```bash
+   docker-compose pull
+   docker-compose up -d
+   ```
+
+3. Access the application through your server's hostname:
+   - Frontend: http://your-server-hostname:5000
+   - Backend API: http://your-server-hostname:3000
+
+### Environment Configuration
+
+The Docker setup uses environment variables to configure the services:
+
+- Frontend:
+  - `VITE_API_URL`: URL of the backend API (default: http://backend:3000 for container networking)
+  - `VITE_SOCKET_URL`: WebSocket URL for real-time communication (default: ws://backend:3000)
+
+- Backend:
+  - Database connection parameters
+  - Storage configuration
+  - Other backend settings
+
+For custom configuration, edit the `.env` file or the `update-docker-env.sh` script.
+
