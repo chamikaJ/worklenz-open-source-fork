@@ -9,19 +9,27 @@ import {
   Flex,
   Divider,
   Tooltip,
+  Progress,
+  Card,
+  Space,
 } from 'antd';
 import { useState, useEffect, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SocketEvents } from '@/shared/socket-events';
 import { ITask } from '@/types/task/taskViewModel.types';
-import { CheckCircleOutlined, InfoCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { 
+  CheckCircleOutlined, 
+  InfoCircleOutlined, 
+  QuestionCircleOutlined,
+  PercentageOutlined,
+  BarChartOutlined 
+} from '@ant-design/icons';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import taskProgressService from '@/services/tasks/task-progress.service';
 import './task-progress-editor.css';
 import { calculateAverageSubtaskProgress, findSubtasks } from '@/utils/task-progress-utils';
 import { getUserSession } from '@/utils/session-helper';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 type TaskProgressEditorProps = {
   task: ITask;
@@ -31,6 +39,7 @@ type TaskProgressEditorProps = {
 // Memoize the component to improve performance
 const TaskProgressEditor = memo(({ task, onClose }: TaskProgressEditorProps) => {
   const { t } = useTranslation('task-progress');
+  const { token } = theme.useToken();
   const themeMode = useAppSelector(state => state.themeReducer.mode);
   const isDarkMode = themeMode === 'dark';
   const [progressValue, setProgressValue] = useState(task.complete_ratio || 0);
@@ -172,7 +181,7 @@ const TaskProgressEditor = memo(({ task, onClose }: TaskProgressEditorProps) => 
     }
   };
 
-  const roundedProgress = Math.round(progressValue);
+  const roundedProgress = useManualProgress ? Math.round(progressValue) : Math.round(task.complete_ratio || 0);
   const isComplete = roundedProgress === 100;
 
   // Color for progress text based on value and theme
@@ -192,9 +201,26 @@ const TaskProgressEditor = memo(({ task, onClose }: TaskProgressEditorProps) => 
   // Calculate if the save button should be disabled
   const isSaveDisabled = !useManualProgress || !isManualProgressAllowed;
 
+  // Get appropriate progress status for Progress component
+  const getProgressStatus = () => {
+    if (isComplete) return 'success';
+    if (roundedProgress > 0) return 'active';
+    return 'normal';
+  };
+
+  // Color for progress based on theme and completion
+  const getProgressStrokeColor = () => {
+    if (isComplete) return '#52c41a';
+    return isDarkMode ? '#0a84ff' : '#1677ff';
+  };
+
   return (
     <Modal
-      title={getTitle()}
+      title={
+        <Flex align="center" gap="small">
+          <span>{getTitle()}</span>
+        </Flex>
+      }
       open={true}
       onCancel={onClose}
       width={640}
@@ -215,7 +241,7 @@ const TaskProgressEditor = memo(({ task, onClose }: TaskProgressEditorProps) => 
       centered
       className="task-progress-editor"
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {!useManualProgress && (
           <Alert
             message={t('manualProgressDisabledTitle')}
@@ -228,7 +254,6 @@ const TaskProgressEditor = memo(({ task, onClose }: TaskProgressEditorProps) => 
 
         {useManualProgress && hasSubtasks && !isSubtask && (
           <Alert
-            message={t('parentTaskProgressTitle')}
             description={t('parentTaskProgressDescription')}
             type="info"
             showIcon
@@ -239,7 +264,6 @@ const TaskProgressEditor = memo(({ task, onClose }: TaskProgressEditorProps) => 
         {/* Only show weighted progress info if it's enabled for the project */}
         {useWeightedProgress && (
           <Alert
-            message={t('weightedProgressEnabledTitle')}
             description={t('weightedProgressEnabledDescription')}
             type="info"
             showIcon
@@ -249,107 +273,118 @@ const TaskProgressEditor = memo(({ task, onClose }: TaskProgressEditorProps) => 
 
         {/* Task Weight input (only for subtasks) */}
         {isSubtask && useWeightedProgress && (
-          <div>
-            <div className="weight-section">
-              <Flex align="center" justify="space-between">
-                <div>
-                  <Text strong>{t('taskWeightLabel')}</Text>
-                  <Tooltip title={t('taskWeightTooltip')}>
-                    <QuestionCircleOutlined style={{ marginLeft: 8 }} />
-                  </Tooltip>
-                </div>
-                <InputNumber
-                  min={1}
-                  max={100}
-                  value={weightValue}
-                  onChange={value => setWeightValue(value || 1)}
-                  disabled={!useWeightedProgress}
-                />
+          <Card 
+            className="card-section" 
+            size="small" 
+            title={
+              <Flex align="center" gap="small">
+                <BarChartOutlined />
+                <Text strong>{t('taskWeightLabel')}</Text>
+                <Tooltip title={t('taskWeightTooltip')}>
+                  <QuestionCircleOutlined style={{ fontSize: '14px', color: token.colorTextSecondary }} />
+                </Tooltip>
               </Flex>
+            }
+          >
+            <Flex align="center" justify="space-between">
               <Text type="secondary" className="weight-description">
                 {t('taskWeightDescription')}
               </Text>
-            </div>
-            <Divider />
-          </div>
+              <InputNumber
+                min={1}
+                max={100}
+                value={weightValue}
+                onChange={value => setWeightValue(value || 1)}
+                disabled={!useWeightedProgress}
+                addonAfter={<BarChartOutlined />}
+                style={{ width: '120px' }}
+              />
+            </Flex>
+          </Card>
         )}
 
-        <div>
-          <div className="progress-label">
-            {t(isSubtask ? 'subtaskManualProgressLabel' : 'manualProgressLabel')}
-          </div>
-
-          <div>
-            <div className="progress-current" style={{ color: getProgressColor() }}>
-              {isComplete ? (
-                <span
-                  style={{
-                    color: '#52c41a',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                  }}
-                >
-                  <CheckCircleOutlined /> {t('statusComplete')}
-                </span>
-              ) : (
-                `${roundedProgress}%`
-              )}
-            </div>
-
-            <Slider
-              min={0}
-              max={100}
-              value={progressValue}
-              onChange={setProgressValue}
-              tooltip={{ formatter: value => `${value}%` }}
-              marks={{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }}
-              className="progress-slider"
-              disabled={!useManualProgress || !isManualProgressAllowed}
+        <Card 
+          className="card-section progress-section" 
+          size="small"
+          title={
+            <Flex align="center" gap="small">
+              <Text strong>
+                {t(isSubtask ? 'subtaskManualProgressLabel' : 'manualProgressLabel')}
+              </Text>
+            </Flex>
+          }
+        >
+          <Flex align="center" gap="large">
+            <Progress
+              type="circle"
+              percent={roundedProgress}
+              status={getProgressStatus()}
+              strokeColor={getProgressStrokeColor()}
+              size={100}
             />
+            <div style={{ flex: 1 }}>
+              <Slider
+                min={0}
+                max={100}
+                value={progressValue}
+                onChange={setProgressValue}
+                tooltip={{ formatter: value => `${value}%` }}
+                marks={{}}
+                disabled={!useManualProgress || !isManualProgressAllowed}
+              />
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
-              <Button
-                size="small"
-                onClick={() => setProgressValue(0)}
-                disabled={progressValue === 0 || !useManualProgress || !isManualProgressAllowed}
-              >
-                0%
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setProgressValue(25)}
-                disabled={progressValue === 25 || !useManualProgress || !isManualProgressAllowed}
-              >
-                25%
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setProgressValue(50)}
-                disabled={progressValue === 50 || !useManualProgress || !isManualProgressAllowed}
-              >
-                50%
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setProgressValue(75)}
-                disabled={progressValue === 75 || !useManualProgress || !isManualProgressAllowed}
-              >
-                75%
-              </Button>
-              <Button
-                size="small"
-                type={isComplete ? 'primary' : 'default'}
-                onClick={() => setProgressValue(100)}
-                disabled={progressValue === 100 || !useManualProgress || !isManualProgressAllowed}
-              >
-                100%
-              </Button>
+              <Flex gap="small" wrap="wrap" justify="space-between" style={{ marginTop: '16px' }}>
+                <Button
+                  size="small"
+                  onClick={() => setProgressValue(0)}
+                  disabled={progressValue === 0 || !useManualProgress || !isManualProgressAllowed}
+                  type={progressValue === 0 ? 'primary' : 'default'}
+                  style={{ minWidth: '60px' }}
+                >
+                  0%
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => setProgressValue(25)}
+                  disabled={progressValue === 25 || !useManualProgress || !isManualProgressAllowed}
+                  type={progressValue === 25 ? 'primary' : 'default'}
+                  style={{ minWidth: '60px' }}
+                >
+                  25%
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => setProgressValue(50)}
+                  disabled={progressValue === 50 || !useManualProgress || !isManualProgressAllowed}
+                  type={progressValue === 50 ? 'primary' : 'default'}
+                  style={{ minWidth: '60px' }}
+                >
+                  50%
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => setProgressValue(75)}
+                  disabled={progressValue === 75 || !useManualProgress || !isManualProgressAllowed}
+                  type={progressValue === 75 ? 'primary' : 'default'}
+                  style={{ minWidth: '60px' }}
+                >
+                  75%
+                </Button>
+                <Button
+                  size="small"
+                  type={isComplete ? 'primary' : 'default'}
+                  onClick={() => setProgressValue(100)}
+                  disabled={progressValue === 100 || !useManualProgress || !isManualProgressAllowed}
+                  icon={isComplete ? <CheckCircleOutlined /> : null}
+                  style={{ minWidth: '60px' }}
+                >
+                  100%
+                </Button>
+              </Flex>
             </div>
-          </div>
-        </div>
-      </div>
+          </Flex>
+        </Card>
+      </Space>
     </Modal>
   );
 });

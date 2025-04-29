@@ -3,6 +3,11 @@
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+.task-progress-editor .ant-modal-content {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 .task-progress-editor .ant-segmented {
   background-color: #f5f5f5;
   padding: 4px;
@@ -32,6 +37,37 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
+}
+
+/* Card sections */
+.task-progress-editor .card-section {
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.task-progress-editor .card-section:hover {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+.task-progress-editor .ant-card-head {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  min-height: auto;
+  padding: 8px 16px;
+}
+
+.task-progress-editor .ant-card-head-title {
+  padding: 8px 0;
+}
+
+.task-progress-editor .ant-card-body {
+  padding: 16px;
+}
+
+/* Progress section */
+.task-progress-editor .progress-section .ant-progress-text {
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .task-progress-editor .progress-slider .ant-slider-rail {
@@ -104,6 +140,26 @@
   font-size: 12px;
 }
 
+/* Alert styling */
+.task-progress-editor .ant-alert {
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Percentage buttons */
+.task-progress-editor .ant-btn-default {
+  transition: all 0.2s ease;
+}
+
+.task-progress-editor .ant-btn-default:hover {
+  border-color: #1677ff;
+  color: #1677ff;
+}
+
+.task-progress-editor .ant-btn-primary {
+  box-shadow: 0 2px 0 rgba(5, 125, 255, 0.1);
+}
+
 /* Accessibility */
 .task-progress-editor *:focus {
   outline: 2px solid #1677ff;
@@ -117,7 +173,7 @@
 
 /* Dark theme support */
 [data-theme="dark"] .task-progress-editor .ant-modal-content {
-  background-color: #1f1f1f;
+  background-color: #1a1a1a;
   box-shadow:
     0 3px 6px -4px rgba(0, 0, 0, 0.48),
     0 6px 16px 0 rgba(0, 0, 0, 0.42),
@@ -131,6 +187,16 @@
 
 [data-theme="dark"] .task-progress-editor .ant-modal-title {
   color: #e6e6e6;
+}
+
+[data-theme="dark"] .task-progress-editor .card-section {
+  background-color: #202020;
+  border-color: #303030;
+}
+
+[data-theme="dark"] .task-progress-editor .ant-card-head {
+  border-bottom: 1px solid #303030;
+  background-color: #202020;
 }
 
 [data-theme="dark"] .task-progress-editor .ant-modal-close {
@@ -162,20 +228,20 @@
 }
 
 [data-theme="dark"] .task-progress-editor .progress-slider .ant-slider-rail {
-  background-color: #141414;
+  background-color: #333333;
 }
 
 [data-theme="dark"] .task-progress-editor .progress-slider .ant-slider-track {
-  background-color: #1677ff;
+  background-color: #0a84ff;
 }
 
 [data-theme="dark"] .task-progress-editor .progress-slider .ant-slider-handle {
-  background-color: #1f1f1f;
-  border-color: #1677ff;
+  background-color: #0a84ff;
+  border-color: #0a84ff;
 }
 
 [data-theme="dark"] .task-progress-editor .progress-slider .ant-slider-mark-text {
-  color: #bfbfbf;
+  display: none;
 }
 
 [data-theme="dark"] .task-progress-editor .progress-current {
@@ -200,15 +266,15 @@
 }
 
 [data-theme="dark"] .task-progress-editor .ant-btn-default {
-  background-color: #141414;
-  border-color: #424242;
-  color: #bfbfbf;
+  background-color: #2c2c2c;
+  border-color: #333333;
+  color: #e0e0e0;
 }
 
 [data-theme="dark"] .task-progress-editor .ant-btn-default:hover {
-  background-color: #303030;
-  border-color: #1677ff;
-  color: #e6e6e6;
+  background-color: #3a3a3a;
+  border-color: #0a84ff;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .task-progress-editor .ant-btn-default:disabled {
@@ -226,4 +292,31 @@
 [data-theme="dark"] .task-progress-editor .ant-segmented {
   background-color: #141414;
   padding: 2px;
+}
+
+/* Percentage buttons for dark mode */
+[data-theme="dark"] .task-progress-editor .ant-btn-primary {
+  background-color: #0a84ff;
+  border-color: #0a84ff;
+  color: #ffffff;
+}
+
+/* Progress circle */
+[data-theme="dark"] .task-progress-editor .ant-progress-circle .ant-progress-text {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .task-progress-editor .progress-section .ant-progress-circle-path {
+  stroke: #0a84ff;
+}
+
+/* Percentage buttons spacing and alignment */
+.task-progress-editor .progress-section .ant-btn {
+  margin: 0 3px;
+  min-width: 60px;
+  padding: 0 8px;
+}
+
+.task-progress-editor .progress-slider {
+  margin: 0 0 16px 0;
 }
