@@ -115,6 +115,7 @@ This shows how the subtask with twice the weight (Subtask B) has twice the influ
 - You still enter manual progress percentages for tasks without subtasks
 - Tasks with longer time estimates have more influence on overall progress
 - Parent task progress is calculated based on time-weighted averages
+- Progress is capped at 100% even if more time is logged than estimated
 
 ### When to Use Time-based Progress
 
@@ -138,6 +139,7 @@ The parent task will be approximately 29% complete, with the lengthy Subtask C p
 - Time is converted to minutes internally (a 2-hour task = 120 minutes)
 - Setting a time estimate to 0 removes that task from progress calculations
 - Time estimates serve dual purposes: scheduling/resource planning and progress weighting
+- If more time is logged than estimated, progress is capped at 100%
 
 ### Detailed Time-based Progress Calculation Example
 
@@ -161,6 +163,20 @@ The calculation works as follows:
 The parent task would be approximately 29% complete.
 
 This demonstrates how tasks with longer time estimates (like Subtask C) have more influence on the overall progress calculation. Even though Subtask B is 80% complete, its shorter time estimate means it contributes less to the overall progress than the partially-completed but longer Subtask A.
+
+### Handling Overlogged Time
+
+When more time is logged than estimated for a task:
+- The progress calculation will never exceed 100%
+- For example, if a task is estimated at 2 hours but 3 hours are logged:
+  - The progress will be capped at 100%
+  - This ensures realistic progress tracking even when time estimates are exceeded
+  - The extra logged time is still recorded but doesn't affect the progress calculation
+
+This approach ensures that:
+- Progress values remain meaningful and realistic
+- Time overruns are properly tracked without distorting progress
+- The system maintains accurate progress reporting even when estimates are exceeded
 
 ### How It Works
 

@@ -71,12 +71,14 @@ This mode calculates progress based on estimated time vs. actual time spent.
 - Uses task time estimates (hours and minutes) for calculation
 - Manual progress input is still required for tasks without subtasks
 - No separate socket handler needed as it's calculated automatically
+- Progress is capped at 100% even when logged time exceeds estimated time
 
 **Calculation Logic:**
 - For tasks without subtasks: Uses the manually entered progress value
 - Progress is calculated using time as the weight: `SUM(progress_value * estimated_minutes) / SUM(estimated_minutes)`
 - For tasks with time tracking, estimated vs. actual time can be factored in
 - Parent task progress is weighted by the estimated time of each subtask
+- When logged time exceeds estimated time, progress is capped at 100%
 
 **SQL Example:**
 ```sql
@@ -93,7 +95,20 @@ WITH subtask_progress AS (
                         WHERE tasks_with_status_view.task_id = t.id
                         AND is_done IS TRUE
                     ) THEN 100
-                    ELSE 0
+                    ELSE
+                        -- Calculate progress based on logged time vs estimated time
+                        CASE
+                            WHEN COALESCE(total_minutes, 0) > 0 THEN
+                                LEAST(
+                                    (COALESCE((
+                                        SELECT SUM(time_spent)
+                                        FROM task_work_log
+                                        WHERE task_id = t.id
+                                    ), 0) / COALESCE(total_minutes, 1)) * 100,
+                                    100
+                                )
+                            ELSE 0
+                        END
                 END
         END AS progress_value,
         COALESCE(total_hours * 60 + total_minutes, 0) AS estimated_minutes
@@ -108,6 +123,20 @@ SELECT COALESCE(
 FROM subtask_progress
 INTO _ratio;
 ```
+
+**Handling Overlogged Time:**
+When more time is logged than estimated for a task:
+1. The system calculates the ratio: (logged_time / estimated_time) * 100
+2. If this ratio exceeds 100%, it is capped at 100%
+3. The extra logged time is still recorded in the task_work_log table
+4. The progress calculation uses the capped value
+5. This ensures realistic progress tracking even when time estimates are exceeded
+
+This approach ensures that:
+- Progress values remain meaningful and realistic
+- Time overruns are properly tracked without distorting progress
+- The system maintains accurate progress reporting even when estimates are exceeded
+- Historical time data is preserved even when it exceeds estimates
 
 ## Default Progress Tracking (when no special mode is selected)
 

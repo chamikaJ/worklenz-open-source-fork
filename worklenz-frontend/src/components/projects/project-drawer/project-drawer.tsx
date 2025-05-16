@@ -609,7 +609,7 @@ const ProjectDrawer = ({ onClose }: { onClose: () => void }) => {
             label={
               <Space>
                 <Typography.Text>{t('timeProgress')}</Typography.Text>
-                <Tooltip title={t('timeProgressTooltip')}>
+                <Tooltip title={t('timeProgressTooltip', 'Progress will be automatically calculated based on logged time against estimated time')}>
                   <Button type="text" size="small" icon={<Typography.Text>ⓘ</Typography.Text>} />
                 </Tooltip>
               </Space>

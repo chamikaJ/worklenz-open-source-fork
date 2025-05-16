@@ -22,30 +22,39 @@ ALTER TABLE projects
     ADD COLUMN IF NOT EXISTS use_weighted_progress BOOLEAN DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS use_time_progress     BOOLEAN DEFAULT FALSE;
 
--- Update function to consider manual progress
+-- Update function to consider manual progress and time-based calculation
 CREATE OR REPLACE FUNCTION get_task_complete_ratio(_task_id UUID) RETURNS JSON
     LANGUAGE plpgsql
 AS
 $$
 DECLARE
-    _parent_task_done      FLOAT   = 0;
-    _sub_tasks_done        FLOAT   = 0;
-    _sub_tasks_count       FLOAT   = 0;
-    _total_completed       FLOAT   = 0;
-    _total_tasks           FLOAT   = 0;
-    _ratio                 FLOAT   = 0;
-    _is_manual             BOOLEAN = FALSE;
-    _manual_value          INTEGER = NULL;
+    _parent_task_done      FLOAT       = 0;
+    _sub_tasks_done        FLOAT       = 0;
+    _sub_tasks_count       FLOAT       = 0;
+    _total_completed       FLOAT       = 0;
+    _total_tasks           FLOAT       = 0;
+    _ratio                 FLOAT       = 0;
+    _is_manual             BOOLEAN     = FALSE;
+    _manual_value          INTEGER     = NULL;
     _project_id            UUID;
-    _use_manual_progress   BOOLEAN = FALSE;
-    _use_weighted_progress BOOLEAN = FALSE;
-    _use_time_progress     BOOLEAN = FALSE;
+    _use_manual_progress   BOOLEAN     = FALSE;
+    _use_weighted_progress BOOLEAN     = FALSE;
+    _use_time_progress     BOOLEAN     = FALSE;
+    _task_complete         BOOLEAN     = FALSE;
+    _progress_mode         VARCHAR(20) = NULL;
 BEGIN
-    -- Check if manual progress is set
-    SELECT manual_progress, progress_value, project_id
+    -- Check if manual progress is set for this task
+    SELECT manual_progress,
+           progress_value,
+           project_id,
+           progress_mode,
+           EXISTS(SELECT 1
+                  FROM tasks_with_status_view
+                  WHERE tasks_with_status_view.task_id = tasks.id
+                    AND is_done IS TRUE) AS is_complete
     FROM tasks
     WHERE id = _task_id
-    INTO _is_manual, _manual_value, _project_id;
+    INTO _is_manual, _manual_value, _project_id, _progress_mode, _task_complete;
 
     -- Check if the project uses manual progress
     IF _project_id IS NOT NULL
@@ -58,48 +67,219 @@ BEGIN
         INTO _use_manual_progress, _use_weighted_progress, _use_time_progress;
     END IF;
 
-    -- If manual progress is enabled and has a value, use it directly
-    IF _is_manual IS TRUE AND _manual_value IS NOT NULL
+    -- Get all subtasks
+    SELECT COUNT(*)
+    FROM tasks
+    WHERE parent_task_id = _task_id
+      AND archived IS FALSE
+    INTO _sub_tasks_count;
+
+    -- If task is complete, always return 100%
+    IF _task_complete IS TRUE
     THEN
         RETURN JSON_BUILD_OBJECT(
-                'ratio', _manual_value,
-                'total_completed', 0,
-                'total_tasks', 0,
-                'is_manual', TRUE
+                'ratio', 100,
+                'total_completed', 1,
+                'total_tasks', 1,
+                'is_manual', FALSE
                );
     END IF;
 
-    -- Otherwise calculate automatically as before
-    SELECT (CASE
-                WHEN EXISTS(SELECT 1
-                            FROM tasks_with_status_view
-                            WHERE tasks_with_status_view.task_id = _task_id
-                              AND is_done IS TRUE) THEN 1
-                ELSE 0 END)
-    INTO _parent_task_done;
-    SELECT COUNT(*) FROM tasks WHERE parent_task_id = _task_id AND archived IS FALSE INTO _sub_tasks_count;
+    -- Determine current active mode
+    DECLARE
+        _current_mode VARCHAR(20) = CASE
+                                        WHEN _use_manual_progress IS TRUE THEN 'manual'
+                                        WHEN _use_weighted_progress IS TRUE THEN 'weighted'
+                                        WHEN _use_time_progress IS TRUE THEN 'time'
+                                        ELSE 'default'
+            END;
+    BEGIN
+        -- Only use manual progress value if it was set in the current active mode
+        -- or if the task is explicitly marked for manual progress
+        IF (_is_manual IS TRUE AND _manual_value IS NOT NULL AND
+            (_progress_mode IS NULL OR _progress_mode = _current_mode)) OR
+           (_use_manual_progress IS TRUE AND _manual_value IS NOT NULL AND
+            (_progress_mode IS NULL OR _progress_mode = 'manual'))
+        THEN
+            RETURN JSON_BUILD_OBJECT(
+                    'ratio', _manual_value,
+                    'total_completed', 0,
+                    'total_tasks', 0,
+                    'is_manual', TRUE
+                   );
+        END IF;
+    END;
 
-    SELECT COUNT(*)
-    FROM tasks_with_status_view
-    WHERE parent_task_id = _task_id
-      AND is_done IS TRUE
-    INTO _sub_tasks_done;
-
-    _total_completed = _parent_task_done + _sub_tasks_done;
-    _total_tasks = _sub_tasks_count; -- +1 for the parent task
-
-    IF _total_tasks > 0
+    -- If there are no subtasks, calculate based on time if enabled
+    IF _sub_tasks_count = 0
     THEN
-        _ratio = (_total_completed / _total_tasks) * 100;
+        -- Use time-based estimation for tasks without subtasks if enabled
+        IF _use_time_progress IS TRUE
+        THEN
+            -- Calculate progress based on logged time vs estimated time
+            SELECT CASE
+                       WHEN _task_complete IS TRUE THEN 100
+                       WHEN COALESCE(total_minutes, 0) > 0 THEN
+                           LEAST(
+                               (COALESCE((
+                                   SELECT SUM(time_spent)
+                                   FROM task_work_log
+                                   WHERE task_id = _task_id
+                               ), 0) / COALESCE(total_minutes, 1)) * 100,
+                               100
+                           )
+                       ELSE 0
+                       END
+            INTO _ratio;
+        ELSE
+            -- Traditional calculation for non-time-based tasks
+            SELECT (CASE WHEN _task_complete IS TRUE THEN 1 ELSE 0 END)
+            INTO _parent_task_done;
+
+            _ratio = _parent_task_done * 100;
+        END IF;
     ELSE
-        _ratio = _parent_task_done * 100;
+        -- If project uses manual progress, calculate based on subtask manual progress values
+        IF _use_manual_progress IS TRUE
+        THEN
+            WITH subtask_progress AS (SELECT t.id,
+                                             t.manual_progress,
+                                             t.progress_value,
+                                             t.progress_mode,
+                                             EXISTS(SELECT 1
+                                                    FROM tasks_with_status_view
+                                                    WHERE tasks_with_status_view.task_id = t.id
+                                                      AND is_done IS TRUE) AS is_complete
+                                      FROM tasks t
+                                      WHERE t.parent_task_id = _task_id
+                                        AND t.archived IS FALSE),
+                 subtask_with_values AS (SELECT CASE
+                                                    -- For completed tasks, always use 100%
+                                                    WHEN is_complete IS TRUE THEN 100
+                                                    -- For tasks with progress value set in the correct mode, use it
+                                                    WHEN progress_value IS NOT NULL AND
+                                                         (progress_mode = 'manual' OR progress_mode IS NULL)
+                                                        THEN progress_value
+                                                    -- Default to 0 for incomplete tasks with no progress value or wrong mode
+                                                    ELSE 0
+                                                    END AS progress_value
+                                         FROM subtask_progress)
+            SELECT COALESCE(AVG(progress_value), 0)
+            FROM subtask_with_values
+            INTO _ratio;
+        -- If project uses weighted progress, calculate based on subtask weights
+        ELSIF _use_weighted_progress IS TRUE
+        THEN
+            WITH subtask_progress AS (SELECT t.id,
+                                             t.manual_progress,
+                                             t.progress_value,
+                                             t.progress_mode,
+                                             EXISTS(SELECT 1
+                                                    FROM tasks_with_status_view
+                                                    WHERE tasks_with_status_view.task_id = t.id
+                                                      AND is_done IS TRUE) AS is_complete,
+                                             COALESCE(t.weight, 100) AS weight
+                                      FROM tasks t
+                                      WHERE t.parent_task_id = _task_id
+                                        AND t.archived IS FALSE),
+                 subtask_with_values AS (SELECT CASE
+                                                    -- For completed tasks, always use 100%
+                                                    WHEN is_complete IS TRUE THEN 100
+                                                    -- For tasks with progress value set in the correct mode, use it
+                                                    WHEN progress_value IS NOT NULL AND
+                                                         (progress_mode = 'weighted' OR progress_mode IS NULL)
+                                                        THEN progress_value
+                                                    -- Default to 0 for incomplete tasks with no progress value or wrong mode
+                                                    ELSE 0
+                                                    END AS progress_value,
+                                                weight
+                                         FROM subtask_progress)
+            SELECT COALESCE(
+                           SUM(progress_value * weight) / NULLIF(SUM(weight), 0),
+                           0
+                   )
+            FROM subtask_with_values
+            INTO _ratio;
+        -- If project uses time-based progress, calculate based on estimated time
+        ELSIF _use_time_progress IS TRUE
+        THEN
+            WITH subtask_progress AS (SELECT t.id,
+                                             t.manual_progress,
+                                             t.progress_value,
+                                             t.progress_mode,
+                                             EXISTS(SELECT 1
+                                                    FROM tasks_with_status_view
+                                                    WHERE tasks_with_status_view.task_id = t.id
+                                                      AND is_done IS TRUE) AS is_complete,
+                                             COALESCE(t.total_minutes, 0) AS estimated_minutes
+                                      FROM tasks t
+                                      WHERE t.parent_task_id = _task_id
+                                        AND t.archived IS FALSE),
+                 subtask_with_values AS (SELECT CASE
+                                                    -- For completed tasks, always use 100%
+                                                    WHEN is_complete IS TRUE THEN 100
+                                                    -- For tasks with progress value set in the correct mode, use it
+                                                    WHEN progress_value IS NOT NULL AND
+                                                         (progress_mode = 'time' OR progress_mode IS NULL)
+                                                        THEN progress_value
+                                                    -- For tasks with time tracking, calculate based on logged time
+                                                    WHEN COALESCE(estimated_minutes, 0) > 0 THEN
+                                                        LEAST(
+                                                            (COALESCE((
+                                                                SELECT SUM(time_spent)
+                                                                FROM task_work_log
+                                                                WHERE task_id = t.id
+                                                            ), 0) / COALESCE(estimated_minutes, 1)) * 100,
+                                                            100
+                                                        )
+                                                    -- Default to 0 for incomplete tasks with no progress value or wrong mode
+                                                    ELSE 0
+                                                    END AS progress_value,
+                                                estimated_minutes
+                                         FROM subtask_progress)
+            SELECT COALESCE(
+                           SUM(progress_value * estimated_minutes) / NULLIF(SUM(estimated_minutes), 0),
+                           0
+                   )
+            FROM subtask_with_values
+            INTO _ratio;
+        ELSE
+            -- Traditional calculation based on completion status
+            SELECT (CASE WHEN _task_complete IS TRUE THEN 1 ELSE 0 END)
+            INTO _parent_task_done;
+
+            SELECT COUNT(*)
+            FROM tasks_with_status_view
+            WHERE parent_task_id = _task_id
+              AND is_done IS TRUE
+            INTO _sub_tasks_done;
+
+            _total_completed = _parent_task_done + _sub_tasks_done;
+            _total_tasks = _sub_tasks_count + 1; -- +1 for the parent task
+
+            IF _total_tasks = 0
+            THEN
+                _ratio = 0;
+            ELSE
+                _ratio = (_total_completed / _total_tasks) * 100;
+            END IF;
+        END IF;
+    END IF;
+
+    -- Ensure ratio is between 0 and 100
+    IF _ratio < 0
+    THEN
+        _ratio = 0;
+    ELSIF _ratio > 100
+    THEN
+        _ratio = 100;
     END IF;
 
     RETURN JSON_BUILD_OBJECT(
             'ratio', _ratio,
             'total_completed', _total_completed,
             'total_tasks', _total_tasks,
-            'is_manual', FALSE
+            'is_manual', _is_manual
            );
 END
 $$;
@@ -298,90 +478,6 @@ COMMIT;
 
 BEGIN;
 
--- Update the on_update_task_progress function to set progress_mode
-CREATE OR REPLACE FUNCTION on_update_task_progress(_body JSON) RETURNS JSON
-    LANGUAGE plpgsql
-AS
-$$
-DECLARE
-    _task_id        UUID;
-    _progress_value INTEGER;
-    _parent_task_id UUID;
-    _project_id     UUID;
-    _current_mode   VARCHAR(20);
-BEGIN
-    _task_id = (_body ->> 'task_id')::UUID;
-    _progress_value = (_body ->> 'progress_value')::INTEGER;
-    _parent_task_id = (_body ->> 'parent_task_id')::UUID;
-
-    -- Get the project ID and determine the current progress mode
-    SELECT project_id INTO _project_id FROM tasks WHERE id = _task_id;
-
-    IF _project_id IS NOT NULL
-    THEN
-        SELECT CASE
-                   WHEN use_manual_progress IS TRUE THEN 'manual'
-                   WHEN use_weighted_progress IS TRUE THEN 'weighted'
-                   WHEN use_time_progress IS TRUE THEN 'time'
-                   ELSE 'default'
-                   END
-        INTO _current_mode
-        FROM projects
-        WHERE id = _project_id;
-    ELSE
-        _current_mode := 'default';
-    END IF;
-
-    -- Update the task with progress value and set the progress mode
-    UPDATE tasks
-    SET progress_value  = _progress_value,
-        manual_progress = TRUE,
-        progress_mode   = _current_mode,
-        updated_at      = CURRENT_TIMESTAMP
-    WHERE id = _task_id;
-
-    -- Return the updated task info
-    RETURN JSON_BUILD_OBJECT(
-            'task_id', _task_id,
-            'progress_value', _progress_value,
-            'progress_mode', _current_mode
-           );
-END;
-$$;
-
--- Update the on_update_task_weight function to set progress_mode when weight is updated
-CREATE OR REPLACE FUNCTION on_update_task_weight(_body JSON) RETURNS JSON
-    LANGUAGE plpgsql
-AS
-$$
-DECLARE
-    _task_id        UUID;
-    _weight         INTEGER;
-    _parent_task_id UUID;
-    _project_id     UUID;
-BEGIN
-    _task_id = (_body ->> 'task_id')::UUID;
-    _weight = (_body ->> 'weight')::INTEGER;
-    _parent_task_id = (_body ->> 'parent_task_id')::UUID;
-
-    -- Get the project ID
-    SELECT project_id INTO _project_id FROM tasks WHERE id = _task_id;
-
-    -- Update the task with weight value and set progress_mode to 'weighted'
-    UPDATE tasks
-    SET weight        = _weight,
-        progress_mode = 'weighted',
-        updated_at    = CURRENT_TIMESTAMP
-    WHERE id = _task_id;
-
-    -- Return the updated task info
-    RETURN JSON_BUILD_OBJECT(
-            'task_id', _task_id,
-            'weight', _weight
-           );
-END;
-$$;
-
 -- Create a function to reset progress values when switching project progress modes
 CREATE OR REPLACE FUNCTION reset_project_progress_values() RETURNS TRIGGER
     LANGUAGE plpgsql
@@ -530,19 +626,24 @@ BEGIN
         END IF;
     END;
 
-    -- If there are no subtasks, just use the parent task's status (unless in time-based mode)
+    -- If there are no subtasks, calculate based on time if enabled
     IF _sub_tasks_count = 0
     THEN
         -- Use time-based estimation for tasks without subtasks if enabled
         IF _use_time_progress IS TRUE
         THEN
-            -- For time-based tasks without subtasks, we still need some progress calculation
-            -- If the task is completed, return 100%
-            -- Otherwise, use the progress value if set manually in the correct mode, or 0
+            -- Calculate progress based on logged time vs estimated time
             SELECT CASE
                        WHEN _task_complete IS TRUE THEN 100
-                       WHEN _manual_value IS NOT NULL AND (_progress_mode = 'time' OR _progress_mode IS NULL)
-                           THEN _manual_value
+                       WHEN COALESCE(total_minutes, 0) > 0 THEN
+                           LEAST(
+                               (COALESCE((
+                                   SELECT SUM(time_spent)
+                                   FROM task_work_log
+                                   WHERE task_id = _task_id
+                               ), 0) / COALESCE(total_minutes, 1)) * 100,
+                               100
+                           )
                        ELSE 0
                        END
             INTO _ratio;
@@ -582,7 +683,7 @@ BEGIN
             SELECT COALESCE(AVG(progress_value), 0)
             FROM subtask_with_values
             INTO _ratio;
-            -- If project uses weighted progress, calculate based on subtask weights
+        -- If project uses weighted progress, calculate based on subtask weights
         ELSIF _use_weighted_progress IS TRUE
         THEN
             WITH subtask_progress AS (SELECT t.id,
@@ -615,7 +716,7 @@ BEGIN
                    )
             FROM subtask_with_values
             INTO _ratio;
-            -- If project uses time-based progress, calculate based on estimated time
+        -- If project uses time-based progress, calculate based on estimated time
         ELSIF _use_time_progress IS TRUE
         THEN
             WITH subtask_progress AS (SELECT t.id,
@@ -637,6 +738,16 @@ BEGIN
                                                     WHEN progress_value IS NOT NULL AND
                                                          (progress_mode = 'time' OR progress_mode IS NULL)
                                                         THEN progress_value
+                                                    -- For tasks with time tracking, calculate based on logged time
+                                                    WHEN COALESCE(estimated_minutes, 0) > 0 THEN
+                                                        LEAST(
+                                                            (COALESCE((
+                                                                SELECT SUM(time_spent)
+                                                                FROM task_work_log
+                                                                WHERE task_id = t.id
+                                                            ), 0) / COALESCE(estimated_minutes, 1)) * 100,
+                                                            100
+                                                        )
                                                     -- Default to 0 for incomplete tasks with no progress value or wrong mode
                                                     ELSE 0
                                                     END AS progress_value,

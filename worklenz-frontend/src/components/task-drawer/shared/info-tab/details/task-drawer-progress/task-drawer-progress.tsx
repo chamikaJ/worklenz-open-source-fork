@@ -42,7 +42,7 @@ const TaskDrawerProgress = ({ task, form }: TaskDrawerProgressProps) => {
 
   // Never show manual progress input for parent tasks (tasks with subtasks)
   // Only show progress input for tasks without subtasks
-  const showManualProgressInput = !hasSubTasks;
+  const showManualProgressInput = !hasSubTasks && project?.use_manual_progress && !project?.use_time_progress;
 
   // Only show weight input for subtasks in weighted progress mode
   const showTaskWeightInput = project?.use_weighted_progress && isSubTask && !hasSubTasks;
