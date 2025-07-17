@@ -68,6 +68,7 @@
   "statusLabel": "Statusi",
   
   "createClientSuccessMessage": "Klienti u krijua me sukses",
+  "createClientSuccessMessageWithInvite": "Klienti u krijua me sukses! Ftesa u dërgua në {email}",
   "createClientErrorMessage": "Dështoi krijimi i klientit",
   "updateClientSuccessMessage": "Klienti u përditësua me sukses",
   "updateClientErrorMessage": "Dështoi përditësimi i klientit",

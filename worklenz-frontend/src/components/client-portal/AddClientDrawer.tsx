@@ -36,7 +36,13 @@ const AddClientDrawer = () => {
       }).unwrap();
       
       form.resetFields();
-      message.success(t('createClientSuccessMessage') || 'Client created successfully');
+      
+      // Show success message with invitation info
+      const successMessage = values.email 
+        ? t('createClientSuccessMessageWithInvite') || `Client created successfully! Invitation sent to ${values.email}`
+        : t('createClientSuccessMessage') || 'Client created successfully';
+      
+      message.success(successMessage);
       dispatch(toggleAddClientDrawer());
     } catch (error: any) {
       message.error(error?.data?.message || t('createClientErrorMessage') || 'Failed to create client');

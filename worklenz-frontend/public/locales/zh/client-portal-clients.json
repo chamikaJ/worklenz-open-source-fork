@@ -68,6 +68,7 @@
   "statusLabel": "状态",
   
   "createClientSuccessMessage": "客户创建成功",
+  "createClientSuccessMessageWithInvite": "客户创建成功！邀请已发送至 {email}",
   "createClientErrorMessage": "创建客户失败",
   "updateClientSuccessMessage": "客户更新成功",
   "updateClientErrorMessage": "更新客户失败",

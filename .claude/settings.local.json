@@ -4,13 +4,7 @@
       "Bash(find:*)",
       "Bash(npm run build:*)",
       "Bash(npm run type-check:*)",
-      "Bash(npm run:*)",
-      "Bash(rm:*)",
-      "Bash(mkdir:*)",
-      "Bash(mv:*)",
-      "Bash(npx tsc:*)",
-      "Bash(npm start)",
-      "Bash(grep:*)"
+      "Bash(npm run:*)"
     ],
     "deny": []
   }

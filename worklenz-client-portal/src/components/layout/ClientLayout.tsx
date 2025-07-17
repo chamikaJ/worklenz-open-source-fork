@@ -64,7 +64,7 @@ const ClientLayout: React.FC = () => {
   // Update notification count
   React.useEffect(() => {
     // if (notificationsData?.body) {
-    //   const unreadCount = notificationsData.body.data.filter(n => !n.read).length;
+    //   const unreadCount = notificationsData.body.filter(n => !n.read).length;
     //   // dispatch(setUnreadNotifications(unreadCount));
     // }
   }, [notificationsData]);
@@ -146,7 +146,7 @@ const ClientLayout: React.FC = () => {
       label: (
         <div style={{ padding: '8px 0' }}>
           <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Notifications</div>
-          {notificationsData?.body?.data.slice(0, 3).map((notification) => (
+          {Array.isArray(notificationsData?.body) && notificationsData.body.slice(0, 3).map((notification) => (
             <div key={notification.id} style={{ fontSize: '12px', marginBottom: '4px' }}>
               {notification.title}
             </div>

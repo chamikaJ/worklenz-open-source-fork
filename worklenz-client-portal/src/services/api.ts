@@ -8,7 +8,7 @@ class ClientPortalAPI {
 
   constructor() {
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/client-portal',
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ class ClientPortalAPI {
     this.api.interceptors.request.use(
       (config) => {
         if (this.clientToken) {
-          config.headers['Authorization'] = `Bearer ${this.clientToken}`;
+          config.headers['x-client-token'] = this.clientToken;
         }
         return config;
       },
@@ -46,7 +46,7 @@ class ClientPortalAPI {
             // Try to refresh token
             const newToken = await this.refreshTokenSilently();
             this.setToken(newToken);
-            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+            originalRequest.headers['x-client-token'] = newToken;
             return this.api(originalRequest);
           } catch (refreshError) {
             // If refresh fails, redirect to login
@@ -129,7 +129,7 @@ class ClientPortalAPI {
   }
 
   async validateInvite(token: string): Promise<ApiResponse<{ valid: boolean; email?: string; organizationName?: string }>> {
-    const response = await this.api.get(`/auth/invite/validate?token=${token}`);
+    const response = await this.api.get(`/invitation/validate?token=${token}`);
     return response.data;
   }
 
@@ -139,7 +139,7 @@ class ClientPortalAPI {
     email: string; 
     password: string; 
   }): Promise<ApiResponse<{ user: ClientUser; token: string; expiresAt: string }>> {
-    const response = await this.api.post('/auth/invite/accept', inviteData);
+    const response = await this.api.post('/invitation/accept', inviteData);
     return response.data;
   }
 
@@ -178,67 +178,67 @@ class ClientPortalAPI {
 
   // Dashboard
   async getDashboard() {
-    return this.request('/client-portal/dashboard');
+    return this.request('/dashboard');
   }
 
   // Services
   async getServices() {
-    return this.request('/client-portal/services');
+    return this.request('/services');
   }
 
   async getServiceDetails(id: string) {
-    return this.request(`/client-portal/services/${id}`);
+    return this.request(`/services/${id}`);
   }
 
   // Requests
   async getRequests() {
-    return this.request('/client-portal/requests');
+    return this.request('/requests');
   }
 
   async createRequest(data: Partial<ClientRequest>) {
-    return this.request('/client-portal/requests', {
+    return this.request('/requests', {
       method: 'POST',
       data,
     });
   }
 
   async getRequestDetails(id: string) {
-    return this.request(`/client-portal/requests/${id}`);
+    return this.request(`/requests/${id}`);
   }
 
   async updateRequest(id: string, data: Partial<ClientRequest>) {
-    return this.request(`/client-portal/requests/${id}`, {
+    return this.request(`/requests/${id}`, {
       method: 'PUT',
       data,
     });
   }
 
   async deleteRequest(id: string) {
-    return this.request(`/client-portal/requests/${id}`, {
+    return this.request(`/requests/${id}`, {
       method: 'DELETE',
     });
   }
 
   // Projects
   async getProjects() {
-    return this.request('/client-portal/projects');
+    return this.request('/projects');
   }
 
   async getProjectDetails(id: string) {
-    return this.request(`/client-portal/projects/${id}`);
+    return this.request(`/projects/${id}`);
   }
 
   // Invoices
   async getInvoices() {
-    return this.request('/client-portal/invoices');
+    return this.request('/invoices');
   }
 
   async getInvoiceDetails(id: string) {
-    return this.request(`/client-portal/invoices/${id}`);
+    return this.request(`/invoices/${id}`);
   }
 
   async payInvoice(id: string, paymentData: unknown) {
-    return this.request(`/client-portal/invoices/${id}/pay`, {
+    return this.request(`/invoices/${id}/pay`, {
       method: 'POST',
       data: paymentData,
     });
@@ -246,7 +246,7 @@ class ClientPortalAPI {
 
   async downloadInvoice(id: string): Promise<Blob> {
     const response = await this.api.request({
-      url: `/client-portal/invoices/${id}/download`,
+      url: `/invoices/${id}/download`,
       method: 'GET',
       responseType: 'blob',
     });
@@ -255,31 +255,31 @@ class ClientPortalAPI {
 
   // Chat
   async getChats() {
-    return this.request('/client-portal/chats');
+    return this.request('/chats');
   }
 
   async getChatDetails(id: string) {
-    return this.request(`/client-portal/chats/${id}`);
+    return this.request(`/chats/${id}`);
   }
 
   async sendMessage(chatId: string, messageData: { content: string; attachments?: string[] }) {
-    return this.request(`/client-portal/chats/${chatId}/messages`, {
+    return this.request(`/chats/${chatId}/messages`, {
       method: 'POST',
       data: messageData,
     });
   }
 
   async getMessages(chatId: string) {
-    return this.request(`/client-portal/chats/${chatId}/messages`);
+    return this.request(`/chats/${chatId}/messages`);
   }
 
   // Settings
   async getSettings() {
-    return this.request('/client-portal/settings');
+    return this.request('/settings');
   }
 
   async updateSettings(settingsData: Partial<ClientSettings>) {
-    return this.request('/client-portal/settings', {
+    return this.request('/settings', {
       method: 'PUT',
       data: settingsData,
     });
@@ -287,11 +287,11 @@ class ClientPortalAPI {
 
   // Profile
   async getProfile() {
-    return this.request('/client-portal/profile');
+    return this.request('/profile');
   }
 
   async updateProfile(profileData: Partial<ClientUser>) {
-    return this.request('/client-portal/profile', {
+    return this.request('/profile', {
       method: 'PUT',
       data: profileData,
     });
@@ -299,17 +299,17 @@ class ClientPortalAPI {
 
   // Notifications
   async getNotifications() {
-    return this.request('/client-portal/notifications');
+    return this.request('/notifications');
   }
 
   async markNotificationRead(id: string) {
-    return this.request(`/client-portal/notifications/${id}/read`, {
+    return this.request(`/notifications/${id}/read`, {
       method: 'PUT',
     });
   }
 
   async markAllNotificationsRead() {
-    return this.request('/client-portal/notifications/read-all', {
+    return this.request('/notifications/read-all', {
       method: 'PUT',
     });
   }
@@ -320,7 +320,7 @@ class ClientPortalAPI {
     formData.append('file', file);
     
     const response = await this.api.request({
-      url: '/client-portal/upload',
+      url: '/upload',
       method: 'POST',
       data: formData,
       headers: {

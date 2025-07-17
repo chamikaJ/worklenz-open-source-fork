@@ -22,7 +22,7 @@ const InvitePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
-  const { isLoading, error, inviteToken, inviteValid, inviteLoading, isAuthenticated } = useAppSelector((state: RootState) => state.auth);
+  const { isLoading, error, inviteToken, inviteValid, inviteLoading, inviteDetails, isAuthenticated } = useAppSelector((state: RootState) => state.auth);
   const [form] = Form.useForm<InviteFormValues>();
 
   const validationRules = {
@@ -72,6 +72,16 @@ const InvitePage: React.FC = () => {
       dispatch(setError(null));
     };
   }, [dispatch]);
+
+  // Autofill form when invitation details are loaded
+  useEffect(() => {
+    if (inviteDetails) {
+      form.setFieldsValue({
+        email: inviteDetails.email || '',
+        name: inviteDetails.name || '',
+      });
+    }
+  }, [inviteDetails, form]);
 
   const onFinish = useCallback(
     async (values: InviteFormValues) => {
@@ -220,6 +230,7 @@ const InvitePage: React.FC = () => {
               placeholder={t('invite.email_placeholder')}
               size="large"
               style={styles.button}
+              disabled={!!inviteDetails?.email}
             />
           </Form.Item>
 

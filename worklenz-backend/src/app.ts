@@ -17,6 +17,7 @@ import apiRouter from "./routes/apis";
 import authRouter from "./routes/auth";
 import emailTemplatesRouter from "./routes/email-templates";
 import public_router from "./routes/public";
+import clientPortalApiRouter from "./routes/apis/client-portal-api-router";
 import { isInternalServer, isProduction } from "./shared/utils";
 import sessionMiddleware from "./middlewares/session-middleware";
 import safeControllerFunction from "./shared/safe-controller-function";
@@ -62,6 +63,7 @@ const allowedOrigins = [
     : [
         "http://localhost:3000",
         "http://localhost:5173",
+        "http://localhost:5174",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5000",
@@ -88,7 +90,8 @@ app.use(cors({
     "Content-Type",
     "Accept",
     "Authorization",
-    "X-CSRF-Token"
+    "X-CSRF-Token",
+    "x-client-token"
   ],
   exposedHeaders: ["Set-Cookie", "X-CSRF-Token"]
 }));
@@ -109,6 +112,15 @@ app.use(flash());
 
 // Auth check middleware
 function isLoggedIn(req: Request, _res: Response, next: NextFunction) {
+  // Allow client portal invitation routes to bypass authentication
+  const fullPath = req.originalUrl || req.url;
+  
+  if (req.path.includes("/client-portal/invitation/") || 
+      req.path.includes("/client-portal/auth/login") ||
+      fullPath.includes("/client-portal/invitation/") ||
+      fullPath.includes("/client-portal/auth/login")) {
+    return next();
+  }
   return req.user ? next() : next(createError(401));
 }
 
@@ -193,6 +205,7 @@ const apiLimiter = rateLimit({
 
 // Routes
 app.use("/api/v1", apiLimiter, isLoggedIn, apiRouter);
+app.use("/api/client-portal", apiLimiter, clientPortalApiRouter);
 app.use("/secure", authRouter);
 app.use("/public", public_router);
 

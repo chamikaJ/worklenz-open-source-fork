@@ -68,6 +68,7 @@
   "statusLabel": "Status",
   
   "createClientSuccessMessage": "Cliente criado com sucesso",
+  "createClientSuccessMessageWithInvite": "Cliente criado com sucesso! Convite enviado para {email}",
   "createClientErrorMessage": "Falha ao criar cliente",
   "updateClientSuccessMessage": "Cliente atualizado com sucesso",
   "updateClientErrorMessage": "Falha ao atualizar cliente",

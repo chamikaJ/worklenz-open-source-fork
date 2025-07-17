@@ -44,8 +44,9 @@ export function isTestServer() {
 
 /** Returns true if localhost:3000 or localhost:4200 */
 export function isLocalServer() {
+  const allowedUrls = ["localhost:5173", "localhost:5174", "localhost:4200", "localhost:3000", "127.0.0.1:3000", "localhost:5000"];
   const frontendUrl = process.env.FRONTEND_URL;
-  return frontendUrl === "localhost:5173" || frontendUrl === "localhost:4200" || frontendUrl === "localhost:3000" || frontendUrl === "127.0.0.1:3000";
+  return allowedUrls.includes(frontendUrl || "");
 }
 
 /** Returns true of isLocal or isTest server */

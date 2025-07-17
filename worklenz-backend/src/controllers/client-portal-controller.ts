@@ -4,14 +4,17 @@ import db from "../config/db";
 import TokenService from "../services/token-service";
 import { sendEmail, EmailRequest } from "../shared/email";
 import { AuthenticatedClientRequest } from "../middlewares/client-auth-middleware";
+import FileConstants from "../shared/file-constants";
+import { IEmailTemplateType } from "../interfaces/email-template-type";
+import { getBaseUrl, getClientPortalBaseUrl } from "../cron_jobs/helpers";
 
 class ClientPortalController {
 
   // Dashboard
   static async getDashboard(req: AuthenticatedClientRequest, res: Response) {
     try {
-      const clientId = req.clientId;
-      const organizationId = req.organizationId;
+      const {clientId} = req;
+      const {organizationId} = req;
 
       // Get request statistics
       const requestStatsQuery = `
@@ -81,9 +84,9 @@ class ClientPortalController {
   // Services
   static async getServices(req: AuthenticatedClientRequest, res: Response) {
     try {
-      const clientId = req.clientId;
-      const organizationId = req.organizationId;
-      const { page = 1, limit = 10, status = 'active' } = req.query;
+      const {clientId} = req;
+      const {organizationId} = req;
+      const { page = 1, limit = 10, status = "active" } = req.query;
 
       // Get services that are either public or specifically allowed for this client
       const query = `
@@ -125,8 +128,8 @@ class ClientPortalController {
   static async getServiceDetails(req: AuthenticatedClientRequest, res: Response) {
     try {
       const { id } = req.params;
-      const clientId = req.clientId;
-      const organizationId = req.organizationId;
+      const {clientId} = req;
+      const {organizationId} = req;
 
       // Get service details if client has access
       const query = `
@@ -173,8 +176,8 @@ class ClientPortalController {
   // Requests
   static async getRequests(req: AuthenticatedClientRequest, res: Response) {
     try {
-      const clientId = req.clientId;
-      const organizationId = req.organizationId;
+      const {clientId} = req;
+      const {organizationId} = req;
       const { page = 1, limit = 10, status, search } = req.query;
 
       // Build query with pagination and filtering
@@ -265,9 +268,9 @@ class ClientPortalController {
 
   static async createRequest(req: AuthenticatedClientRequest, res: Response) {
     try {
-      const clientId = req.clientId;
-      const organizationId = req.organizationId;
-      const clientEmail = req.clientEmail;
+      const {clientId} = req;
+      const {organizationId} = req;
+      const {clientEmail} = req;
       const { serviceId, requestData, notes } = req.body;
 
       // Validate required fields
@@ -304,7 +307,7 @@ class ClientPortalController {
         serviceId,
         clientId,
         organizationId,
-        'pending',
+        "pending",
         requestData ? JSON.stringify(requestData) : null,
         notes || null
       ];
@@ -335,8 +338,8 @@ class ClientPortalController {
   static async getRequestDetails(req: AuthenticatedClientRequest, res: Response) {
     try {
       const { id } = req.params;
-      const clientId = req.clientId;
-      const organizationId = req.organizationId;
+      const {clientId} = req;
+      const {organizationId} = req;
 
       // Get request details with service information
       const query = `
@@ -392,8 +395,8 @@ class ClientPortalController {
   static async updateRequest(req: AuthenticatedClientRequest, res: Response) {
     try {
       const { id } = req.params;
-      const clientId = req.clientId;
-      const organizationId = req.organizationId;
+      const {clientId} = req;
+      const {organizationId} = req;
       const { requestData, notes } = req.body;
 
       // Verify request exists and belongs to client
@@ -409,7 +412,7 @@ class ClientPortalController {
       const currentRequest = requestCheck.rows[0];
 
       // Only allow updates if request is in pending status
-      if (currentRequest.status !== 'pending') {
+      if (currentRequest.status !== "pending") {
         return res.status(400).json(new ServerResponse(false, null, "Cannot update request after it has been accepted"));
       }
 
@@ -471,8 +474,8 @@ class ClientPortalController {
   static async deleteRequest(req: AuthenticatedClientRequest, res: Response) {
     try {
       const { id } = req.params;
-      const clientId = req.clientId;
-      const organizationId = req.organizationId;
+      const {clientId} = req;
+      const {organizationId} = req;
 
       // Verify request exists and belongs to client
       const requestCheck = await db.query(
@@ -487,7 +490,7 @@ class ClientPortalController {
       const currentRequest = requestCheck.rows[0];
 
       // Only allow deletion if request is in pending status
-      if (currentRequest.status !== 'pending') {
+      if (currentRequest.status !== "pending") {
         return res.status(400).json(new ServerResponse(false, null, "Cannot delete request after it has been accepted"));
       }
 
@@ -512,11 +515,11 @@ class ClientPortalController {
   static async getRequestStatusOptions(req: AuthenticatedClientRequest, res: Response) {
     try {
       const statusOptions = [
-        { value: 'pending', label: 'Pending', description: 'Request is waiting for review', color: '#faad14' },
-        { value: 'accepted', label: 'Accepted', description: 'Request has been accepted and will be processed', color: '#52c41a' },
-        { value: 'in_progress', label: 'In Progress', description: 'Request is currently being worked on', color: '#1890ff' },
-        { value: 'completed', label: 'Completed', description: 'Request has been completed successfully', color: '#52c41a' },
-        { value: 'rejected', label: 'Rejected', description: 'Request has been rejected', color: '#f5222d' }
+        { value: "pending", label: "Pending", description: "Request is waiting for review", color: "#faad14" },
+        { value: "accepted", label: "Accepted", description: "Request has been accepted and will be processed", color: "#52c41a" },
+        { value: "in_progress", label: "In Progress", description: "Request is currently being worked on", color: "#1890ff" },
+        { value: "completed", label: "Completed", description: "Request has been completed successfully", color: "#52c41a" },
+        { value: "rejected", label: "Rejected", description: "Request has been rejected", color: "#f5222d" }
       ];
 
       return res.json(new ServerResponse(true, statusOptions, "Request status options retrieved successfully"));
@@ -960,6 +963,17 @@ class ClientPortalController {
       const result = await db.query(query, values);
       const newClient = result.rows[0];
 
+      // Send invitation email if email is provided
+      if (newClient.email) {
+        try {
+          const userId = (req.user as any)?.id;
+          await ClientPortalController.sendClientInvitationEmail(newClient, teamId, userId);
+        } catch (emailError) {
+          console.error("Error sending client invitation email:", emailError);
+          // Continue with client creation even if email fails
+        }
+      }
+
       return res.json(new ServerResponse(true, {
         id: newClient.id,
         name: newClient.name,
@@ -977,6 +991,67 @@ class ClientPortalController {
     } catch (error) {
       console.error("Error creating client:", error);
       return res.status(500).json(new ServerResponse(false, null, "Failed to create client"));
+    }
+  }
+
+  static async sendClientInvitationEmail(client: any, teamId: string, invitedBy: string) {
+    try {
+      // Get team information
+      const teamQuery = `SELECT name FROM teams WHERE id = $1`;
+      const teamResult = await db.query(teamQuery, [teamId]);
+      const teamName = teamResult.rows[0]?.name || "Worklenz Team";
+
+      // Generate secure token for invitation
+      const expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days from now
+      const inviteToken = TokenService.generateInviteToken({
+        clientId: client.id,
+        email: client.email,
+        name: client.name,
+        role: "member",
+        invitedBy,
+        expiresAt,
+        type: "invite"
+      });
+
+      // Create invitation record in database
+      await TokenService.createInvitation({
+        clientId: client.id,
+        email: client.email,
+        name: client.name,
+        role: "member",
+        invitedBy,
+        token: inviteToken
+      });
+
+      // Get the email template
+      const template = FileConstants.getEmailTemplate(IEmailTemplateType.ClientInvitation) as string;
+      if (!template) {
+        throw new Error("Client invitation email template not found");
+      }
+
+      // Generate client portal link with secure token
+      const portalLink = `${getClientPortalBaseUrl()}/invite?token=${inviteToken}`;
+
+      // Replace template variables
+      const emailContent = template
+        .replace(/\[VAR_CLIENT_NAME\]/g, client.name || "Client")
+        .replace(/\[VAR_CLIENT_EMAIL\]/g, client.email || "")
+        .replace(/\[VAR_COMPANY_NAME\]/g, client.company_name || "N/A")
+        .replace(/\[VAR_CLIENT_PHONE\]/g, client.phone || "N/A")
+        .replace(/\[VAR_TEAM_NAME\]/g, teamName)
+        .replace(/\[VAR_PORTAL_LINK\]/g, portalLink);
+
+      // Send the email
+      await sendEmail({
+        to: [client.email],
+        subject: `Welcome to your Client Portal - ${teamName}`,
+        html: emailContent
+      });
+
+      console.log(`Client invitation email sent to ${client.email}`);
+    } catch (error) {
+      console.error("Error sending client invitation email:", error);
+      throw error;
     }
   }
 
@@ -1150,7 +1225,7 @@ class ClientPortalController {
           unpaidInvoices: 0 // Placeholder
         },
         // Projects
-        projects: projects,
+        projects,
         // Team members (placeholder)
         team_members: []
       };
@@ -1555,7 +1630,7 @@ class ClientPortalController {
   static async inviteTeamMember(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { email, name, role = 'member' } = req.body;
+      const { email, name, role = "member" } = req.body;
       const teamId = (req.user as any)?.team_id;
       const inviterId = (req.user as any)?.id;
       const inviterName = (req.user as any)?.name;
@@ -1611,7 +1686,7 @@ class ClientPortalController {
       });
 
       // Generate invitation link
-      const inviteLink = `${process.env.CLIENT_PORTAL_URL || 'http://localhost:3001'}/invitation?token=${inviteToken}`;
+      const inviteLink = `${process.env.CLIENT_PORTAL_URL || "http://localhost:3001"}/invitation?token=${inviteToken}`;
 
       // Generate email HTML
       const emailHtml = ClientPortalController.generateInvitationEmailHTML({
@@ -1642,7 +1717,7 @@ class ClientPortalController {
         email,
         name,
         role,
-        status: 'pending',
+        status: "pending",
         expiresAt
       }, "Team member invited successfully"));
     } catch (error) {
@@ -1715,7 +1790,7 @@ class ClientPortalController {
       );
 
       // Generate new invitation link
-      const inviteLink = `${process.env.CLIENT_PORTAL_URL || 'http://localhost:3001'}/invitation?token=${newToken}`;
+      const inviteLink = `${process.env.CLIENT_PORTAL_URL || "http://localhost:3001"}/invitation?token=${newToken}`;
 
       // Generate email HTML
       const emailHtml = ClientPortalController.generateInvitationEmailHTML({
@@ -1945,8 +2020,10 @@ class ClientPortalController {
 
       // Return invitation details for the frontend
       return res.json(new ServerResponse(true, {
-        id: invitation.id,
+        valid: true,
         email: invitation.email,
+        organizationName: invitation.team_name,
+        id: invitation.id,
         name: invitation.name,
         role: invitation.role,
         clientName: invitation.client_name,
@@ -1978,7 +2055,7 @@ class ClientPortalController {
       // Send welcome email
       const invitation = await TokenService.getInvitationByToken(token);
       if (invitation) {
-        const portalLink = `${process.env.CLIENT_PORTAL_URL || 'http://localhost:3001'}/login`;
+        const portalLink = `${process.env.CLIENT_PORTAL_URL || "http://localhost:3001"}/login`;
         
         // Generate welcome email HTML
         const emailHtml = ClientPortalController.generateWelcomeEmailHTML({
@@ -2031,7 +2108,7 @@ class ClientPortalController {
         organizationId: clientUser.team_id,
         email: clientUser.email,
         permissions: await TokenService.getClientPermissions(clientUser.client_id),
-        type: 'client' as const
+        type: "client" as const
       };
 
       const accessToken = TokenService.generateClientToken(tokenPayload);
@@ -2043,7 +2120,7 @@ class ClientPortalController {
       );
 
       return res.json(new ServerResponse(true, {
-        accessToken,
+        token: accessToken,
         user: {
           id: clientUser.id,
           email: clientUser.email,
@@ -2073,8 +2150,8 @@ class ClientPortalController {
 
   static async getClientProfile(req: AuthenticatedClientRequest, res: Response) {
     try {
-      const clientId = req.clientId;
-      const clientEmail = req.clientEmail;
+      const {clientId} = req;
+      const {clientEmail} = req;
 
       // Get client user details
       const query = `
@@ -2111,8 +2188,8 @@ class ClientPortalController {
 
   static async updateClientProfile(req: AuthenticatedClientRequest, res: Response) {
     try {
-      const clientId = req.clientId;
-      const clientEmail = req.clientEmail;
+      const {clientId} = req;
+      const {clientEmail} = req;
       const { name, currentPassword, newPassword } = req.body;
 
       if (!name) {
@@ -2130,7 +2207,7 @@ class ClientPortalController {
       }
 
       const user = currentUser.rows[0];
-      const updateFields = ['name = $1', 'updated_at = NOW()'];
+      const updateFields = ["name = $1", "updated_at = NOW()"];
       const updateValues = [name];
       let paramIndex = 2;
 
@@ -2141,15 +2218,15 @@ class ClientPortalController {
         }
 
         // Verify current password
-        const crypto = require('crypto');
-        const currentPasswordHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
+        const crypto = require("crypto");
+        const currentPasswordHash = crypto.createHash("sha256").update(currentPassword).digest("hex");
         
         if (currentPasswordHash !== user.password_hash) {
           return res.status(400).json(new ServerResponse(false, null, "Current password is incorrect"));
         }
 
         // Hash new password
-        const newPasswordHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+        const newPasswordHash = crypto.createHash("sha256").update(newPassword).digest("hex");
         updateFields.push(`password_hash = $${paramIndex}`);
         updateValues.push(newPasswordHash);
         paramIndex++;
@@ -2159,7 +2236,7 @@ class ClientPortalController {
       updateValues.push(user.id);
       const updateQuery = `
         UPDATE client_users 
-        SET ${updateFields.join(', ')}
+        SET ${updateFields.join(", ")}
         WHERE id = $${paramIndex}
         RETURNING id, email, name, role, updated_at
       `;

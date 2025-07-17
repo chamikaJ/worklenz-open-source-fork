@@ -191,7 +191,7 @@ const ClientTeamsDrawer = () => {
       width: 150,
       render: (_, record: any) => (
         <Flex gap={8} align="center">
-          {record.status !== 'active' && (
+          {!record.accepted_at && (
             <Tooltip title={t('resendInvitationTooltip') || 'Resend Invitation'}>
               <Button
                 shape="default"

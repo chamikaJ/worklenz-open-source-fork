@@ -138,6 +138,7 @@ export interface ClientPortalTeamMember {
   role: string;
   avatar?: string;
   status: 'active' | 'inactive';
+  accepted_at?: string | null;
 }
 
 export interface CreateClientRequest {

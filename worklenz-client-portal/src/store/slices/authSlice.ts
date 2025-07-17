@@ -11,6 +11,13 @@ interface AuthState {
   inviteToken: string | null;
   inviteValid: boolean;
   inviteLoading: boolean;
+  inviteDetails: {
+    email?: string;
+    name?: string;
+    organizationName?: string;
+    clientName?: string;
+    companyName?: string;
+  } | null;
   tokenExpiry: string | null;
 }
 
@@ -122,6 +129,7 @@ const initialState: AuthState = {
   inviteToken: null,
   inviteValid: false,
   inviteLoading: false,
+  inviteDetails: null,
   tokenExpiry: localStorage.getItem('clientTokenExpiry'),
 };
 
@@ -237,6 +245,13 @@ const authSlice = createSlice({
         state.inviteLoading = false;
         state.inviteValid = true;
         state.inviteToken = action.payload.token;
+        state.inviteDetails = {
+          email: action.payload.email,
+          name: action.payload.name,
+          organizationName: action.payload.organizationName,
+          clientName: action.payload.clientName,
+          companyName: action.payload.companyName,
+        };
         state.error = null;
       })
       .addCase(validateInviteToken.rejected, (state, action) => {

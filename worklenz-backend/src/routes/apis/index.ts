@@ -58,7 +58,6 @@ import taskDependenciesApiRouter from "./task-dependencies-api-router";
 import taskRecurringApiRouter from "./task-recurring-api-router";
 
 import customColumnsApiRouter from "./custom-columns-api-router";
-import clientPortalApiRouter from "./client-portal-api-router";
 
 const api = express.Router();
 
@@ -118,8 +117,5 @@ api.use("/task-dependencies", taskDependenciesApiRouter);
 api.use("/task-recurring", taskRecurringApiRouter);
 
 api.use("/custom-columns", customColumnsApiRouter);
-
-// Client Portal API routes
-api.use("/client-portal", clientPortalApiRouter);
 
 export default api;

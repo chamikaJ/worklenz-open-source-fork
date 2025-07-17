@@ -12,5 +12,6 @@ export enum IEmailTemplateType {
   TaskDone,
   ProjectDailyDigest,
   TaskComment,
-  ProjectComment
+  ProjectComment,
+  ClientInvitation
 }

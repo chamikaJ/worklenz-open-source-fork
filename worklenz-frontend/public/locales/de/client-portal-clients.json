@@ -70,6 +70,7 @@
   "statusLabel": "Status",
   
   "createClientSuccessMessage": "Kunde erfolgreich erstellt",
+  "createClientSuccessMessageWithInvite": "Kunde erfolgreich erstellt! Einladung an {email} gesendet",
   "createClientErrorMessage": "Fehler beim Erstellen des Kunden",
   "updateClientSuccessMessage": "Kunde erfolgreich aktualisiert",
   "updateClientErrorMessage": "Fehler beim Aktualisieren des Kunden",
