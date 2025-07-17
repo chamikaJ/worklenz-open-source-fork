@@ -16,6 +16,7 @@ import LoginPage from '@/pages/LoginPage';
 import InvitePage from '@/pages/InvitePage';
 import DashboardPage from '@/pages/DashboardPage';
 import ServicesPage from '@/pages/ServicesPage';
+import ServiceDetailsPage from '@/pages/ServiceDetailsPage';
 import RequestsPage from '@/pages/RequestsPage';
 import RequestDetailsPage from '@/pages/RequestDetailsPage';
 import ProjectsPage from '@/pages/ProjectsPage';
@@ -40,6 +41,31 @@ const AppContent: React.FC = () => {
         token: {
           colorPrimary: '#1890ff',
           borderRadius: 6,
+          colorBgLayout: currentTheme === 'dark' ? '#141414' : '#f0f2f5',
+          colorBgContainer: currentTheme === 'dark' ? '#1f1f1f' : '#ffffff',
+          colorText: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          colorTextSecondary: currentTheme === 'dark' ? '#a6a6a6' : '#666666',
+          colorBorder: currentTheme === 'dark' ? '#303030' : '#d9d9d9',
+        },
+        components: {
+          Layout: {
+            siderBg: currentTheme === 'dark' ? '#1f1f1f' : '#ffffff',
+            headerBg: currentTheme === 'dark' ? '#1f1f1f' : '#ffffff',
+          },
+          Menu: {
+            colorBgContainer: currentTheme === 'dark' ? '#1f1f1f' : '#ffffff',
+            itemBg: 'transparent',
+            itemSelectedBg: currentTheme === 'dark' ? '#1890ff20' : '#1890ff10',
+            itemHoverBg: currentTheme === 'dark' ? '#ffffff10' : '#00000008',
+            colorText: currentTheme === 'dark' ? '#ffffff' : '#000000',
+            colorTextDescription: currentTheme === 'dark' ? '#a6a6a6' : '#666666',
+          },
+          Button: {
+            borderRadius: 6,
+          },
+          Select: {
+            borderRadius: 6,
+          },
         },
       }}
     >
@@ -77,6 +103,7 @@ const AppContent: React.FC = () => {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="services" element={<ServicesPage />} />
+            <Route path="services/:id" element={<ServiceDetailsPage />} />
             <Route path="requests" element={<RequestsPage />} />
             <Route path="requests/:id" element={<RequestDetailsPage />} />
             <Route path="projects" element={<ProjectsPage />} />

@@ -36,5 +36,45 @@
     "invalid_token": "Invalid invitation token",
     "validation_error": "Failed to validate invitation",
     "acceptance_error": "Failed to accept invitation"
+  },
+  "services": {
+    "title": "Services ({{items}})",
+    "noDescription": "No description available",
+    "price": "{{currency}} {{price}}",
+    "noServices": "No services available",
+    "errorLoadingServices": "Error loading services",
+    "errorLoadingServicesDescription": "Failed to load services. Please try again later.",
+    "errorLoadingService": "Error loading service",
+    "errorLoadingServiceDescription": "Failed to load service details. Please try again later.",
+    "requestButton": "Request Service",
+    "description": "Description",
+    "details": "Service Details",
+    "category": "Category",
+    "status": "Status"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "services": "Services",
+    "requests": "Requests",
+    "projects": "Projects",
+    "invoices": "Invoices",
+    "chats": "Chats",
+    "settings": "Settings"
+  },
+  "user": {
+    "profile": "Profile",
+    "logout": "Logout",
+    "defaultName": "Client User"
+  },
+  "theme": {
+    "dark": "Dark Mode",
+    "light": "Light Mode"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No new notifications"
+  },
+  "app": {
+    "title": "Client Portal"
   }
 } 
