@@ -56,7 +56,7 @@ export async function sendEmail(email: IEmail): Promise<string | null> {
 
     // Filter out empty, null, undefined, and invalid emails
     options.to = options.to
-      .filter(email => email && typeof email === 'string' && email.trim().length > 0)
+      .filter(email => email && typeof email === "string" && email.trim().length > 0)
       .map(email => email.trim())
       .filter(email => isValidateEmail(email));
 

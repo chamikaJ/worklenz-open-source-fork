@@ -6,6 +6,7 @@ import mainRoutes, { licenseExpiredRoute } from './main-routes';
 import notFoundRoute from './not-found-route';
 import accountSetupRoute from './account-setup-routes';
 import reportingRoutes from './reporting-routes';
+import clientPortalRoutes from './client-portal-routes';
 import { useAuthService } from '@/hooks/useAuth';
 import { AuthenticatedLayout } from '@/layouts/AuthenticatedLayout';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -30,6 +31,7 @@ const withCodeSplitting = (Component: React.LazyExoticComponent<React.ComponentT
 
 // Memoized guard components with defensive programming
 import { useAuthStatus } from '@/hooks/useAuthStatus';
+import clientViewRoutes from './client-view-routes';
 
 export const AuthGuard = memo(({ children }: GuardProps) => {
   const { isAuthenticated, location } = useAuthStatus();
@@ -191,7 +193,7 @@ const publicRoutes = [...rootRoutes, ...authRoutes, notFoundRoute];
 // Apply combined guard to main routes that require both auth and setup completion
 const protectedMainRoutes = wrapRoutes(mainRoutes, AuthAndSetupGuard);
 const adminRoutes = wrapRoutes(reportingRoutes, AdminGuard);
-// Setup route should be accessible without setup completion, only requires authentication
+const adminclientPortalRoutes = wrapRoutes(clientPortalRoutes, AdminGuard);
 const setupRoutes = wrapRoutes([accountSetupRoute], AuthGuard);
 
 // License expiry check function
@@ -232,7 +234,7 @@ const router = createBrowserRouter(
           </Suspense>
         </ErrorBoundary>
       ),
-      children: [...licenseCheckedMainRoutes, ...adminRoutes, ...setupRoutes, licenseExpiredRoute],
+      children: [...licenseCheckedMainRoutes, ...adminRoutes, ...adminclientPortalRoutes, ...clientViewRoutes , ...setupRoutes, licenseExpiredRoute],
     },
     ...publicRoutes,
   ],

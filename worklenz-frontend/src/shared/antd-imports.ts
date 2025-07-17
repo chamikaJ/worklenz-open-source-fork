@@ -50,7 +50,9 @@ import {
   message,
   notification,
   theme,
-} from 'antd';
+  Pagination,
+  Statistic
+} from 'antd/es';
 
 // Icons - Import commonly used ones
 export {
@@ -101,7 +103,10 @@ export {
   DoubleRightOutlined,
   UserAddOutlined,
   ArrowsAltOutlined,
-  EllipsisOutlined
+  EllipsisOutlined,
+  ExclamationCircleFilled,
+  ReloadOutlined,
+  ShareAltOutlined
 } from '@ant-design/icons';
 
 // Re-export all components with React
@@ -145,6 +150,8 @@ export {
   message,
   notification,
   theme,
+  Pagination,
+  Statistic,
 };
 
 // TypeScript Types - Import commonly used ones

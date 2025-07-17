@@ -86,11 +86,24 @@ import { projectsApi } from '@/api/projects/projects.v1.api.service';
 import projectViewReducer from '@features/project/project-view-slice';
 import taskManagementFieldsReducer from '@features/task-management/taskListFields.slice';
 
+//clients portal
+import clientsPortalReducer from '../features/clients-portal';
+
+//client view
+import clientViewReducer from '../features/client-view';
+
+// Client Portal API
+import { clientPortalApi } from '@/api/client-portal/client-portal-api';
+
 export const store = configureStore({
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(homePageApiService.middleware, projectsApi.middleware),
+    }).concat(
+      homePageApiService.middleware, 
+      projectsApi.middleware,
+      clientPortalApi.middleware
+    ),
   reducer: {
     // Auth & User
     auth: authReducer,
@@ -103,6 +116,8 @@ export const store = configureStore({
     homePageReducer: homePageReducer,
     [homePageApiService.reducerPath]: homePageApiService.reducer,
     [projectsApi.reducerPath]: projectsApi.reducer,
+    [clientPortalApi.reducerPath]: clientPortalApi.reducer,
+    
     // Core UI
     themeReducer: themeReducer,
     localesReducer: localesReducer,
@@ -174,11 +189,16 @@ export const store = configureStore({
     grouping: groupingReducer,
     taskManagementSelection: selectionReducer,
     taskManagementFields: taskManagementFieldsReducer,
+
+    //clients portal
+    clientsPortalReducer: clientsPortalReducer,
+
+    //client view
+    clientViewReducer: clientViewReducer,
   },
 });
 
 export type RootState = ReturnType<typeof store.getState>;
-
 export type AppDispatch = typeof store.dispatch;
 
 export const useAppDispatch = () => useDispatch<AppDispatch>();

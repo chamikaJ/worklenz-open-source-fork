@@ -1,0 +1,100 @@
+{
+  "pageTitle": "Klientët",
+  "pageDescription": "Menaxhoni klientët tuaj dhe qasjen e tyre në portal",
+  "addClientButton": "Shto Klient",
+  
+  "totalClientsLabel": "Klientët Gjithsej",
+  "activeClientsLabel": "Klientët Aktivë",
+  "totalProjectsLabel": "Projektet Gjithsej",
+  "totalTeamMembersLabel": "Anëtarët e Ekipit",
+  
+  "errorTitle": "Gabim",
+  "loadingText": "Duke ngarkuar...",
+  "refreshButton": "Rifresko",
+  "clearFiltersButton": "Pastro Filtrat",
+  
+  "clientColumn": "Klienti",
+  "statusColumn": "Statusi",
+  "assignedProjectsColumn": "Projektet e Caktuara",
+  "teamMembersColumn": "Anëtarët e Ekipit",
+  "actionBtnsColumn": "Veprimet",
+  
+  "statusActive": "Aktiv",
+  "statusInactive": "Joaktiv",
+  "statusPending": "Në pritje",
+  
+  "viewDetailsTooltip": "Shiko Detajet",
+  "editClientTooltip": "Redakto Klientin",
+  "manageProjectsTooltip": "Menaxho Projektet",
+  "manageTeamTooltip": "Menaxho Ekipin",
+  "deleteTooltip": "Fshi",
+  
+  "deleteConfirmationTitle": "Fshi Klientin",
+  "deleteConfirmationDescription": "Jeni i sigurt që doni të fshini këtë klient? Ky veprim nuk mund të zhbëhet.",
+  "deleteConfirmationOk": "Fshi",
+  "deleteConfirmationCancel": "Anulo",
+  
+  "searchClientsPlaceholder": "Kërko klientë...",
+  "statusFilterPlaceholder": "Filtro sipas statusit",
+  
+  "paginationText": "Duke treguar",
+  "ofText": "nga",
+  "clientsText": "klientë",
+  
+  "addClientTitle": "Shto Klient të Ri",
+  "createButton": "Krijo Klient",
+  "cancelButton": "Anulo",
+  
+  "clientNameLabel": "Emri i Klientit",
+  "clientNamePlaceholder": "Shkruani emrin e klientit",
+  "clientNameRequired": "Ju lutemi shkruani emrin e klientit",
+  "clientNameMinLength": "Emri duhet të ketë të paktën 2 karaktere",
+  
+  "emailLabel": "Adresa e Email-it",
+  "emailPlaceholder": "Shkruani adresën e email-it",
+  "emailRequired": "Ju lutemi shkruani adresën e email-it",
+  "emailInvalid": "Ju lutemi shkruani një adresë email-i të vlefshme",
+  
+  "companyNameLabel": "Emri i Kompanisë",
+  "companyNamePlaceholder": "Shkruani emrin e kompanisë (opsionale)",
+  
+  "phoneLabel": "Numri i Telefonit",
+  "phonePlaceholder": "Shkruani numrin e telefonit (opsionale)",
+  "phoneInvalid": "Ju lutemi shkruani një numër telefoni të vlefshëm",
+  
+  "addressLabel": "Adresa",
+  "addressPlaceholder": "Shkruani adresën (opsionale)",
+  
+  "statusLabel": "Statusi",
+  
+  "createClientSuccessMessage": "Klienti u krijua me sukses",
+  "createClientErrorMessage": "Dështoi krijimi i klientit",
+  "updateClientSuccessMessage": "Klienti u përditësua me sukses",
+  "updateClientErrorMessage": "Dështoi përditësimi i klientit",
+  "deleteClientSuccessMessage": "Klienti u fshi me sukses",
+  "deleteClientErrorMessage": "Dështoi fshirja e klientit",
+  
+  "closeButton": "Mbyll",
+  "deleteButton": "Fshi Klientin",
+  "editButton": "Redakto",
+  "updateButton": "Përditëso Klientin",
+  
+  "editClientTitle": "Redakto Klientin",
+  "errorLoadingClient": "Gabim në ngarkimin e të dhënave të klientit",
+  
+  "clientInformationTitle": "Informacioni i Klientit",
+  "createdAtLabel": "Krijuar",
+  
+  "statisticsTitle": "Statistikat",
+  "activeProjectsLabel": "Projektet Aktive",
+  "totalRequestsLabel": "Kërkesat Gjithsej",
+  
+  "teamManagementTitle": "Menaxhimi i Ekipit",
+  "clientPortalLinkLabel": "Lidhja e Portalit të Klientit",
+  "clientPortalLinkDescription": "Ndani këtë lidhje me klientin tuaj për t'i dhënë atij qasje në portalin e tij",
+  "linkCopiedMessage": "Lidhja u kopjua në të papastër",
+  "noClientsTitle": "Nuk u gjetën klientë",
+  "noClientsDescription": "Ju nuk keni shtuar ende asnjë klient. Shtoni klientin tuaj të parë për të filluar të menaxhoni qasjen në portal.",
+  "errorLoadingClients": "Gabim gjatë ngarkimit të klientëve",
+  "errorLoadingClientsDescription": "Pati një gabim gjatë ngarkimit të klientëve tuaj. Ju lutemi provoni përsëri më vonë."
+}
