@@ -29,6 +29,9 @@ import type { RootState } from '@/store';
 import { useTranslation } from 'react-i18next';
 import ClientPortalSidebar from './ClientPortalSidebar';
 import { useResponsive } from '@/hooks/useResponsive';
+import worklenzLightLogo from '@/assets/images/worklenz-light-mode.png';
+import worklenzDarkLogo from '@/assets/images/worklenz-dark-mode.png';
+import { useGetSettingsQuery } from '@/store/api';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -55,6 +58,9 @@ const ClientLayout: React.FC = () => {
   const currentLanguage = useAppSelector((state: RootState) => state.ui.language);
   const notifications = useAppSelector((state: RootState) => state.ui.notifications);
   const user = useAppSelector((state: RootState) => state.auth.user);
+  
+  // Get client portal settings for custom logo
+  const { data: settingsData } = useGetSettingsQuery();
 
   // RTK Query hooks
   const { data: profileData } = useGetProfileQuery();

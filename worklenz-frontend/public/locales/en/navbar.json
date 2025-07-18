@@ -20,6 +20,8 @@
   "adminCenter": "Admin Center",
   "settings": "Settings",
   "logOut": "Log Out",
+  "lightMode": "Light Mode",
+  "darkMode": "Dark Mode",
   "notificationsDrawer": {
     "read": "Read notifications",
     "unread": "Unread notifications",

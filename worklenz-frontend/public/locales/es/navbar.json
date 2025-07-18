@@ -20,6 +20,8 @@
   "adminCenter": "Centro de administración",
   "settings": "Configuración",
   "logOut": "Cerrar sesión",
+  "lightMode": "Modo Claro",
+  "darkMode": "Modo Oscuro",
   "notificationsDrawer": {
     "read": "Notificaciones leídas",
     "unread": "Notificaciones no leídas",

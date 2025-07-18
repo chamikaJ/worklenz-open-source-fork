@@ -8,6 +8,9 @@ import { RightOutlined, MenuFoldOutlined, MenuUnfoldOutlined, MenuOutlined } fro
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { themeWiseColor } from '@/utils/themeWiseColor';
 import { useResponsive } from '@/hooks/useResponsive';
+import worklenzLightLogo from '@/assets/images/worklenz-light-mode.png';
+import worklenzDarkLogo from '@/assets/images/worklenz-dark-mode.png';
+import { useGetSettingsQuery } from '@/store/api';
 
 interface ClientPortalSidebarProps {
   items?: ClientPortalMenuItems[];
@@ -25,6 +28,9 @@ const ClientPortalSidebar: React.FC<ClientPortalSidebarProps> = ({
   const themeMode = useAppSelector(state => state.ui.theme);
   const { isMobile } = useResponsive();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Get client portal settings for custom logo
+  const { data: settingsData } = useGetSettingsQuery();
   
   // Example: get unread chat count from Redux (replace with real selector)
   const unreadChatsCount = useAppSelector(
@@ -79,26 +85,22 @@ const ClientPortalSidebar: React.FC<ClientPortalSidebarProps> = ({
     <Drawer
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              background: colors.gradient.primary,
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: '14px',
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+          <img
+            src={(() => {
+              // Check for custom logo from API first
+              if (settingsData?.body?.logo_url) {
+                return settingsData.body.logo_url;
+              }
+              // Fallback to Worklenz logo based on theme
+              return themeMode === 'dark' ? worklenzDarkLogo : worklenzLightLogo;
+            })()}
+            alt="Logo"
+            style={{ 
+              maxHeight: '32px', 
+              maxWidth: '140px',
+              objectFit: 'contain'
             }}
-          >
-            CP
-          </div>
-          <span style={{ fontWeight: 600, fontSize: 18 }}>
-            {t('app.title', 'Client Portal')}
-          </span>
+          />
         </div>
       }
       placement="left"
@@ -159,56 +161,24 @@ const ClientPortalSidebar: React.FC<ClientPortalSidebarProps> = ({
           background: themeWiseColor('#fff', '#262626', themeMode),
         }}
       >
-        {!collapsed && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                background: colors.gradient.primary,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
-              }}
-            >
-              CP
-            </div>
-            <div
-              style={{
-                fontWeight: 700,
-                fontSize: 20,
-                color: themeWiseColor('#1a1a1a', '#fff', themeMode),
-                letterSpacing: '-0.5px',
-              }}
-            >
-              {t('app.title', 'Client Portal')}
-            </div>
-          </div>
-        )}
-        {collapsed && (
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              background: colors.gradient.primary,
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: '16px',
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start' }}>
+          <img
+            src={(() => {
+              // Check for custom logo from API first
+              if (settingsData?.body?.logo_url) {
+                return settingsData.body.logo_url;
+              }
+              // Fallback to Worklenz logo based on theme
+              return themeMode === 'dark' ? worklenzDarkLogo : worklenzLightLogo;
+            })()}
+            alt="Logo"
+            style={{ 
+              maxHeight: collapsed ? '32px' : '36px', 
+              maxWidth: collapsed ? '48px' : '160px',
+              objectFit: 'contain'
             }}
-          >
-            CP
-          </div>
-        )}
+          />
+        </div>
         {onToggleCollapse && (
           <Button
             type="text"

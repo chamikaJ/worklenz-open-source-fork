@@ -20,6 +20,8 @@
   "adminCenter": "管理中心",
   "settings": "设置",
   "logOut": "登出",
+  "lightMode": "浅色模式",
+  "darkMode": "深色模式",
   "notificationsDrawer": {
     "read": "已读通知",
     "unread": "未读通知",

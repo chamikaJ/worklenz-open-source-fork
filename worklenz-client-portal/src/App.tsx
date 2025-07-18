@@ -18,6 +18,7 @@ import DashboardPage from '@/pages/DashboardPage';
 import ServicesPage from '@/pages/ServicesPage';
 import ServiceDetailsPage from '@/pages/ServiceDetailsPage';
 import RequestsPage from '@/pages/RequestsPage';
+import NewRequestPage from '@/pages/NewRequestPage';
 import RequestDetailsPage from '@/pages/RequestDetailsPage';
 import ProjectsPage from '@/pages/ProjectsPage';
 import ProjectDetailsPage from '@/pages/ProjectDetailsPage';
@@ -105,6 +106,7 @@ const AppContent: React.FC = () => {
             <Route path="services" element={<ServicesPage />} />
             <Route path="services/:id" element={<ServiceDetailsPage />} />
             <Route path="requests" element={<RequestsPage />} />
+            <Route path="requests/new" element={<NewRequestPage />} />
             <Route path="requests/:id" element={<RequestDetailsPage />} />
             <Route path="projects" element={<ProjectsPage />} />
             <Route path="projects/:id" element={<ProjectDetailsPage />} />

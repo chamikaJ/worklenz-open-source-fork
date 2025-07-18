@@ -1,11 +1,20 @@
-import { UserOutlined } from '@ant-design/icons';
 import { Button, Card, Dropdown, Flex, MenuProps, Tooltip, Typography } from 'antd';
+import { 
+  UserOutlined, 
+  SunOutlined, 
+  MoonOutlined, 
+  SettingOutlined, 
+  LogoutOutlined,
+  DashboardOutlined
+} from '@/shared/antd-imports';
 
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { useAppSelector } from '@/hooks/useAppSelector';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { RootState } from '@/app/store';
+import { toggleTheme } from '@/features/theme/themeSlice';
 
 import { getRole } from '@/utils/session-helper';
 
@@ -22,6 +31,7 @@ interface ProfileButtonProps {
 const ProfileButton = ({ isOwnerOrAdmin }: ProfileButtonProps) => {
   const { t } = useTranslation('navbar');
   const authService = useAuthService();
+  const dispatch = useAppDispatch();
   const currentSession = useAppSelector((state: RootState) => state.userReducer);
 
   const role = getRole();
@@ -30,6 +40,10 @@ const ProfileButton = ({ isOwnerOrAdmin }: ProfileButtonProps) => {
   const getLinkStyle = () => ({
     color: themeMode === 'dark' ? '#ffffffd9' : '#181818',
   });
+
+  const handleThemeToggle = () => {
+    dispatch(toggleTheme());
+  };
 
   const profile: MenuProps['items'] = [
     {
@@ -82,13 +96,26 @@ const ProfileButton = ({ isOwnerOrAdmin }: ProfileButtonProps) => {
         >
           {isOwnerOrAdmin && (
             <Link to="/worklenz/admin-center/overview" style={getLinkStyle()}>
+              <DashboardOutlined />
               {t('adminCenter')}
             </Link>
           )}
           <Link to="/worklenz/settings/profile" style={getLinkStyle()}>
+            <SettingOutlined />
             {t('settings')}
           </Link>
+          <div 
+            onClick={handleThemeToggle}
+            style={{
+              ...getLinkStyle(),
+              cursor: 'pointer',
+            }}
+          >
+            {themeMode === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+            {themeMode === 'dark' ? t('lightMode') : t('darkMode')}
+          </div>
           <Link to="/auth/logging-out" style={getLinkStyle()}>
+            <LogoutOutlined />
             {t('logOut')}
           </Link>
         </Card>

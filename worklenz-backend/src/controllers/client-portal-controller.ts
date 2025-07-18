@@ -7,6 +7,8 @@ import { AuthenticatedClientRequest } from "../middlewares/client-auth-middlewar
 import FileConstants from "../shared/file-constants";
 import { IEmailTemplateType } from "../interfaces/email-template-type";
 import { getBaseUrl, getClientPortalBaseUrl } from "../cron_jobs/helpers";
+import { uploadBase64, getClientPortalLogoKey } from "../shared/storage";
+import { log_error } from "../shared/utils";
 
 class ClientPortalController {
 
@@ -730,23 +732,157 @@ class ClientPortalController {
   // Settings
   static async getSettings(req: Request, res: Response) {
     try {
-      // TODO: Implement settings retrieval
-      const settings = {};
+      const organizationTeamId = req.user?.organization_team_id || req.user?.team_id;
+      if (!organizationTeamId) {
+        return res.status(400).json(new ServerResponse(false, null, "Organization team ID not found"));
+      }
+
+      const q = `
+        SELECT id, team_id, organization_team_id, logo_url, primary_color, 
+               welcome_message, contact_email, contact_phone, terms_of_service, 
+               privacy_policy, created_at, updated_at
+        FROM client_portal_settings 
+        WHERE organization_team_id = $1
+      `;
+      
+      const result = await db.query(q, [organizationTeamId]);
+      const settings = result.rows[0] || {
+        organization_team_id: organizationTeamId,
+        logo_url: null,
+        primary_color: '#3b7ad4',
+        welcome_message: null,
+        contact_email: null,
+        contact_phone: null,
+        terms_of_service: null,
+        privacy_policy: null
+      };
 
       return res.json(new ServerResponse(true, settings, "Settings retrieved successfully"));
     } catch (error) {
+      log_error(error);
       return res.status(500).json(new ServerResponse(false, null, "Failed to retrieve settings"));
     }
   }
 
   static async updateSettings(req: Request, res: Response) {
     try {
-      const settingsData = req.body;
-      // TODO: Implement settings update
+      const organizationTeamId = req.user?.organization_team_id || req.user?.team_id;
+      const teamId = req.user?.team_id;
+      
+      if (!organizationTeamId || !teamId) {
+        return res.status(400).json(new ServerResponse(false, null, "Team ID not found"));
+      }
 
-      return res.json(new ServerResponse(true, {}, "Settings updated successfully"));
+      const {
+        logo_url,
+        primary_color,
+        welcome_message,
+        contact_email,
+        contact_phone,
+        terms_of_service,
+        privacy_policy
+      } = req.body;
+
+      // Check if settings exist
+      const checkQ = `SELECT id FROM client_portal_settings WHERE organization_team_id = $1`;
+      const existingResult = await db.query(checkQ, [organizationTeamId]);
+
+      let result;
+      if (existingResult.rows.length > 0) {
+        // Update existing settings
+        const updateQ = `
+          UPDATE client_portal_settings 
+          SET logo_url = $1, primary_color = $2, welcome_message = $3, 
+              contact_email = $4, contact_phone = $5, terms_of_service = $6, 
+              privacy_policy = $7, updated_at = CURRENT_TIMESTAMP
+          WHERE organization_team_id = $8
+          RETURNING *
+        `;
+        result = await db.query(updateQ, [
+          logo_url, primary_color, welcome_message, contact_email,
+          contact_phone, terms_of_service, privacy_policy, organizationTeamId
+        ]);
+      } else {
+        // Create new settings
+        const insertQ = `
+          INSERT INTO client_portal_settings 
+          (team_id, organization_team_id, logo_url, primary_color, welcome_message, 
+           contact_email, contact_phone, terms_of_service, privacy_policy)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          RETURNING *
+        `;
+        result = await db.query(insertQ, [
+          teamId, organizationTeamId, logo_url, primary_color, welcome_message,
+          contact_email, contact_phone, terms_of_service, privacy_policy
+        ]);
+      }
+
+      return res.json(new ServerResponse(true, result.rows[0], "Settings updated successfully"));
     } catch (error) {
+      log_error(error);
       return res.status(500).json(new ServerResponse(false, null, "Failed to update settings"));
+    }
+  }
+
+  static async uploadLogo(req: Request, res: Response) {
+    try {
+      const organizationTeamId = req.user?.organization_team_id || req.user?.team_id;
+      if (!organizationTeamId) {
+        return res.status(400).json(new ServerResponse(false, null, "Organization team ID not found"));
+      }
+
+      const { logoData } = req.body;
+      if (!logoData) {
+        return res.status(400).json(new ServerResponse(false, null, "Logo data is required"));
+      }
+
+      // Extract file type from base64 data
+      const mimeMatch = logoData.match(/^data:(image\/[a-z]+);base64,/);
+      if (!mimeMatch) {
+        return res.status(400).json(new ServerResponse(false, null, "Invalid image format"));
+      }
+
+      const mimeType = mimeMatch[1];
+      const fileExtension = mimeType.split('/')[1];
+      
+      // Generate storage key
+      const storageKey = getClientPortalLogoKey(organizationTeamId, fileExtension);
+      
+      // Upload to storage
+      const logoUrl = await uploadBase64(logoData, storageKey);
+      if (!logoUrl) {
+        return res.status(500).json(new ServerResponse(false, null, "Failed to upload logo"));
+      }
+
+      // Update database with logo URL
+      const teamId = req.user?.team_id;
+      const checkQ = `SELECT id FROM client_portal_settings WHERE organization_team_id = $1`;
+      const existingResult = await db.query(checkQ, [organizationTeamId]);
+
+      if (existingResult.rows.length > 0) {
+        // Update existing settings
+        const updateQ = `
+          UPDATE client_portal_settings 
+          SET logo_url = $1, updated_at = CURRENT_TIMESTAMP
+          WHERE organization_team_id = $2
+          RETURNING *
+        `;
+        await db.query(updateQ, [logoUrl, organizationTeamId]);
+      } else {
+        // Create new settings
+        const insertQ = `
+          INSERT INTO client_portal_settings 
+          (team_id, organization_team_id, logo_url)
+          VALUES ($1, $2, $3)
+          RETURNING *
+        `;
+        await db.query(insertQ, [teamId, organizationTeamId, logoUrl]);
+      }
+
+      return res.json(new ServerResponse(true, { logo_url: logoUrl }, "Logo uploaded successfully"));
+    } catch (error) {
+      log_error(error);
+      return res.status(500).json(new ServerResponse(false, null, "Failed to upload logo"));
     }
   }
 

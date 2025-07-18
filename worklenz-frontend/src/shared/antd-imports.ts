@@ -106,7 +106,11 @@ export {
   EllipsisOutlined,
   ExclamationCircleFilled,
   ReloadOutlined,
-  ShareAltOutlined
+  ShareAltOutlined,
+  SunOutlined, 
+  MoonOutlined, 
+  LogoutOutlined,
+  DashboardOutlined
 } from '@ant-design/icons';
 
 // Re-export all components with React

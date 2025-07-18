@@ -20,6 +20,8 @@
   "adminCenter": "Admin-Center",
   "settings": "Einstellungen",
   "logOut": "Abmelden",
+  "lightMode": "Heller Modus",
+  "darkMode": "Dunkler Modus",
   "notificationsDrawer": {
     "read": "Gelesene Benachrichtigungen",
     "unread": "Ungelesene Benachrichtigungen",

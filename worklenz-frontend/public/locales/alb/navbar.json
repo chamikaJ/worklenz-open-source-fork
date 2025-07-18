@@ -20,6 +20,8 @@
   "adminCenter": "Qendra Administrative",
   "settings": "Cilësimet",
   "logOut": "Dil",
+  "lightMode": "Modaliteti i Ndritshëm",
+  "darkMode": "Modaliteti i Errët",
   "notificationsDrawer": {
     "read": "Lexuara e njoftimet ",
     "unread": "Njoftimet e palexuara",

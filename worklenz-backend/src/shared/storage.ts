@@ -141,6 +141,14 @@ export function getAvatarKey(userId: string, type: string) {
   return keyPath;
 }
 
+export function getClientPortalLogoKey(teamId: string, type: string) {
+  const keyPath = path
+    .join("client-portal-logos", getRootDir(), `${teamId}.${type}`)
+    .replace(/\\/g, "/");
+  
+  return keyPath;
+}
+
 async function uploadBufferToS3(
   buffer: Buffer,
   type: string,

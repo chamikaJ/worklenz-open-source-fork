@@ -101,7 +101,7 @@ const RequestsPage: React.FC = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => navigate('/services')}
+          onClick={() => navigate('/requests/new')}
         >
           New Request
         </Button>
@@ -137,7 +137,7 @@ const RequestsPage: React.FC = () => {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => navigate('/services')}
+              onClick={() => navigate('/requests/new')}
             >
               Create Your First Request
             </Button>

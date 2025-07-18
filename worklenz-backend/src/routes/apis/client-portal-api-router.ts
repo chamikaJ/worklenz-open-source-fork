@@ -47,6 +47,7 @@ router.get("/chats/:id/messages", safeControllerFunction(ClientPortalController.
 // Settings
 router.get("/settings", safeControllerFunction(ClientPortalController.getSettings));
 router.put("/settings", safeControllerFunction(ClientPortalController.updateSettings));
+router.post("/settings/upload-logo", safeControllerFunction(ClientPortalController.uploadLogo));
 
 // Profile
 router.get("/profile", safeControllerFunction(ClientPortalController.getClientProfile));
