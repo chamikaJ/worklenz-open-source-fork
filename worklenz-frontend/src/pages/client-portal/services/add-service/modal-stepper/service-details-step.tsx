@@ -1,14 +1,9 @@
-import React, { useState, useRef, useCallback, lazy, Suspense, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Form, Input, Button, Upload, message, Card, Space, Typography, Divider } from 'antd';
 import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { RcFile } from 'antd/es/upload';
-import DOMPurify from 'dompurify';
-
-// Lazy load TinyMCE editor to reduce initial bundle size
-const LazyTinyMCEEditor = lazy(() => 
-  import('@tinymce/tinymce-react').then(module => ({ default: module.Editor }))
-);
+import RichTextEditor from '../../../../../components/shared/RichTextEditor';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -20,43 +15,22 @@ interface ServiceDetailsStepProps {
 }
 
 const ServiceDetailsStep: React.FC<ServiceDetailsStepProps> = ({ setCurrent, service, setService }) => {
-  const { t } = useTranslation('client-portal-services');
+  const { t, ready } = useTranslation('client-portal-services');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [uploading, setUploading] = useState(false);
-  const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
-  const [isEditorLoading, setIsEditorLoading] = useState<boolean>(false);
-  const [isTinyMCELoaded, setIsTinyMCELoaded] = useState<boolean>(false);
-  const [isHovered, setIsHovered] = useState(false);
+  const [placeholder, setPlaceholder] = useState('Describe your service in detail...');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const editorRef = useRef<any>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Load TinyMCE script only when editor is opened
-  const loadTinyMCE = async () => {
-    if (isTinyMCELoaded) return;
-    
-    setIsEditorLoading(true);
-    try {
-      // Load TinyMCE script dynamically
-      await new Promise<void>((resolve, reject) => {
-        if ((window as any).tinymce) {
-          resolve();
-          return;
-        }
-        
-        const script = document.createElement('script');
-        script.src = '/tinymce/tinymce.min.js';
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error('Failed to load TinyMCE'));
-        document.head.appendChild(script);
-      });
-      
-      setIsTinyMCELoaded(true);
-    } catch (error) {
-      console.error('Failed to load TinyMCE:', error);
-      setIsEditorLoading(false);
+  // Update placeholder when translation is ready
+  useEffect(() => {
+    if (ready) {
+      setPlaceholder(t('addService.serviceDetails.descriptionPlaceholder'));
     }
+  }, [ready, t]);
+
+  // Get current theme mode
+  const getThemeMode = () => {
+    return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
   };
 
   const beforeUpload = (file: RcFile) => {
@@ -115,106 +89,18 @@ const ServiceDetailsStep: React.FC<ServiceDetailsStepProps> = ({ setCurrent, ser
     setCurrent(1);
   };
 
-  const handleOpenEditor = async () => {
-    setIsEditorOpen(true);
-    await loadTinyMCE();
-  };
-
-  const handleContentClick = (event: React.MouseEvent) => {
-    const target = event.target as HTMLElement;
-    
-    // Check if clicked element is a link
-    if (target.tagName === 'A' || target.closest('a')) {
-      event.preventDefault(); // Prevent default link behavior
-      event.stopPropagation(); // Prevent opening the editor
-      const link = target.tagName === 'A' ? target : target.closest('a');
-      if (link) {
-        const href = (link as HTMLAnchorElement).href;
-        if (href) {
-          // Open link in new tab/window for security
-          window.open(href, '_blank', 'noopener,noreferrer');
-        }
-      }
-      return;
-    }
-    
-    // If not a link, open the editor
-    handleOpenEditor();
-  };
-
-  const handleEditorChange = (content: string) => {
-    const sanitizedContent = DOMPurify.sanitize(content);
+  const handleDescriptionChange = (content: string) => {
     setService({
       ...service,
       service_data: {
         ...service.service_data,
-        description: sanitizedContent
+        description: content
       }
     });
   };
 
-  const handleInit = (evt: any, editor: any) => {
-    editorRef.current = editor;
-    editor.on('focus', () => setIsEditorOpen(true));
-    setIsEditorLoading(false);
-  };
-
-  // Handle outside clicks to close editor
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const wrapper = wrapperRef.current;
-      const target = event.target as Node;
-
-      const isClickedInsideWrapper = wrapper && wrapper.contains(target);
-      const isClickedInsideEditor = document.querySelector('.tox-tinymce')?.contains(target);
-      const isClickedInsideToolbarPopup = document
-        .querySelector('.tox-menu, .tox-pop, .tox-collection, .tox-dialog, .tox-dialog-wrap, .tox-silver-sink')
-        ?.contains(target);
-
-      if (
-        isEditorOpen &&
-        !isClickedInsideWrapper &&
-        !isClickedInsideEditor &&
-        !isClickedInsideToolbarPopup
-      ) {
-        setIsEditorOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isEditorOpen]);
-
-  // CSS styles for description content links
-  const descriptionStyles = `
-    .description-content a {
-      color: ${document.documentElement.classList.contains('dark') ? '#4dabf7' : '#1890ff'} !important;
-      text-decoration: underline !important;
-      cursor: pointer !important;
-    }
-    .description-content a:hover {
-      color: ${document.documentElement.classList.contains('dark') ? '#74c0fc' : '#40a9ff'} !important;
-    }
-  `;
-
-  const darkModeStyles = document.documentElement.classList.contains('dark')
-    ? `
-      body { 
-        background-color: #1e1e1e !important;
-        color: #ffffff !important;
-      }
-      body.mce-content-body[data-mce-placeholder]:not([contenteditable="false"]):before {
-        color: #666666 !important;
-      }
-    `
-    : '';
-
   return (
     <div className="flex flex-col h-full">
-      {/* Inject CSS styles for links */}
-      <style>{descriptionStyles}</style>
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
         <Card className="shadow-sm border-gray-200 dark:border-gray-700">
@@ -291,135 +177,14 @@ const ServiceDetailsStep: React.FC<ServiceDetailsStepProps> = ({ setCurrent, ser
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('addService.serviceDetails.serviceDescription')} *
               </label>
-              <div ref={wrapperRef}>
-                {isEditorOpen ? (
-                  <div
-                    style={{
-                      minHeight: '200px',
-                      backgroundColor: document.documentElement.classList.contains('dark') ? '#1e1e1e' : '#ffffff',
-                    }}
-                  >
-                    {isEditorLoading && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          zIndex: 10,
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          width: '100%',
-                          height: '200px',
-                          backgroundColor: document.documentElement.classList.contains('dark') 
-                            ? 'rgba(30, 30, 30, 0.8)' 
-                            : 'rgba(255, 255, 255, 0.8)',
-                          color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
-                        }}
-                      >
-                        <div>Loading editor...</div>
-                      </div>
-                    )}
-                    {isTinyMCELoaded && (
-                      <Suspense fallback={<div>Loading editor...</div>}>
-                        <LazyTinyMCEEditor
-                          tinymceScriptSrc="/tinymce/tinymce.min.js"
-                          value={service.service_data?.description || ''}
-                          onInit={handleInit}
-                          licenseKey="gpl"
-                          init={{
-                            height: 200,
-                            menubar: false,
-                            branding: false,
-                            plugins: [
-                              'advlist',
-                              'autolink',
-                              'lists',
-                              'link',
-                              'charmap',
-                              'preview',
-                              'anchor',
-                              'searchreplace',
-                              'visualblocks',
-                              'code',
-                              'fullscreen',
-                              'insertdatetime',
-                              'media',
-                              'table',
-                              'code',
-                              'wordcount',
-                            ],
-                            toolbar:
-                              'blocks |' +
-                              'bold italic underline strikethrough | ' +
-                              'bullist numlist | link |  removeformat | help',
-                            content_style: `
-                              body { 
-                                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
-                                font-size: 14px;
-                              }
-                              ${darkModeStyles}
-                            `,
-                            skin: document.documentElement.classList.contains('dark') ? 'oxide-dark' : 'oxide',
-                            content_css: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
-                            skin_url: `/tinymce/skins/ui/${document.documentElement.classList.contains('dark') ? 'oxide-dark' : 'oxide'}`,
-                            content_css_cors: true,
-                            auto_focus: true,
-                            placeholder: t('addService.serviceDetails.descriptionPlaceholder'),
-                            init_instance_callback: editor => {
-                              editor.dom.setStyle(
-                                editor.getBody(),
-                                'backgroundColor',
-                                document.documentElement.classList.contains('dark') ? '#1e1e1e' : '#ffffff'
-                              );
-                            },
-                          }}
-                          onEditorChange={handleEditorChange}
-                        />
-                      </Suspense>
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    onClick={handleContentClick}
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
-                    style={{
-                      minHeight: '40px',
-                      padding: '8px 12px',
-                      border: `1px solid ${document.documentElement.classList.contains('dark') ? '#424242' : '#d9d9d9'}`,
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      backgroundColor: isHovered
-                        ? document.documentElement.classList.contains('dark')
-                          ? '#2a2a2a'
-                          : '#fafafa'
-                        : document.documentElement.classList.contains('dark')
-                        ? '#1e1e1e'
-                        : '#ffffff',
-                      color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    {service.service_data?.description ? (
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html: DOMPurify.sanitize(service.service_data.description),
-                        }}
-                        className="description-content"
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          color: document.documentElement.classList.contains('dark') ? '#888888' : '#999999',
-                          fontStyle: 'italic',
-                        }}
-                      >
-                        Click to add description...
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              <Text className="text-xs text-gray-500 dark:text-gray-400">
+              <RichTextEditor
+                value={service.service_data?.description || ''}
+                onChange={handleDescriptionChange}
+                placeholder={placeholder}
+                themeMode={getThemeMode()}
+                height={200}
+              />
+              <Text className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {t('addService.serviceDetails.descriptionHelp')}
               </Text>
             </div>

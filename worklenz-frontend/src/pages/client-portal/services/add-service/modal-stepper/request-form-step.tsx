@@ -24,18 +24,31 @@ const RequestFormStep = ({
 
   const addQuestionCardRef = useRef<HTMLDivElement>(null);
 
-  const [requestForm, setRequestForm] = useState<TempRequestFromItemType[]>([
+  const [requestForm, setRequestForm] = useState<TempRequestFromItemType[]>(
+    service.service_data?.request_form || []
+  );
+
+  const sampleQuestions: TempRequestFromItemType[] = [
     {
-      question: "If you're ordering for a business, what's your industry?",
-      type: 'multipleChoice',
-      answer: ['3D design', 'e-commerce', 'accounting', 'marketing', 'etc.'],
+      question: "What is the project scope and timeline?",
+      type: "text",
+      answer: []
     },
     {
-      question: "If you're ordering for a business, what's your industry?",
-      type: 'text',
-      answer: ['3D design', 'e-commerce', 'accounting', 'marketing', 'etc.'],
+      question: "What is your budget range?",
+      type: "multipleChoice", 
+      answer: ["$1,000 - $5,000", "$5,000 - $10,000", "$10,000 - $25,000", "$25,000+"]
     },
-  ]);
+    {
+      question: "Please upload any relevant documents",
+      type: "attachment",
+      answer: []
+    }
+  ];
+
+  const handleAddSampleQuestions = () => {
+    setRequestForm(sampleQuestions);
+  };
 
   // States for new question form
   const [newQuestion, setNewQuestion] = useState<{
@@ -85,14 +98,36 @@ const RequestFormStep = ({
     setCurrent(2);
   };
 
+  // function to delete question
+  const handleDeleteQuestion = (index: number) => {
+    setRequestForm(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // function to edit question
+  const handleEditQuestion = (index: number) => {
+    const questionToEdit = requestForm[index];
+    setNewQuestion({
+      question: questionToEdit.question,
+      type: questionToEdit.type,
+      options: questionToEdit.type === 'multipleChoice' ? questionToEdit.answer as string[] : []
+    });
+    handleDeleteQuestion(index);
+    setIsAddQuestionCardVisible(true);
+  };
+
   return (
-    <Flex vertical gap={12}>
-      <Flex
-        vertical
-        gap={24}
-        style={{ height: 'calc(100vh - 460px)', overflowY: 'auto' }}
-      >
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Scrollable Content */}
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 16 }}>
         <Flex vertical gap={12}>
+          {requestForm.length === 0 && !isAddQuestionCardVisible && (
+            <Card style={{ textAlign: 'center', padding: 40 }}>
+              <Typography.Text type="secondary" style={{ fontSize: 16 }}>
+                {t('noQuestionsMessage')}
+              </Typography.Text>
+            </Card>
+          )}
+          
           {requestForm.map((item, index) => (
             <Card key={index}>
               <Flex vertical gap={8}>
@@ -119,8 +154,8 @@ const RequestFormStep = ({
                   )}
                 </Flex>
                 <Flex gap={4} style={{ alignSelf: 'flex-end' }}>
-                  <Button type="link">{t('editButton')}</Button>
-                  <Button type="link">{t('deleteButton')}</Button>
+                  <Button type="link" onClick={() => handleEditQuestion(index)}>{t('editButton')}</Button>
+                  <Button type="link" onClick={() => handleDeleteQuestion(index)}>{t('deleteButton')}</Button>
                 </Flex>
               </Flex>
             </Card>
@@ -176,7 +211,7 @@ const RequestFormStep = ({
                     <Flex vertical gap={8}>
                       <Flex vertical gap={4}>
                         {newQuestion.options.map((option, index) => (
-                          <div>
+                          <div key={index}>
                             <Input
                               style={{ maxWidth: 300 }}
                               value={option}
@@ -243,37 +278,41 @@ const RequestFormStep = ({
             </Card>
           )}
         </Flex>
-      </Flex>
+      </div>
 
-      <Flex align="center" justify="space-between">
-        <Button
-          type="dashed"
-          style={{
-            width: 'fit-content',
-            color: colors.skyBlue,
-            borderColor: colors.skyBlue,
-          }}
-          onClick={() => {
-            setIsAddQuestionCardVisible(true);
-            setTimeout(() => {
-              addQuestionCardRef.current?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'end',
-              });
-            }, 0);
-          }}
-        >
-          {t('addQuestionButton')}
-        </Button>
-
-        <Flex gap={8}>
-          <Button onClick={() => setCurrent(0)}>{t('previousButton')}</Button>
-          <Button type="primary" onClick={handleNext}>
-            {t('nextButton')}
+      {/* Fixed Action Buttons */}
+      <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: 16, flexShrink: 0 }}>
+        <Flex align="center" justify="space-between">
+          <Button
+            type="primary"
+            size="large"
+            style={{
+              backgroundColor: colors.skyBlue,
+              borderColor: colors.skyBlue,
+              boxShadow: '0 2px 8px rgba(22, 119, 255, 0.3)',
+            }}
+            onClick={() => {
+              setIsAddQuestionCardVisible(true);
+              setTimeout(() => {
+                addQuestionCardRef.current?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'end',
+                });
+              }, 0);
+            }}
+          >
+            + {t('addQuestionButton')}
           </Button>
+
+          <Flex gap={8}>
+            <Button onClick={() => setCurrent(0)}>{t('previousButton')}</Button>
+            <Button type="primary" onClick={handleNext}>
+              {t('nextButton')}
+            </Button>
+          </Flex>
         </Flex>
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 };
 

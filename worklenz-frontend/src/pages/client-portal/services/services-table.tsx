@@ -1,9 +1,11 @@
-import { Card, Table, Typography, Spin, Alert, Empty, Button } from 'antd';
+import { Card, Table, Typography, Spin, Alert, Empty, Button, Space, Dropdown, message, Modal } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { TableProps } from 'antd/lib';
 import { useTranslation } from 'react-i18next';
 import ClientPortalStatusTags from '@/components/client-portal/ClientPortalStatusTags';
-import { useGetServicesQuery } from '../../../api/client-portal/client-portal-api';
-import { PlusOutlined } from '@ant-design/icons';
+import { useGetServicesQuery, useDeleteOrganizationServiceMutation } from '../../../api/client-portal/client-portal-api';
+import { PlusOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 const ServicesTable = () => {
   // localization
@@ -11,6 +13,25 @@ const ServicesTable = () => {
 
   // Fetch services from API
   const { data: servicesData, isLoading, error } = useGetServicesQuery();
+  const [deleteService] = useDeleteOrganizationServiceMutation();
+
+  const navigate = useNavigate();
+
+  // Handle edit service
+  const handleEdit = (serviceId: string) => {
+    navigate(`/worklenz/client-portal/edit-service/${serviceId}`);
+  };
+
+  // Handle delete service
+  const handleDelete = async (serviceId: string, serviceName: string) => {
+    try {
+      await deleteService(serviceId).unwrap();
+      message.success(t('serviceDeletedSuccessfully') || `Service "${serviceName}" deleted successfully!`);
+    } catch (error) {
+      console.error('Failed to delete service:', error);
+      message.error(t('serviceDeleteFailed') || 'Failed to delete service. Please try again.');
+    }
+  };
 
   // table columns
   const columns: TableProps['columns'] = [
@@ -24,7 +45,7 @@ const ServicesTable = () => {
       title: t('createdByColumn'),
       render: (record) => (
         <Typography.Text style={{ textTransform: 'capitalize' }}>
-          {record.created_by}
+          {record.created_by_name || 'Unknown'}
         </Typography.Text>
       ),
     },
@@ -38,9 +59,56 @@ const ServicesTable = () => {
       title: t('noOfRequestsColumn'),
       render: (record) => (
         <Typography.Text style={{ textTransform: 'capitalize' }}>
-          {record.no_of_requests}
+          {record.requests_count || 0}
         </Typography.Text>
       ),
+    },
+    {
+      key: 'actions',
+      title: t('actionsColumn') || 'Actions',
+      width: 100,
+      align: 'center',
+      render: (record) => {
+        const menuItems = [
+          {
+            key: 'edit',
+            label: t('editButton'),
+            icon: <EditOutlined />,
+            onClick: () => handleEdit(record.id),
+          },
+          {
+            key: 'delete',
+            label: t('deleteButton'),
+            icon: <DeleteOutlined />,
+            danger: true,
+            onClick: () => {
+              Modal.confirm({
+                title: t('confirmDeleteTitle') || 'Confirm Delete',
+                icon: <ExclamationCircleOutlined />,
+                content: t('confirmDeleteMessage') || `Are you sure you want to delete "${record.name}"? This action cannot be undone.`,
+                okText: t('deleteButton'),
+                okType: 'danger',
+                cancelText: t('cancelButton'),
+                onOk: () => handleDelete(record.id, record.name),
+              });
+            },
+          },
+        ];
+
+        return (
+          <Dropdown
+            menu={{ items: menuItems }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button
+              type="text"
+              icon={<MoreOutlined />}
+              style={{ border: 'none' }}
+            />
+          </Dropdown>
+        );
+      },
     },
   ];
 
@@ -100,10 +168,7 @@ const ServicesTable = () => {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => {
-              // TODO: Open add service modal/drawer
-              console.log('Add service clicked');
-            }}
+            onClick={() => navigate('/worklenz/client-portal/add-service')}
           >
             {t('addServiceButton')}
           </Button>

@@ -1,39 +1,50 @@
 import { Button, Flex, Space, Typography, message, Card, Tag, Divider } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TempServicesType } from '../../../../../types/client-portal/temp-client-portal.types';
-import { useCreateOrganizationServiceMutation } from '../../../../../api/client-portal/client-portal-api';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { TempServicesType, TempRequestFromItemType } from '../../../../types/client-portal/temp-client-portal.types';
+import { useUpdateOrganizationServiceMutation } from '../../../../api/client-portal/client-portal-api';
 
-type PreviewAndSubmitStepProps = {
+type EditPreviewAndSubmitStepProps = {
   setCurrent: (index: number) => void;
   service: TempServicesType;
+  isEdit?: boolean;
 };
 
-const PreviewAndSubmitStep = ({
+const EditPreviewAndSubmitStep = ({
   setCurrent,
   service,
-}: PreviewAndSubmitStepProps) => {
+  isEdit = false,
+}: EditPreviewAndSubmitStepProps) => {
   // localization
   const { t } = useTranslation('client-portal-services');
+  const { id } = useParams<{ id: string }>();
 
   const navigate = useNavigate();
-  const [createService, { isLoading }] = useCreateOrganizationServiceMutation();
+  const [updateService, { isLoading }] = useUpdateOrganizationServiceMutation();
 
-  // function to handle save
+  // function to handle save/update
   const handleSave = async () => {
+    if (!id) {
+      message.error('Service ID is missing');
+      return;
+    }
+
     try {
-      await createService({
-        name: service.name,
-        description: service.service_data?.description,
-        service_data: service.service_data,
-        is_public: false
+      await updateService({
+        id,
+        data: {
+          name: service.name,
+          description: service.service_data?.description,
+          service_data: service.service_data,
+          is_public: false
+        }
       }).unwrap();
-      message.success(t('serviceCreatedSuccessfully') || 'Service created successfully!');
+      message.success(t('serviceUpdatedSuccessfully') || 'Service updated successfully!');
       navigate(-1); // Go back to services list
     } catch (error) {
-      console.error('Failed to create service:', error);
-      message.error(t('serviceCreationFailed') || 'Failed to create service. Please try again.');
+      console.error('Failed to update service:', error);
+      message.error(t('serviceUpdateFailed') || 'Failed to update service. Please try again.');
     }
   };
 
@@ -95,7 +106,7 @@ const PreviewAndSubmitStep = ({
                     }}
                   >
                     <Typography.Text type="secondary" style={{ fontStyle: 'italic' }}>
-                      {t('noDescriptionProvided') || 'No description provided'}
+                      {t('noDescriptionProvided')}
                     </Typography.Text>
                   </div>
                 )}
@@ -111,13 +122,13 @@ const PreviewAndSubmitStep = ({
                   <Typography.Title level={4} style={{ margin: 0 }}>
                     {t('requestFormPreview')}
                   </Typography.Title>
-                  <Tag color="blue">{service.service_data.request_form.length} {t('questionsCount') || 'questions'}</Tag>
+                  <Tag color="blue">{service.service_data.request_form.length} {t('questionsCount')}</Tag>
                 </Flex>
               }
               style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
             >
               <Flex vertical gap={12}>
-                {service.service_data.request_form.map((item, index) => (
+                {service.service_data.request_form.map((item: TempRequestFromItemType, index: number) => (
                   <Card 
                     key={index} 
                     size="small"
@@ -146,7 +157,7 @@ const PreviewAndSubmitStep = ({
                             {t('optionsLabel')}:
                           </Typography.Text>
                           <Flex wrap gap={4}>
-                            {item.answer.map((option, optionIndex) => (
+                            {item.answer.map((option: string, optionIndex: number) => (
                               <Tag key={optionIndex} style={{ margin: 0 }}>
                                 {option}
                               </Tag>
@@ -168,7 +179,7 @@ const PreviewAndSubmitStep = ({
         <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
           <Button onClick={() => setCurrent(1)}>{t('previousButton')}</Button>
           <Button type="primary" onClick={handleSave} loading={isLoading}>
-            {t('submitButton')}
+            {isEdit ? (t('updateButton') || 'Update') : t('submitButton')}
           </Button>
         </Space>
       </div>
@@ -176,4 +187,4 @@ const PreviewAndSubmitStep = ({
   );
 };
 
-export default PreviewAndSubmitStep;
+export default EditPreviewAndSubmitStep;

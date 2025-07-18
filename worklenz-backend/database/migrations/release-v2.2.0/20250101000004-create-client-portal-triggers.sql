@@ -82,16 +82,9 @@ BEGIN
         END CASE;
     END IF;
 
-    -- Insert activity log
-    INSERT INTO project_logs (
-        team_id,
-        project_id,
-        description
-    ) VALUES (
-        COALESCE(NEW.organization_team_id, OLD.organization_team_id),
-        NULL, -- No specific project for client portal activities
-        'Client Portal: ' || activity_description
-    );
+    -- Skip project logs for client portal activities since they don't have an associated project
+    -- Client portal activities are logged in their respective tables with audit fields
+    -- TODO: Consider creating a separate client_portal_activity_logs table if detailed logging is needed
 
     RETURN COALESCE(NEW, OLD);
 END;

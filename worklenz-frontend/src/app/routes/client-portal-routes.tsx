@@ -6,6 +6,7 @@ import ClientPortalRequests from '@/pages/client-portal/requests/client-portal-r
 import ClientPortalRequestDetails from '@/pages/client-portal/requests/request-details/client-portal-request-details';
 import ClientPortalServices from '@/pages/client-portal/services/client-portal-services';
 import ClientPortalAddServices from '@/pages/client-portal/services/add-service/client-portal-add-service';
+import ClientPortalEditService from '@/pages/client-portal/services/edit-service/client-portal-edit-service';
 import ClientPortalChats from '@/pages/client-portal/chats/client-portal-chats';
 import ClientPortalSettings from '@/pages/client-portal/settings/client-portal-settings';
 import ClientPortalInvoices from '@/pages/client-portal/invoices/client-portal-invoices';
@@ -35,6 +36,10 @@ const clientPortalRoutes: RouteObject[] = [
       {
         path: 'add-service',
         element: <ClientPortalAddServices />,
+      },
+      {
+        path: 'edit-service/:id',
+        element: <ClientPortalEditService />,
       },
       {
         path: 'chats',

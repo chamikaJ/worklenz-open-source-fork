@@ -4,7 +4,10 @@
       "Bash(find:*)",
       "Bash(npm run build:*)",
       "Bash(npm run type-check:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm outdated)",
+      "Bash(npm update)"
     ],
     "deny": []
   }

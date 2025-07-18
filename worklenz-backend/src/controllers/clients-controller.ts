@@ -326,9 +326,12 @@ export default class ClientsController extends WorklenzControllerBase {
                             s.service_data,
                             s.created_at,
                             s.updated_at,
+                            s.created_by,
+                            u.name as created_by_name,
                             (SELECT COUNT(*) FROM client_portal_requests WHERE service_id = s.id) as requests_count,
                             (SELECT COUNT(*) FROM client_portal_requests WHERE service_id = s.id AND status = 'pending') as pending_requests
                     FROM client_portal_services s
+                    LEFT JOIN users u ON s.created_by = u.id
                     WHERE s.organization_team_id = $1 ${searchQuery}
                     ORDER BY ${sortField} ${sortOrder}
                     LIMIT $2 OFFSET $3) t) AS data

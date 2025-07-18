@@ -99,19 +99,16 @@ const ClientPortalAddServices = () => {
           borderRadius: 8,
         }}
       >
-        <Flex
-          vertical
-          gap={32}
-          style={{ height: 'calc(100vh - 330px)', overflow: 'hidden' }}
-        >
+        <div style={{ height: 'calc(100vh - 330px)', display: 'flex', flexDirection: 'column' }}>
           <Steps
             type="navigation"
             current={current}
             className="clients-portal-services-steper"
             items={stepItems}
+            style={{ marginBottom: 32 }}
           />
 
-          <div>
+          <div style={{ flex: 1, overflow: 'hidden' }}>
             {current === 0 && (
               <ServiceDetailsStep
                 setCurrent={setCurrent}
@@ -130,7 +127,7 @@ const ClientPortalAddServices = () => {
               <PreviewAndSubmitStep setCurrent={setCurrent} service={service} />
             )}
           </div>
-        </Flex>
+        </div>
       </Card>
     </div>
   );
