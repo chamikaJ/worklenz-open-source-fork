@@ -7,7 +7,13 @@
       "Bash(npm run:*)",
       "Bash(npm install:*)",
       "Bash(npm outdated)",
-      "Bash(npm update)"
+      "Bash(npm update)",
+      "Bash(npm audit:*)",
+      "Bash(npm ls:*)",
+      "Bash(ls:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }

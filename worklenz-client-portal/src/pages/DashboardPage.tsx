@@ -1,15 +1,42 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, Row, Col, Statistic, Spin, Alert } from 'antd';
 import { 
   FileTextOutlined, 
   ProjectOutlined, 
   FileDoneOutlined, 
-  MessageOutlined 
+  MessageOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  DollarOutlined
 } from '@ant-design/icons';
-import { useGetDashboardQuery } from '@/store/api';
+import clientPortalAPI from '@/services/api';
+import { DashboardStats } from '@/types';
 
 const DashboardPage: React.FC = () => {
-  const { data: dashboardData, isLoading, error } = useGetDashboardQuery();
+  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await clientPortalAPI.getDashboard();
+        if (response.done) {
+          setDashboardData(response.body);
+        } else {
+          setError('Failed to load dashboard data');
+        }
+      } catch (err) {
+        setError('Failed to load dashboard data. Please try again later.');
+        console.error('Dashboard API error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   if (isLoading) {
     return (
@@ -24,21 +51,26 @@ const DashboardPage: React.FC = () => {
     return (
       <Alert
         message="Error"
-        description="Failed to load dashboard data. Please try again later."
+        description={error}
         type="error"
         showIcon
       />
     );
   }
 
-  const stats = dashboardData?.body || {
-    totalRequests: 0,
-    pendingRequests: 0,
+  const stats = dashboardData || {
     totalProjects: 0,
     activeProjects: 0,
+    completedProjects: 0,
+    totalRequests: 0,
+    pendingRequests: 0,
+    acceptedRequests: 0,
+    inProgressRequests: 0,
+    completedRequests: 0,
+    rejectedRequests: 0,
     totalInvoices: 0,
     unpaidInvoices: 0,
-    unreadMessages: 0,
+    unpaidAmount: 0,
   };
 
   return (
@@ -46,54 +78,9 @@ const DashboardPage: React.FC = () => {
       <h1>Dashboard</h1>
       <p>Welcome to your client portal dashboard</p>
       
+      {/* Projects Overview */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Total Requests"
-              value={stats.totalRequests}
-              prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
-        </Col>
-        
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Pending Requests"
-              value={stats.pendingRequests}
-              prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#cf1322' }}
-            />
-          </Card>
-        </Col>
-        
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Active Projects"
-              value={stats.activeProjects}
-              prefix={<ProjectOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Unpaid Invoices"
-              value={stats.unpaidInvoices}
-              prefix={<FileDoneOutlined />}
-              valueStyle={{ color: '#cf1322' }}
-            />
-          </Card>
-        </Col>
-      </Row>
-      
-      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} lg={8}>
           <Card>
             <Statistic
               title="Total Projects"
@@ -104,7 +91,79 @@ const DashboardPage: React.FC = () => {
           </Card>
         </Col>
         
+        <Col xs={24} sm={12} lg={8}>
+          <Card>
+            <Statistic
+              title="Active Projects"
+              value={stats.activeProjects}
+              prefix={<ProjectOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        
+        <Col xs={24} sm={12} lg={8}>
+          <Card>
+            <Statistic
+              title="Completed Projects"
+              value={stats.completedProjects}
+              prefix={<CheckCircleOutlined />}
+              valueStyle={{ color: '#3f8600' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+      
+      {/* Requests Overview */}
+      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
         <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Total Requests"
+              value={stats.totalRequests}
+              prefix={<FileTextOutlined />}
+              valueStyle={{ color: '#595959' }}
+            />
+          </Card>
+        </Col>
+        
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Pending"
+              value={stats.pendingRequests}
+              prefix={<ClockCircleOutlined />}
+              valueStyle={{ color: '#faad14' }}
+            />
+          </Card>
+        </Col>
+        
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="In Progress"
+              value={stats.inProgressRequests}
+              prefix={<FileTextOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Completed"
+              value={stats.completedRequests}
+              prefix={<CheckCircleOutlined />}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+      
+      {/* Financial Overview */}
+      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
+        <Col xs={24} sm={12} lg={8}>
           <Card>
             <Statistic
               title="Total Invoices"
@@ -115,13 +174,25 @@ const DashboardPage: React.FC = () => {
           </Card>
         </Col>
         
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} lg={8}>
           <Card>
             <Statistic
-              title="Unread Messages"
-              value={stats.unreadMessages}
-              prefix={<MessageOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              title="Unpaid Invoices"
+              value={stats.unpaidInvoices}
+              prefix={<FileDoneOutlined />}
+              valueStyle={{ color: '#cf1322' }}
+            />
+          </Card>
+        </Col>
+        
+        <Col xs={24} sm={12} lg={8}>
+          <Card>
+            <Statistic
+              title="Unpaid Amount"
+              value={stats.unpaidAmount}
+              prefix={<DollarOutlined />}
+              precision={2}
+              valueStyle={{ color: '#cf1322' }}
             />
           </Card>
         </Col>

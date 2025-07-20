@@ -113,13 +113,13 @@ class ClientPortalAPI {
 
   // Authentication endpoints
   async login(credentials: { email: string; password: string }): Promise<ApiResponse<{ user: ClientUser; token: string; expiresAt: string }>> {
-    const response = await this.api.post('/auth/login', credentials);
+    const response = await this.api.post('/login', credentials);
     return response.data;
   }
 
   async logout(): Promise<void> {
     try {
-      await this.api.post('/auth/logout');
+      await this.api.post('/logout');
     } catch (error) {
       // Ignore errors during logout
       console.warn('Logout request failed:', error);
@@ -129,17 +129,16 @@ class ClientPortalAPI {
   }
 
   async validateInvite(token: string): Promise<ApiResponse<{ valid: boolean; email?: string; organizationName?: string }>> {
-    const response = await this.api.get(`/invitation/validate?token=${token}`);
+    const response = await this.api.get(`/validate-invitation?token=${token}`);
     return response.data;
   }
 
   async acceptInvite(inviteData: { 
     token: string; 
     name: string; 
-    email: string; 
     password: string; 
   }): Promise<ApiResponse<{ user: ClientUser; token: string; expiresAt: string }>> {
-    const response = await this.api.post('/invitation/accept', inviteData);
+    const response = await this.api.post('/accept-invitation', inviteData);
     return response.data;
   }
 
@@ -182,8 +181,14 @@ class ClientPortalAPI {
   }
 
   // Services
-  async getServices() {
-    return this.request('/services');
+  async getServices(params?: { page?: number; limit?: number; status?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    
+    const queryString = queryParams.toString();
+    return this.request(`/services${queryString ? `?${queryString}` : ''}`);
   }
 
   async getServiceDetails(id: string) {
@@ -191,11 +196,18 @@ class ClientPortalAPI {
   }
 
   // Requests
-  async getRequests() {
-    return this.request('/requests');
+  async getRequests(params?: { page?: number; limit?: number; status?: string; search?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    return this.request(`/requests${queryString ? `?${queryString}` : ''}`);
   }
 
-  async createRequest(data: Partial<ClientRequest>) {
+  async createRequest(data: { serviceId: string; requestData?: any; notes?: string }) {
     return this.request('/requests', {
       method: 'POST',
       data,
@@ -206,7 +218,7 @@ class ClientPortalAPI {
     return this.request(`/requests/${id}`);
   }
 
-  async updateRequest(id: string, data: Partial<ClientRequest>) {
+  async updateRequest(id: string, data: { requestData?: any; notes?: string }) {
     return this.request(`/requests/${id}`, {
       method: 'PUT',
       data,
@@ -219,9 +231,20 @@ class ClientPortalAPI {
     });
   }
 
+  async getRequestStatusOptions() {
+    return this.request('/requests/status-options');
+  }
+
   // Projects
-  async getProjects() {
-    return this.request('/projects');
+  async getProjects(params?: { page?: number; limit?: number; status?: string; search?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    return this.request(`/projects${queryString ? `?${queryString}` : ''}`);
   }
 
   async getProjectDetails(id: string) {
@@ -229,48 +252,66 @@ class ClientPortalAPI {
   }
 
   // Invoices
-  async getInvoices() {
-    return this.request('/invoices');
+  async getInvoices(params?: { page?: number; limit?: number; status?: string; search?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    return this.request(`/invoices${queryString ? `?${queryString}` : ''}`);
   }
 
   async getInvoiceDetails(id: string) {
     return this.request(`/invoices/${id}`);
   }
 
-  async payInvoice(id: string, paymentData: unknown) {
+  async payInvoice(id: string, paymentData: { paymentMethod?: string; transactionId?: string; notes?: string }) {
     return this.request(`/invoices/${id}/pay`, {
       method: 'POST',
       data: paymentData,
     });
   }
 
-  async downloadInvoice(id: string): Promise<Blob> {
-    const response = await this.api.request({
-      url: `/invoices/${id}/download`,
-      method: 'GET',
-      responseType: 'blob',
-    });
-    return response.data;
+  async downloadInvoice(id: string, format: string = 'pdf'): Promise<ApiResponse<any>> {
+    return this.request(`/invoices/${id}/download?format=${format}`);
   }
 
   // Chat
-  async getChats() {
-    return this.request('/chats');
+  async getChats(params?: { page?: number; limit?: number }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    
+    const queryString = queryParams.toString();
+    return this.request(`/chats${queryString ? `?${queryString}` : ''}`);
   }
 
-  async getChatDetails(id: string) {
-    return this.request(`/chats/${id}`);
+  async getChatDetails(date: string, params?: { page?: number; limit?: number }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    
+    const queryString = queryParams.toString();
+    return this.request(`/chats/${date}${queryString ? `?${queryString}` : ''}`);
   }
 
-  async sendMessage(chatId: string, messageData: { content: string; attachments?: string[] }) {
-    return this.request(`/chats/${chatId}/messages`, {
+  async sendMessage(messageData: { message: string; messageType?: string; fileUrl?: string }) {
+    return this.request('/messages', {
       method: 'POST',
       data: messageData,
     });
   }
 
-  async getMessages(chatId: string) {
-    return this.request(`/chats/${chatId}/messages`);
+  async getMessages(params?: { page?: number; limit?: number; since?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.since) queryParams.append('since', params.since);
+    
+    const queryString = queryParams.toString();
+    return this.request(`/messages${queryString ? `?${queryString}` : ''}`);
   }
 
   // Settings
@@ -298,8 +339,14 @@ class ClientPortalAPI {
   }
 
   // Notifications
-  async getNotifications() {
-    return this.request('/notifications');
+  async getNotifications(params?: { page?: number; limit?: number; unread_only?: boolean }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.unread_only) queryParams.append('unread_only', params.unread_only.toString());
+    
+    const queryString = queryParams.toString();
+    return this.request(`/notifications${queryString ? `?${queryString}` : ''}`);
   }
 
   async markNotificationRead(id: string) {
@@ -315,20 +362,31 @@ class ClientPortalAPI {
   }
 
   // File uploads
-  async uploadFile(file: File): Promise<{ url: string; filename: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
+  async uploadFile(file: File, purpose?: string): Promise<ApiResponse<{ url: string; filename: string; originalName: string; fileType: string; purpose: string; size: number; uploadedAt: string }>> {
+    // Convert file to base64
+    const base64 = await this.fileToBase64(file);
     
     const response = await this.api.request({
       url: '/upload',
       method: 'POST',
-      data: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
+      data: {
+        fileData: base64,
+        fileName: file.name,
+        fileType: file.type,
+        purpose: purpose || 'general'
       },
     });
     
-    return response.data.body;
+    return response.data;
+  }
+
+  private fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
   }
 }
 

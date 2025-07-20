@@ -16,35 +16,44 @@ export interface ClientToken {
 }
 
 export interface DashboardStats {
-  totalRequests: number;
-  pendingRequests: number;
   totalProjects: number;
   activeProjects: number;
+  completedProjects: number;
+  totalRequests: number;
+  pendingRequests: number;
+  acceptedRequests: number;
+  inProgressRequests: number;
+  completedRequests: number;
+  rejectedRequests: number;
   totalInvoices: number;
   unpaidInvoices: number;
-  unreadMessages: number;
+  unpaidAmount: number;
 }
 
 export interface ClientService {
   id: string;
   name: string;
   description: string;
-  price: number;
-  currency: string;
   status: string;
-  category: string;
+  serviceData: any;
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ClientRequest {
   id: string;
-  req_no: string;
-  service: string;
-  title: string;
-  description: string;
+  requestNumber: string;
+  serviceId: string;
+  serviceName: string;
+  serviceDescription: string;
   status: string;
-  priority: string;
-  time: string;
-  attachments: string[];
+  requestData: any;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+  clientName: string;
 }
 
 export interface ClientProject {
@@ -52,31 +61,52 @@ export interface ClientProject {
   name: string;
   description: string;
   status: string;
-  totalTasks: number;
-  completedTasks: number;
-  lastUpdated: string;
-  members: string[];
+  status_color: string;
+  created_at: string;
+  updated_at: string;
+  client_id: string;
+  client_name: string;
+  total_tasks: number;
+  completed_tasks: number;
 }
 
 export interface ClientInvoice {
   id: string;
-  invoice_no: string;
+  invoiceNumber: string;
   amount: number;
   currency: string;
   status: string;
-  due_date: string;
-  created_at: string;
-  sent_at?: string;
-  paid_at?: string;
+  dueDate: string;
+  sentAt?: string;
+  paidAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  requestNumber?: string;
+  serviceName?: string;
+  isOverdue: boolean;
 }
 
 export interface ClientChat {
-  id: string;
-  title: string;
-  participants: string[];
-  lastMessage: string;
-  lastMessageTime: string;
+  date: string;
+  messageCount: number;
+  lastMessageAt: string;
+  lastTeamMessageAt?: string;
   unreadCount: number;
+  hasNewMessages: boolean;
+}
+
+export interface ClientMessage {
+  id: string;
+  senderType: 'client' | 'team_member';
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  message: string;
+  messageType: 'text' | 'file' | 'image';
+  fileUrl?: string;
+  readAt?: string;
+  createdAt: string;
+  isFromClient: boolean;
 }
 
 export interface ClientSettings {
@@ -93,11 +123,14 @@ export interface ClientSettings {
 
 export interface ClientNotification {
   id: string;
+  type: string;
+  referenceId: string;
+  referenceNumber: string;
   title: string;
   message: string;
-  type: string;
-  read: boolean;
-  created_at: string;
+  isRead: boolean;
+  createdAt: string;
+  metadata: any;
 }
 
 // API Response Types
@@ -113,4 +146,109 @@ export interface PaginatedResponse<T> {
   total: number;
   page: number;
   limit: number;
+}
+
+export interface ProjectDetails {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  statusColor: string;
+  startDate?: string;
+  endDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  client: {
+    name: string;
+    companyName: string;
+  };
+  statistics: {
+    totalTasks: number;
+    completedTasks: number;
+    progressPercentage: number;
+  };
+  teamMembers: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    fullName: string;
+    email: string;
+    avatarUrl?: string;
+    roleId?: string;
+    roleName?: string;
+  }>;
+  recentTasks: Array<{
+    id: string;
+    name: string;
+    description: string;
+    status: string;
+    statusColor: string;
+    startDate?: string;
+    endDate?: string;
+    createdAt: string;
+    updatedAt: string;
+    commentCount: number;
+  }>;
+}
+
+export interface InvoiceDetails {
+  id: string;
+  invoiceNumber: string;
+  amount: number;
+  currency: string;
+  status: string;
+  dueDate?: string;
+  sentAt?: string;
+  paidAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  isOverdue: boolean;
+  request?: {
+    id: string;
+    requestNumber: string;
+    requestData: any;
+    notes: string;
+    service: {
+      id: string;
+      name: string;
+      description: string;
+    };
+  };
+  client: {
+    name: string;
+    companyName: string;
+    email: string;
+  };
+  createdBy?: {
+    name: string;
+  };
+}
+
+export interface ClientProfile {
+  client: {
+    id: string;
+    name: string;
+    email: string;
+    companyName: string;
+    phone: string;
+    address: string;
+    contactPerson: string;
+    status: string;
+    createdAt: string;
+  };
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    status: string;
+    createdAt: string;
+    lastLogin?: string;
+  };
+  statistics: {
+    projectCount: number;
+    requestCount: number;
+    invoiceCount: number;
+    unpaidInvoiceCount: number;
+  };
 } 
