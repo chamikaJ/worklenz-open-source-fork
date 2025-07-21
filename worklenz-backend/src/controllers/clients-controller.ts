@@ -13,7 +13,7 @@ export default class ClientsController extends WorklenzControllerBase {
 
   @HandleExceptions()
   public static async create(req: IWorkLenzRequest, res: IWorkLenzResponse): Promise<IWorkLenzResponse> {
-    const q = `INSERT INTO clients (name, team_id) VALUES ($1, $2) RETURNING id, name;`;
+    const q = `INSERT INTO clients (name, team_id, status) VALUES ($1, $2, 'pending') RETURNING id, name;`;
     const result = await db.query(q, [req.body.name, req.user?.team_id || null]);
     const [data] = result.rows;
     return res.status(200).send(new ServerResponse(true, data));
@@ -756,6 +756,13 @@ export default class ClientsController extends WorklenzControllerBase {
       user: req.user
     } as any;
     return ClientPortalController.getDashboard(modifiedReq, res as any);
+  }
+
+  // Organization-side Client Portal Invitation Management
+
+  @HandleExceptions()
+  public static async generateClientInvitationLink(req: IWorkLenzRequest, res: IWorkLenzResponse): Promise<IWorkLenzResponse> {
+    return ClientPortalController.generateClientInvitationLink(req, res);
   }
 
 }

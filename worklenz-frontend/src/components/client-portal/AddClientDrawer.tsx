@@ -1,10 +1,10 @@
+import React from 'react';
 import { Button, Drawer, Flex, Form, Input, message, Typography, Select, Spin } from 'antd';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useTranslation } from 'react-i18next';
 import { toggleAddClientDrawer } from '../../features/clients-portal/clients/clients-slice';
 import { useCreateClientMutation } from '../../api/client-portal/client-portal-api';
-import { CopyOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -37,24 +37,16 @@ const AddClientDrawer = () => {
       
       form.resetFields();
       
-      // Show success message with invitation info
-      const successMessage = values.email 
-        ? t('createClientSuccessMessageWithInvite') || `Client created successfully! Invitation sent to ${values.email}`
-        : t('createClientSuccessMessage') || 'Client created successfully';
+      // Show success message
+      const successMessage = t('createClientSuccessMessage') || 'Client created successfully! Share the organization invite link to give them portal access.';
       
-      message.success(successMessage);
+      message.success(successMessage, 5); // Show for 5 seconds
       dispatch(toggleAddClientDrawer());
     } catch (error: any) {
       message.error(error?.data?.message || t('createClientErrorMessage') || 'Failed to create client');
     }
   };
 
-  // function to copy link to clipboard
-  const copyLinkToClipboard = () => {
-    const link = 'https://app.worklenz.com/worklenz/projects/10889d';
-    navigator.clipboard.writeText(link);
-    message.success(t('linkCopiedMessage') || 'Link copied to clipboard');
-  };
 
   // function to handle drawer close
   const handleDrawerClose = () => {
@@ -155,7 +147,7 @@ const AddClientDrawer = () => {
           <Form.Item
             name="status"
             label={t('statusLabel') || 'Status'}
-            initialValue="active"
+            initialValue="pending"
           >
             <Select size="large">
               <Option value="active">{t('statusActive') || 'Active'}</Option>
@@ -165,31 +157,12 @@ const AddClientDrawer = () => {
           </Form.Item>
         </Form>
 
-        {/* Client Portal Link Section */}
-        <Flex vertical gap={16} style={{ marginTop: 24 }}>
-          <Typography.Title level={5}>
-            {t('clientPortalAccessTitle') || 'Client Portal Access'}
-          </Typography.Title>
-          
-          <Typography.Text type="secondary">
-            {t('clientPortalAccessDescription') || 'Share this link with your client to give them access to their portal'}
+        {/* Info Section */}
+        <div style={{ marginTop: 24, padding: 16, backgroundColor: '#f0f9ff', borderRadius: 8, border: '1px solid #bae6fd' }}>
+          <Typography.Text type="secondary" style={{ fontSize: '14px' }}>
+            💡 {t('clientPortalAccessInfo') || 'After creating the client, use the organization invite link from the Clients page to give them portal access.'}
           </Typography.Text>
-          
-          <Flex gap={8} align="center">
-            <Input
-              value="https://app.worklenz.com/worklenz/projects/10889d"
-              readOnly
-              size="large"
-            />
-            <Button
-              icon={<CopyOutlined />}
-              onClick={copyLinkToClipboard}
-              size="large"
-            >
-              {t('copyButton') || 'Copy'}
-            </Button>
-          </Flex>
-        </Flex>
+        </div>
       </Spin>
     </Drawer>
   );

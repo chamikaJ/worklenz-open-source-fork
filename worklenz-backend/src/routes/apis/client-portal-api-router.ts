@@ -64,4 +64,5 @@ router.put("/notifications/read-all", safeControllerFunction(ClientPortalControl
 // File uploads
 router.post("/upload", safeControllerFunction(ClientPortalController.uploadFile));
 
+
 export default router; 

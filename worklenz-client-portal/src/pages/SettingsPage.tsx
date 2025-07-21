@@ -1,15 +1,42 @@
 import React from 'react';
-import { Card, Typography } from 'antd';
+import { 
+  Card, 
+  Typography, 
+  Button, 
+  Space, 
+  Row, 
+  Col 
+} from 'antd';
+import { 
+  ShareAltOutlined 
+} from '@ant-design/icons';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const SettingsPage: React.FC = () => {
   return (
-    <Card>
-      <Title level={2}>Settings</Title>
-      <p>Settings page coming soon...</p>
-    </Card>
+    <div>
+      <Title level={2}>
+        <ShareAltOutlined /> Settings
+      </Title>
+      <p>Manage your account settings and preferences</p>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <Card title="Account Information" style={{ height: '100%' }}>
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Text type="secondary">
+                View your account details and billing information in the Profile section.
+              </Text>
+              <Button size="large">
+                View Profile
+              </Button>
+            </Space>
+          </Card>
+        </Col>
+      </Row>
+    </div>
   );
 };
 
-export default SettingsPage; 
+export default SettingsPage;

@@ -4,7 +4,6 @@ import {
   FileTextOutlined, 
   ProjectOutlined, 
   FileDoneOutlined, 
-  MessageOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   DollarOutlined
@@ -23,7 +22,7 @@ const DashboardPage: React.FC = () => {
         setIsLoading(true);
         const response = await clientPortalAPI.getDashboard();
         if (response.done) {
-          setDashboardData(response.body);
+          setDashboardData(response.body as DashboardStats);
         } else {
           setError('Failed to load dashboard data');
         }

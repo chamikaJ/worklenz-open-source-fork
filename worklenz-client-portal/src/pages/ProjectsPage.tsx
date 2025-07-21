@@ -8,7 +8,7 @@ import {
   Button, 
   Input, 
   Select, 
-  Spin, 
+ 
   Alert,
   Progress,
   Tooltip
@@ -56,11 +56,11 @@ const ProjectsPage: React.FC = () => {
       });
 
       if (response.done) {
-        setProjects(response.body.projects || []);
+        setProjects((response.body as any).projects || []);
         setPagination({
-          current: response.body.page,
-          pageSize: response.body.limit,
-          total: response.body.total,
+          current: (response.body as any).page,
+          pageSize: (response.body as any).limit,
+          total: (response.body as any).total,
         });
       } else {
         setError('Failed to load projects');

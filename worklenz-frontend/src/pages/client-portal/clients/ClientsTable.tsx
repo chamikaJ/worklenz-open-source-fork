@@ -8,6 +8,8 @@ import {
     EditOutlined,
     MoreOutlined,
     PlusOutlined,
+    LinkOutlined,
+    CopyOutlined,
   } from '@/shared/antd-imports';
   import {
     Button,
@@ -73,6 +75,12 @@ import {
   // Local state for bulk operations
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  
+  // Local state for invitation functionality
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [invitationLink, setInvitationLink] = useState<string>('');
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [currentClientId, setCurrentClientId] = useState<string>('');
 
   // RTK Query hooks
   const { 
@@ -252,6 +260,76 @@ import {
     }
   };
 
+  // Handle invitation link generation
+  const handleGenerateInviteLink = async (clientId: string) => {
+    setCurrentClientId(clientId);
+    setIsGeneratingLink(true);
+    
+    try {
+      const response = await fetch('/api/clients/portal/generate-invitation-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Adjust based on your auth system
+        },
+        body: JSON.stringify({ clientId }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.done) {
+        if (data.body?.isExistingUser) {
+          // Handle existing Worklenz user
+          message.success({
+            content: (
+              <div>
+                <div>{data.body.message}</div>
+                {data.body.portalUrl && (
+                  <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
+                    Portal URL: <a href={data.body.portalUrl} target="_blank" rel="noopener noreferrer">{data.body.portalUrl}</a>
+                  </div>
+                )}
+              </div>
+            ),
+            duration: 8,
+          });
+          // Refresh the client list to show updated status
+          refetch();
+        } else if (data.body?.invitationLink) {
+          // Handle new user invitation
+          setInvitationLink(data.body.invitationLink);
+          setInviteModalOpen(true);
+          message.success('Invitation link generated successfully!');
+        } else {
+          message.error('Failed to generate invitation link');
+        }
+      } else {
+        message.error('Failed to generate invitation link');
+      }
+    } catch (error) {
+      console.error('Failed to generate invitation link:', error);
+      message.error('Failed to generate invitation link');
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+  const copyInvitationLink = async () => {
+    try {
+      await navigator.clipboard.writeText(invitationLink);
+      message.success('Invitation link copied to clipboard!');
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      message.error('Failed to copy link to clipboard');
+    }
+  };
+
+  const closeInviteModal = () => {
+    setInviteModalOpen(false);
+    setInvitationLink('');
+    setCurrentClientId('');
+  };
+
   // Handle row selection
   const handleRowSelection = {
     selectedRowKeys,
@@ -303,42 +381,60 @@ import {
   ];
 
   // Get action menu items for each row
-  const getActionMenuItems = (record: any) => [
-    {
-      key: 'view',
-      label: t('viewDetailsTooltip') || 'View Details',
-      icon: <EyeOutlined />,
-      onClick: () => dispatch(toggleClientDetailsDrawer(record.id)),
-    },
-    {
-      key: 'edit',
-      label: t('editClientTooltip') || 'Edit Client',
-      icon: <EditOutlined />,
-      onClick: () => dispatch(toggleEditClientDrawer(record.id)),
-    },
-    {
-      key: 'projects',
-      label: t('manageProjectsTooltip') || 'Manage Projects',
-      icon: <SettingOutlined />,
-      onClick: () => dispatch(toggleClientSettingsDrawer(record.id)),
-    },
-    {
-      key: 'team',
-      label: t('manageTeamTooltip') || 'Manage Team',
-      icon: <ShareAltOutlined />,
-      onClick: () => dispatch(toggleClientTeamsDrawer(record.id)),
-    },
-    {
-      type: 'divider' as const,
-    },
-    {
-      key: 'delete',
-      label: t('deleteTooltip') || 'Delete Client',
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: () => handleDeleteClientWithConfirmation(record.id),
-    },
-  ];
+  const getActionMenuItems = (record: any) => {
+    const menuItems = [
+      {
+        key: 'view',
+        label: t('viewDetailsTooltip') || 'View Details',
+        icon: <EyeOutlined />,
+        onClick: () => dispatch(toggleClientDetailsDrawer(record.id)),
+      },
+      {
+        key: 'edit',
+        label: t('editClientTooltip') || 'Edit Client',
+        icon: <EditOutlined />,
+        onClick: () => dispatch(toggleEditClientDrawer(record.id)),
+      },
+    ];
+
+    // Show invite link only if client hasn't accepted invite yet
+    // pending = invitation not accepted, active = invitation accepted or already signed up
+    if (record.status === 'pending' || record.status === 'inactive') {
+      menuItems.push({
+        key: 'invite',
+        label: t('inviteClientTooltip') || 'Generate Invite Link',
+        icon: <LinkOutlined />,
+        onClick: () => handleGenerateInviteLink(record.id),
+      });
+    }
+
+    menuItems.push(
+      {
+        key: 'projects',
+        label: t('manageProjectsTooltip') || 'Manage Projects',
+        icon: <SettingOutlined />,
+        onClick: () => dispatch(toggleClientSettingsDrawer(record.id)),
+      },
+      {
+        key: 'team',
+        label: t('manageTeamTooltip') || 'Manage Team',
+        icon: <ShareAltOutlined />,
+        onClick: () => dispatch(toggleClientTeamsDrawer(record.id)),
+      },
+      {
+        type: 'divider' as const,
+      },
+      {
+        key: 'delete',
+        label: t('deleteTooltip') || 'Delete Client',
+        icon: <DeleteOutlined />,
+        danger: true,
+        onClick: () => handleDeleteClientWithConfirmation(record.id),
+      }
+    );
+
+    return menuItems;
+  };
 
   // table columns
   const columns: TableProps<ClientPortalClient | TempClientPortalClientType>['columns'] = [
@@ -538,6 +634,49 @@ import {
           />
         </Flex>
       )}
+      
+      {/* Invitation Modal */}
+      <Modal
+        title="Invitation Link Generated"
+        open={inviteModalOpen}
+        onCancel={closeInviteModal}
+        footer={[
+          <Button key="close" onClick={closeInviteModal}>
+            Close
+          </Button>,
+          <Button
+            key="copy"
+            type="primary"
+            icon={<CopyOutlined />}
+            onClick={copyInvitationLink}
+          >
+            Copy Link
+          </Button>,
+        ]}
+        width={600}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Typography.Text type="secondary">
+            Share this link with the client to invite them to create their portal account. The link will expire in 7 days.
+          </Typography.Text>
+        </div>
+        
+        <div style={{ 
+          padding: 12, 
+          backgroundColor: '#f5f5f5', 
+          borderRadius: 6, 
+          marginBottom: 16,
+          wordBreak: 'break-all'
+        }}>
+          <Typography.Text copyable={{ text: invitationLink }}>
+            {invitationLink}
+          </Typography.Text>
+        </div>
+        
+        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+          When the client clicks this link, they'll be able to create their portal account and access their projects and services.
+        </Typography.Text>
+      </Modal>
     </Card>
   );
 };

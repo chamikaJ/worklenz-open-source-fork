@@ -1,9 +1,8 @@
 import { Middleware } from '@reduxjs/toolkit';
-import { RootState } from '@/store';
 import { logoutUser, refreshToken } from '@/store/slices/authSlice';
 import { TokenManager } from '@/utils/tokenManager';
 
-export const authMiddleware: Middleware<{}, RootState> = (store) => (next) => (action: any) => {
+export const authMiddleware: Middleware = (store) => (next) => (action: any) => {
   const result = next(action);
   const state = store.getState();
   
@@ -14,13 +13,13 @@ export const authMiddleware: Middleware<{}, RootState> = (store) => (next) => (a
     if (auth.isAuthenticated && auth.token) {
       // Check if token is expired
       if (TokenManager.isTokenExpired()) {
-        store.dispatch(logoutUser());
+        store.dispatch(logoutUser() as any);
         return result;
       }
       
       // Check if token should be refreshed
       if (TokenManager.shouldRefreshToken()) {
-        store.dispatch(refreshToken());
+        store.dispatch(refreshToken() as any);
       }
     }
   }

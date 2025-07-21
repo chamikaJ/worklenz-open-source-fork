@@ -242,7 +242,6 @@ const ClientPortalSidebar: React.FC<ClientPortalSidebarProps> = ({
             itemPaddingInline: 16,
             itemHeight: 48,
             fontSize: 14,
-            fontWeight: 500,
           },
         },
       }}

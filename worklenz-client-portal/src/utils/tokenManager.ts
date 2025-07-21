@@ -1,4 +1,3 @@
-import { ClientToken } from '@/types';
 
 export class TokenManager {
   private static readonly TOKEN_KEY = 'clientToken';

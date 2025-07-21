@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, ClientRequest, ClientSettings, ClientUser, ClientToken } from '@/types';
+import { ApiResponse, ClientSettings, ClientUser, ClientToken } from '@/types';
 
 class ClientPortalAPI {
   private api: AxiosInstance;
@@ -129,7 +129,7 @@ class ClientPortalAPI {
   }
 
   async validateInvite(token: string): Promise<ApiResponse<{ valid: boolean; email?: string; organizationName?: string }>> {
-    const response = await this.api.get(`/validate-invitation?token=${token}`);
+    const response = await this.api.get(`/invitation/validate?token=${token}`);
     return response.data;
   }
 
@@ -138,9 +138,10 @@ class ClientPortalAPI {
     name: string; 
     password: string; 
   }): Promise<ApiResponse<{ user: ClientUser; token: string; expiresAt: string }>> {
-    const response = await this.api.post('/accept-invitation', inviteData);
+    const response = await this.api.post('/invitation/accept', inviteData);
     return response.data;
   }
+
 
   async refreshToken(): Promise<ApiResponse<ClientToken>> {
     const response = await this.api.post('/auth/refresh', {

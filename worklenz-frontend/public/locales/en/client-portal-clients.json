@@ -69,7 +69,7 @@
   
   "statusLabel": "Status",
   
-  "createClientSuccessMessage": "Client created successfully",
+  "createClientSuccessMessage": "Client created successfully! Share the organization invite link to give them portal access.",
   "createClientSuccessMessageWithInvite": "Client created successfully! Invitation sent to {email}",
   "createClientErrorMessage": "Failed to create client",
   "updateClientSuccessMessage": "Client updated successfully",
@@ -79,8 +79,24 @@
   
   "clientPortalAccessTitle": "Client Portal Access",
   "clientPortalAccessDescription": "Share this link with your client to give them access to their portal",
+  "clientPortalAccessInfo": "After creating the client, use the organization invite link from the Clients page to give them portal access.",
   "copyButton": "Copy",
   "linkCopiedMessage": "Link copied to clipboard",
+  
+  "organizationInviteLinkTitle": "Organization Invite Link",
+  "organizationInviteLinkDescription": "Share this single link with any client to allow them to join your organization's client portal. The link expires after 7 days for security and can be regenerated as needed.",
+  "generateLink": "Generate Link",
+  "regenerateLink": "Regenerate",
+  "linkExpiresAt": "Link expires at",
+  "noInviteLinkGenerated": "No organization invite link generated yet. Click \"Generate Link\" to create a shareable link for all your clients.",
+  "generateLinkSuccess": "Organization invite link generated successfully!",
+  "generateLinkError": "Failed to generate organization invite link",
+  "regenerateLinkSuccess": "Organization invite link regenerated successfully!",
+  "regenerateLinkError": "Failed to regenerate organization invite link",
+  "linkCopiedSuccess": "Invite link copied to clipboard!",
+  "linkGenerating": "Generating invite link...",
+  "linkExpired": "This invite link has expired",
+  "linkActive": "Active",
   
   "closeButton": "Close",
   "deleteButton": "Delete Client",

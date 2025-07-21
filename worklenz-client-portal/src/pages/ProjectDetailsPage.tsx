@@ -13,7 +13,6 @@ import {
   Space,
   Descriptions,
   Button,
-  Tooltip,
   List
 } from 'antd';
 import { 
@@ -52,7 +51,7 @@ const ProjectDetailsPage: React.FC = () => {
       const response = await clientPortalAPI.getProjectDetails(projectId);
 
       if (response.done) {
-        setProjectDetails(response.body);
+        setProjectDetails(response.body as ProjectDetails);
       } else {
         setError('Failed to load project details');
       }
@@ -284,7 +283,7 @@ const ProjectDetailsPage: React.FC = () => {
                               {member.email}
                             </div>
                             {member.roleName && (
-                              <Tag size="small">{member.roleName}</Tag>
+                              <Tag>{member.roleName}</Tag>
                             )}
                           </Space>
                         }

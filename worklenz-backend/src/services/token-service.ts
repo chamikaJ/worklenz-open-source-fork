@@ -164,6 +164,12 @@ class TokenService {
         ["accepted", token]
       );
 
+      // Update client status to active when invitation is accepted
+      await client.query(
+        "UPDATE clients SET status = $1, updated_at = NOW() WHERE id = $2",
+        ["active", invitation.client_id]
+      );
+
       await client.query("COMMIT");
       return userResult.rows[0];
     } catch (error) {

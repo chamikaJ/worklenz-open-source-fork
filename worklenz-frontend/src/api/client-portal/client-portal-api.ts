@@ -732,6 +732,15 @@ export const clientPortalApi = createApi({
       }),
       invalidatesTags: ['Services'],
     }),
+
+    // Client Invitation Management
+    generateClientInvitationLink: builder.mutation<{ invitationLink: string; token: string; expiresAt: string; clientName: string; clientEmail: string }, { clientId: string }>({
+      query: ({ clientId }) => ({
+        url: '/clients/portal/generate-invitation-link',
+        method: 'POST',
+        body: { clientId },
+      }),
+    }),
   }),
 });
 
@@ -822,4 +831,7 @@ export const {
   useCreateOrganizationServiceMutation,
   useUpdateOrganizationServiceMutation,
   useDeleteOrganizationServiceMutation,
+  
+  // Client Invitation Management
+  useGenerateClientInvitationLinkMutation,
 } = clientPortalApi; 

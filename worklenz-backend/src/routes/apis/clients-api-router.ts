@@ -49,6 +49,9 @@ clientsApiRouter.put("/portal/clients/:id/team/:memberId", idParamValidator, saf
 clientsApiRouter.delete("/portal/clients/:id/team/:memberId", idParamValidator, safeControllerFunction(ClientsController.removePortalTeamMember));
 clientsApiRouter.post("/portal/clients/:id/team/:memberId/resend-invitation", idParamValidator, safeControllerFunction(ClientsController.resendPortalTeamInvitation));
 
+// Organization-side Client Portal Invitation Management
+clientsApiRouter.post("/portal/generate-invitation-link", safeControllerFunction(ClientsController.generateClientInvitationLink));
+
 // Organization-side Client Portal Analytics
 clientsApiRouter.get("/portal/clients/:id/stats", idParamValidator, safeControllerFunction(ClientsController.getPortalClientStats));
 clientsApiRouter.get("/portal/clients/:id/activity", idParamValidator, safeControllerFunction(ClientsController.getPortalClientActivity));

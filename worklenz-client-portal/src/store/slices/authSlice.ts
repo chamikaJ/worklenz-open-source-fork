@@ -247,10 +247,7 @@ const authSlice = createSlice({
         state.inviteToken = action.payload.token;
         state.inviteDetails = {
           email: action.payload.email,
-          name: action.payload.name,
           organizationName: action.payload.organizationName,
-          clientName: action.payload.clientName,
-          companyName: action.payload.companyName,
         };
         state.error = null;
       })

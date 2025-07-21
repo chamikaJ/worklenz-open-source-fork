@@ -51,7 +51,7 @@ import {
   notification,
   theme,
   Pagination,
-  Statistic
+  Statistic,
 } from 'antd/es';
 
 // Icons - Import commonly used ones
@@ -107,10 +107,12 @@ export {
   ExclamationCircleFilled,
   ReloadOutlined,
   ShareAltOutlined,
-  SunOutlined, 
-  MoonOutlined, 
+  SunOutlined,
+  MoonOutlined,
   LogoutOutlined,
-  DashboardOutlined
+  DashboardOutlined,
+  LinkOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 
 // Re-export all components with React

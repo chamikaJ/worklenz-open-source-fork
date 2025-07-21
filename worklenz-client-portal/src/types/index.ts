@@ -39,6 +39,9 @@ export interface ClientService {
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
+  price?: number;
+  currency?: string;
+  category?: string;
 }
 
 export interface ClientRequest {
@@ -54,6 +57,13 @@ export interface ClientRequest {
   updatedAt: string;
   completedAt?: string;
   clientName: string;
+  priority?: string;
+  description?: string;
+  time?: string;
+  attachments?: string[];
+  req_no?: string;
+  service?: any;
+  title?: string;
 }
 
 export interface ClientProject {
@@ -119,6 +129,7 @@ export interface ClientSettings {
   project_updates: boolean;
   invoice_notifications: boolean;
   request_updates: boolean;
+  logo_url?: string;
 }
 
 export interface ClientNotification {

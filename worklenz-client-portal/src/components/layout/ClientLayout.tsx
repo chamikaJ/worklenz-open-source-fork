@@ -8,18 +8,15 @@ import {
   theme,
   Select,
   Switch,
-  Space,
   Typography,
   UserOutlined,
   BellOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
   LogoutOutlined,
   MoonOutlined,
   SunOutlined,
   TranslationOutlined,
 } from '@/shared/antd-imports';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { logout, setUser } from '@/store/slices/authSlice';
@@ -29,8 +26,6 @@ import type { RootState } from '@/store';
 import { useTranslation } from 'react-i18next';
 import ClientPortalSidebar from './ClientPortalSidebar';
 import { useResponsive } from '@/hooks/useResponsive';
-import worklenzLightLogo from '@/assets/images/worklenz-light-mode.png';
-import worklenzDarkLogo from '@/assets/images/worklenz-dark-mode.png';
 import { useGetSettingsQuery } from '@/store/api';
 
 const { Header, Sider, Content } = Layout;
@@ -38,11 +33,10 @@ const { Text } = Typography;
 
 const ClientLayout: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useAppDispatch();
   const { token } = theme.useToken();
   const { t, i18n } = useTranslation();
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
   
   const { isAuthenticated } = useAppSelector((state: RootState) => state.auth);
 
@@ -60,7 +54,7 @@ const ClientLayout: React.FC = () => {
   const user = useAppSelector((state: RootState) => state.auth.user);
   
   // Get client portal settings for custom logo
-  const { data: settingsData } = useGetSettingsQuery();
+  const { } = useGetSettingsQuery();
 
   // RTK Query hooks
   const { data: profileData } = useGetProfileQuery();

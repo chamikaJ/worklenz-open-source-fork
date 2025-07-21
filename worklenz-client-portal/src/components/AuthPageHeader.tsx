@@ -1,4 +1,3 @@
-import React from 'react';
 import { Flex, Typography } from '@/shared/antd-imports';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import logoLight from '@/assets/images/worklenz-light-mode.png';

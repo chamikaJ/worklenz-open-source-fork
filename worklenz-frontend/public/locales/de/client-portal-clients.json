@@ -69,7 +69,7 @@
   
   "statusLabel": "Status",
   
-  "createClientSuccessMessage": "Kunde erfolgreich erstellt",
+  "createClientSuccessMessage": "Kunde erfolgreich erstellt! Teilen Sie den Organisations-Einladungslink, um ihm Portal-Zugang zu gewähren.",
   "createClientSuccessMessageWithInvite": "Kunde erfolgreich erstellt! Einladung an {email} gesendet",
   "createClientErrorMessage": "Fehler beim Erstellen des Kunden",
   "updateClientSuccessMessage": "Kunde erfolgreich aktualisiert",
@@ -79,8 +79,24 @@
   
   "clientPortalAccessTitle": "Kundenportal-Zugang",
   "clientPortalAccessDescription": "Teilen Sie diesen Link mit Ihrem Kunden, um ihm Zugang zu seinem Portal zu gewähren",
+  "clientPortalAccessInfo": "Nach dem Erstellen des Kunden verwenden Sie den Organisations-Einladungslink von der Kundenseite, um ihm Portal-Zugang zu gewähren.",
   "copyButton": "Kopieren",
   "linkCopiedMessage": "Link in die Zwischenablage kopiert",
+  
+  "organizationInviteLinkTitle": "Organisations-Einladungslink",
+  "organizationInviteLinkDescription": "Teilen Sie diesen einzelnen Link mit beliebigen Kunden, um ihnen den Beitritt zum Kundenportal Ihrer Organisation zu ermöglichen. Der Link läuft aus Sicherheitsgründen nach 7 Tagen ab und kann bei Bedarf neu generiert werden.",
+  "generateLink": "Link generieren",
+  "regenerateLink": "Regenerieren",
+  "linkExpiresAt": "Link läuft ab am",
+  "noInviteLinkGenerated": "Noch kein Organisations-Einladungslink generiert. Klicken Sie auf \"Link generieren\", um einen teilbaren Link für alle Ihre Kunden zu erstellen.",
+  "generateLinkSuccess": "Organisations-Einladungslink erfolgreich generiert!",
+  "generateLinkError": "Fehler beim Generieren des Organisations-Einladungslinks",
+  "regenerateLinkSuccess": "Organisations-Einladungslink erfolgreich neu generiert!",
+  "regenerateLinkError": "Fehler beim Neugenerieren des Organisations-Einladungslinks",
+  "linkCopiedSuccess": "Einladungslink in die Zwischenablage kopiert!",
+  "linkGenerating": "Einladungslink wird generiert...",
+  "linkExpired": "Dieser Einladungslink ist abgelaufen",
+  "linkActive": "Aktiv",
   
   "closeButton": "Schließen",
   "deleteButton": "Kunde löschen",

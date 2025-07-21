@@ -69,7 +69,7 @@
   
   "statusLabel": "Estado",
   
-  "createClientSuccessMessage": "Cliente creado exitosamente",
+  "createClientSuccessMessage": "¡Cliente creado exitosamente! Comparte el enlace de invitación de la organización para darle acceso al portal.",
   "createClientSuccessMessageWithInvite": "¡Cliente creado exitosamente! Invitación enviada a {email}",
   "createClientErrorMessage": "Error al crear el cliente",
   "updateClientSuccessMessage": "Cliente actualizado exitosamente",
@@ -79,8 +79,24 @@
   
   "clientPortalAccessTitle": "Acceso al Portal del Cliente",
   "clientPortalAccessDescription": "Comparte este enlace con tu cliente para darle acceso a su portal",
+  "clientPortalAccessInfo": "Después de crear el cliente, usa el enlace de invitación de la organización desde la página de Clientes para darle acceso al portal.",
   "copyButton": "Copiar",
   "linkCopiedMessage": "Enlace copiado al portapapeles",
+  
+  "organizationInviteLinkTitle": "Enlace de Invitación de la Organización",
+  "organizationInviteLinkDescription": "Comparte este único enlace con cualquier cliente para permitirles unirse al portal de clientes de tu organización. El enlace expira después de 7 días por seguridad y se puede regenerar según sea necesario.",
+  "generateLink": "Generar Enlace",
+  "regenerateLink": "Regenerar",
+  "linkExpiresAt": "El enlace expira el",
+  "noInviteLinkGenerated": "Aún no se ha generado ningún enlace de invitación de la organización. Haz clic en \"Generar Enlace\" para crear un enlace compartible para todos tus clientes.",
+  "generateLinkSuccess": "¡Enlace de invitación de la organización generado exitosamente!",
+  "generateLinkError": "Error al generar el enlace de invitación de la organización",
+  "regenerateLinkSuccess": "¡Enlace de invitación de la organización regenerado exitosamente!",
+  "regenerateLinkError": "Error al regenerar el enlace de invitación de la organización",
+  "linkCopiedSuccess": "¡Enlace de invitación copiado al portapapeles!",
+  "linkGenerating": "Generando enlace de invitación...",
+  "linkExpired": "Este enlace de invitación ha expirado",
+  "linkActive": "Activo",
   
   "closeButton": "Cerrar",
   "deleteButton": "Eliminar Cliente",

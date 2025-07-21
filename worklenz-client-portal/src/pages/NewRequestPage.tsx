@@ -34,17 +34,19 @@ const NewRequestPage: React.FC = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   const { data: servicesData, isLoading: servicesLoading } =
-    useGetServicesQuery({ page: 1, limit: 100 });
+    useGetServicesQuery();
   const [createRequest, { isLoading: creating }] = useCreateRequestMutation();
 
   const onFinish = async (values: RequestFormValues) => {
     try {
       const requestData = {
-        service: values.service_id,
-        title: values.title,
-        description: values.description,
-        priority: values.priority,
-        attachments: fileList.map((file) => file.name),
+        serviceId: values.service_id,
+        requestData: {
+          title: values.title,
+          description: values.description,
+          priority: values.priority,
+        },
+        notes: values.description,
       };
 
       await createRequest(requestData).unwrap();
@@ -108,7 +110,7 @@ const NewRequestPage: React.FC = () => {
                 showSearch
                 optionFilterProp="children"
               >
-                {servicesData?.body?.data?.map((service) => (
+                {(servicesData?.body as any)?.map((service: any) => (
                   <Select.Option key={service.id} value={service.id}>
                     {service.name}
                   </Select.Option>

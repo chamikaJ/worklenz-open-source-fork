@@ -18,7 +18,6 @@ import {
   UserOutlined, 
   MailOutlined, 
   PhoneOutlined,
-  HomeOutlined,
   TeamOutlined,
   ProjectOutlined,
   FileTextOutlined,
@@ -49,14 +48,14 @@ const ProfilePage: React.FC = () => {
       const response = await clientPortalAPI.getProfile();
 
       if (response.done) {
-        setProfile(response.body);
+        setProfile(response.body as ClientProfile);
         // Populate form with current data
         form.setFieldsValue({
-          clientName: response.body.client.name,
-          clientPhone: response.body.client.phone,
-          clientAddress: response.body.client.address,
-          contactPerson: response.body.client.contactPerson,
-          userName: response.body.user?.name,
+          clientName: (response.body as ClientProfile).client.name,
+          clientPhone: (response.body as ClientProfile).client.phone,
+          clientAddress: (response.body as ClientProfile).client.address,
+          contactPerson: (response.body as ClientProfile).client.contactPerson,
+          userName: (response.body as ClientProfile).user?.name,
         });
       } else {
         setError('Failed to load profile');
@@ -260,7 +259,6 @@ const ProfilePage: React.FC = () => {
                 name="clientAddress"
               >
                 <Input.TextArea 
-                  prefix={<HomeOutlined />}
                   placeholder="Company address"
                   rows={3}
                 />
