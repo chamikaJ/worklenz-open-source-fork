@@ -2411,7 +2411,7 @@ class ClientPortalController {
 
       // Generate secure token for organization invitation
       const expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days from now
-      const inviteToken = TokenService.generateInviteToken({
+      const inviteToken = TokenService.generateOrganizationInviteToken({
         teamId: teamId,
         type: "organization_invite",
         invitedBy: userId,
@@ -2435,7 +2435,7 @@ class ClientPortalController {
       await db.query(upsertQuery, [teamId, inviteToken, userId, new Date(expiresAt)]);
 
       // Generate organization portal link with secure token
-      const portalLink = `${process.env.CLIENT_PORTAL_URL || "http://localhost:3001"}/organization-invite?token=${inviteToken}`;
+      const portalLink = `${process.env.CLIENT_PORTAL_HOSTNAME ? `http://${process.env.CLIENT_PORTAL_HOSTNAME}` : "http://localhost:5174"}/organization-invite?token=${inviteToken}`;
 
       return res.json(new ServerResponse(true, {
         invitationLink: portalLink,
@@ -3240,7 +3240,7 @@ class ClientPortalController {
       });
 
       // Generate invitation link
-      const inviteLink = `${process.env.CLIENT_PORTAL_URL || "http://localhost:3001"}/invitation?token=${inviteToken}`;
+      const inviteLink = `${process.env.CLIENT_PORTAL_HOSTNAME ? `http://${process.env.CLIENT_PORTAL_HOSTNAME}` : "http://localhost:5174"}/invitation?token=${inviteToken}`;
 
       // Generate email HTML
       const emailHtml = ClientPortalController.generateInvitationEmailHTML({
@@ -3533,7 +3533,7 @@ class ClientPortalController {
       );
 
       // Generate new invitation link
-      const inviteLink = `${process.env.CLIENT_PORTAL_URL || "http://localhost:3001"}/invitation?token=${newToken}`;
+      const inviteLink = `${process.env.CLIENT_PORTAL_HOSTNAME ? `http://${process.env.CLIENT_PORTAL_HOSTNAME}` : "http://localhost:5174"}/invitation?token=${newToken}`;
 
       // Generate email HTML
       const emailHtml = ClientPortalController.generateInvitationEmailHTML({
@@ -4067,7 +4067,7 @@ class ClientPortalController {
       // Send welcome email
       const invitation = await TokenService.getInvitationByToken(token);
       if (invitation) {
-        const portalLink = `${process.env.CLIENT_PORTAL_URL || "http://localhost:3001"}/login`;
+        const portalLink = `${process.env.CLIENT_PORTAL_HOSTNAME ? `http://${process.env.CLIENT_PORTAL_HOSTNAME}` : "http://localhost:5174"}/login`;
         
         // Generate welcome email HTML
         const emailHtml = ClientPortalController.generateWelcomeEmailHTML({

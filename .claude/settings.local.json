@@ -14,7 +14,8 @@
       "Bash(npx eslint:*)",
       "Bash(npm test:*)",
       "Bash(npx tsc:*)",
-      "Bash(/dev/null)"
+      "Bash(/dev/null)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

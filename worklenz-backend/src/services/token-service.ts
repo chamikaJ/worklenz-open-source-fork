@@ -20,6 +20,14 @@ interface InviteTokenPayload {
   type: "invite";
 }
 
+interface OrganizationInviteTokenPayload {
+  teamId: string;
+  type: "organization_invite";
+  invitedBy: string;
+  expiresAt: number;
+  organizationName: string;
+}
+
 class TokenService {
   private readonly SECRET_KEY = process.env.JWT_SECRET || "your-secret-key-here";
   private readonly INVITE_SECRET = process.env.INVITE_SECRET || "invite-secret-key";
@@ -39,6 +47,15 @@ class TokenService {
       expiresIn: "7d", // Invitations expire in 7 days
       issuer: "worklenz-client-portal",
       audience: "invite"
+    });
+  }
+
+  // Generate organization invitation token
+  generateOrganizationInviteToken(payload: OrganizationInviteTokenPayload): string {
+    return jwt.sign(payload, this.INVITE_SECRET, {
+      expiresIn: "7d", // Organization invitations expire in 7 days
+      issuer: "worklenz-client-portal",
+      audience: "organization_invite"
     });
   }
 

@@ -97,6 +97,8 @@
   "linkGenerating": "Generating invite link...",
   "linkExpired": "This invite link has expired",
   "linkActive": "Active",
+  "inviteButton": "Invite",
+  "generatingLink": "Generating invite link...",
   
   "closeButton": "Close",
   "deleteButton": "Delete Client",

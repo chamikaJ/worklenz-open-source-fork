@@ -734,11 +734,20 @@ export const clientPortalApi = createApi({
     }),
 
     // Client Invitation Management
-    generateClientInvitationLink: builder.mutation<{ invitationLink: string; token: string; expiresAt: string; clientName: string; clientEmail: string }, { clientId: string }>({
+    generateClientInvitationLink: builder.mutation<any, { clientId: string }>({
       query: ({ clientId }) => ({
         url: '/clients/portal/generate-invitation-link',
         method: 'POST',
         body: { clientId },
+      }),
+    }),
+    
+    // Handle organization invitation
+    handleOrganizationInvite: builder.mutation<{ redirectTo: string; message: string }, { token: string }>({
+      query: ({ token }) => ({
+        url: '/client-portal/handle-organization-invite',
+        method: 'POST',
+        body: { token },
       }),
     }),
   }),
@@ -834,4 +843,5 @@ export const {
   
   // Client Invitation Management
   useGenerateClientInvitationLinkMutation,
+  useHandleOrganizationInviteMutation,
 } = clientPortalApi; 
