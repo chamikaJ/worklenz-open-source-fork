@@ -31,7 +31,10 @@ export {
   Row,
   Col,
   Descriptions,
-  Timeline
+  Timeline,
+  Statistic,
+  Progress,
+  Tooltip
 } from "antd";
 
 // Icons
@@ -58,5 +61,12 @@ export {
   ArrowLeftOutlined,
   UploadOutlined,
   PaperClipOutlined,
-  SendOutlined
+  SendOutlined,
+  MailOutlined, 
+  PhoneOutlined,
+  TeamOutlined,
+  LockOutlined,
+  SearchOutlined,
+  CalendarOutlined,
+  ShareAltOutlined
 } from "@ant-design/icons";
