@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Row, Col, Statistic, Spin, Alert } from 'antd';
+import { Card, Row, Col, Statistic, Spin, Alert, Typography, Flex } from 'antd';
 import { 
   FileTextOutlined, 
   ProjectOutlined, 
@@ -7,6 +7,8 @@ import {
   MessageOutlined 
 } from '@ant-design/icons';
 import { useGetDashboardQuery } from '@/store/api';
+
+const { Title, Paragraph } = Typography;
 
 const DashboardPage: React.FC = () => {
   const { data: dashboardData, isLoading, error } = useGetDashboardQuery();
@@ -42,9 +44,13 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Welcome to your client portal dashboard</p>
+    <Flex vertical gap={24} style={{ width: '100%' }}>
+      <Flex vertical gap={8}>
+        <Title level={1} style={{ margin: 0 }}>Dashboard</Title>
+        <Paragraph type="secondary" style={{ margin: 0 }}>
+          Welcome to your client portal dashboard
+        </Paragraph>
+      </Flex>
       
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
@@ -126,7 +132,7 @@ const DashboardPage: React.FC = () => {
           </Card>
         </Col>
       </Row>
-    </div>
+    </Flex>
   );
 };
 

@@ -213,9 +213,9 @@ const ClientSettingsDrawer = () => {
     <Drawer
       title={
         <Flex align="center" gap={8}>
-          <Typography.Text style={{ fontWeight: 500, fontSize: 16, textTransform: 'capitalize' }}>
+          <Typography.Title level={2} style={{ margin: 0, textTransform: 'capitalize' }}>
             {client?.name || t('loadingText') || 'Loading...'}
-          </Typography.Text>
+          </Typography.Title>
           <Typography.Text type="secondary">
             {t('projectSettingsTitle') || 'Project Settings'}
           </Typography.Text>
@@ -228,7 +228,13 @@ const ClientSettingsDrawer = () => {
       <Spin spinning={isLoadingClient || isLoadingProjects}>
         <Flex vertical gap={24}>
           {/* Assign New Project */}
-          <Card title={t('assignProjectTitle') || 'Assign New Project'}>
+          <Card 
+            title={
+              <Typography.Title level={4} style={{ margin: 0 }}>
+                {t('assignProjectTitle') || 'Assign New Project'}
+              </Typography.Title>
+            }
+          >
             <Flex gap={16} align="flex-end">
               <div style={{ flex: 1 }}>
                 <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
@@ -268,7 +274,9 @@ const ClientSettingsDrawer = () => {
             title={
               <Flex align="center" gap={8}>
                 <ProjectOutlined />
-                {t('assignedProjectsTitle') || 'Assigned Projects'}
+                <Typography.Title level={4} style={{ margin: 0 }}>
+                  {t('assignedProjectsTitle') || 'Assigned Projects'}
+                </Typography.Title>
                 {clientProjects?.projects && (
                   <Tag color="blue">{clientProjects.projects.length}</Tag>
                 )}

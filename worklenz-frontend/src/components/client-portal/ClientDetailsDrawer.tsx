@@ -122,7 +122,7 @@ const ClientDetailsDrawer = () => {
         <Flex align="center" gap={12}>
           <Avatar size="large" icon={<UserOutlined />} />
           <div>
-            <Title level={4} style={{ margin: 0 }}>
+            <Title level={2} style={{ margin: 0 }}>
               {client?.name || t('loadingText') || 'Loading...'}
             </Title>
             <Text type="secondary">
@@ -172,7 +172,14 @@ const ClientDetailsDrawer = () => {
         {client && (
           <>
             {/* Client Information */}
-            <Card title={t('clientInformationTitle') || 'Client Information'} style={{ marginBottom: 16 }}>
+            <Card 
+              title={
+                <Title level={4} style={{ margin: 0 }}>
+                  {t('clientInformationTitle') || 'Client Information'}
+                </Title>
+              } 
+              style={{ marginBottom: 16 }}
+            >
               <Flex vertical gap={16}>
                 <Flex gap={16} align="center">
                   <MailOutlined style={{ color: '#1890ff' }} />
@@ -234,7 +241,14 @@ const ClientDetailsDrawer = () => {
             </Card>
 
             {/* Statistics */}
-            <Card title={t('statisticsTitle') || 'Statistics'} style={{ marginBottom: 16 }}>
+            <Card 
+              title={
+                <Title level={4} style={{ margin: 0 }}>
+                  {t('statisticsTitle') || 'Statistics'}
+                </Title>
+              } 
+              style={{ marginBottom: 16 }}
+            >
               <Spin spinning={isLoadingStats}>
                 {clientStats && (
                   <Flex gap={16} wrap="wrap">
@@ -267,7 +281,9 @@ const ClientDetailsDrawer = () => {
               title={
                 <Flex align="center" gap={8}>
                   <TeamOutlined />
-                  {t('teamMembersTitle') || 'Team Members'}
+                  <Title level={4} style={{ margin: 0 }}>
+                    {t('teamMembersTitle') || 'Team Members'}
+                  </Title>
                 </Flex>
               } 
               style={{ marginBottom: 16 }}
@@ -310,7 +326,9 @@ const ClientDetailsDrawer = () => {
               title={
                 <Flex align="center" gap={8}>
                   <ProjectOutlined />
-                  {t('projectsTitle') || 'Projects'}
+                  <Title level={4} style={{ margin: 0 }}>
+                    {t('projectsTitle') || 'Projects'}
+                  </Title>
                 </Flex>
               }
             >

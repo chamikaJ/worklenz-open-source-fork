@@ -236,9 +236,9 @@ const ClientTeamsDrawer = () => {
     <Drawer
       title={
         <Flex align="center" gap={8}>
-          <Typography.Text style={{ fontWeight: 500, fontSize: 16, textTransform: 'capitalize' }}>
+          <Typography.Title level={2} style={{ margin: 0, textTransform: 'capitalize' }}>
             {client?.name || t('loadingText') || 'Loading...'}
-          </Typography.Text>
+          </Typography.Title>
           <Typography.Text type="secondary">
             {t('teamManagementTitle') || 'Team Management'}
           </Typography.Text>
@@ -252,8 +252,10 @@ const ClientTeamsDrawer = () => {
         <Flex vertical gap={32}>
           {/* Client Portal Link */}
           <Flex vertical gap={8}>
-            <Typography.Text strong>{t('clientPortalLinkLabel') || 'Client Portal Link'}</Typography.Text>
-            <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              {t('clientPortalLinkLabel') || 'Client Portal Link'}
+            </Typography.Title>
+            <Typography.Text type="secondary">
               {t('clientPortalLinkDescription') || 'Share this link with your client to give them access to their portal'}
             </Typography.Text>
             <Flex gap={8} align="center">
@@ -274,7 +276,12 @@ const ClientTeamsDrawer = () => {
 
           {/* Invite Team Member */}
           <Flex vertical gap={8}>
-            <Typography.Text strong>{t('inviteTeamMemberLabel') || 'Invite Team Member'}</Typography.Text>
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              {t('inviteTeamMemberLabel') || 'Invite Team Member'}
+            </Typography.Title>
+            <Typography.Text type="secondary">
+              {t('inviteTeamMemberDescription') || 'Send an invitation to add a new team member to this client'}
+            </Typography.Text>
             <Form
               form={inviteForm}
               layout="vertical"
@@ -340,7 +347,12 @@ const ClientTeamsDrawer = () => {
 
           {/* Team Members List */}
           <Flex vertical gap={8}>
-            <Typography.Text strong>{t('teamMembersLabel') || 'Team Members'}</Typography.Text>
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              {t('teamMembersLabel') || 'Team Members'}
+            </Typography.Title>
+            <Typography.Text type="secondary">
+              {t('teamMembersDescription') || 'Manage team members who have access to this client'}
+            </Typography.Text>
             {clientTeam?.team_members && clientTeam.team_members.length > 0 ? (
               <Table
                 dataSource={clientTeam.team_members}

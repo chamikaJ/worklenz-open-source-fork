@@ -202,6 +202,31 @@
   "noClientsTitle": "No se encontraron clientes",
   "noClientsDescription": "Aún no ha agregado ningún cliente. Agregue su primer cliente para comenzar a gestionar el acceso a su portal.",
   "errorLoadingClients": "Error al cargar clientes",
-  "errorLoadingClientsDescription": "Hubo un error al cargar sus clientes. Por favor, inténtelo de nuevo más tarde."
+  "errorLoadingClientsDescription": "Hubo un error al cargar sus clientes. Por favor, inténtelo de nuevo más tarde.",
+  
+  "projectSettingsTitle": "Configuración de Proyectos",
+  "assignProjectTitle": "Asignar Nuevo Proyecto",
+  "selectProjectLabel": "Seleccionar Proyecto",
+  "selectProjectPlaceholder": "Elige un proyecto para asignar",
+  "assignButton": "Asignar Proyecto",
+  "assignedProjectsTitle": "Proyectos Asignados",
+  "projectNameColumn": "Nombre del Proyecto",
+  "statusColumn": "Estado",
+  "progressColumn": "Progreso",
+  "tasksCompletedText": "tareas",
+  "actionsColumn": "Acciones",
+  "viewProjectTooltip": "Ver Proyecto",
+  "viewButton": "Ver",
+  "removeProjectConfirmationTitle": "Eliminar Proyecto",
+  "removeProjectConfirmationDescription": "¿Estás seguro de que quieres eliminar este proyecto del cliente?",
+  "removeConfirmationOk": "Eliminar",
+  "removeConfirmationCancel": "Cancelar",
+  "removeProjectTooltip": "Eliminar Proyecto",
+  "removeButton": "Eliminar",
+  "noAssignedProjectsText": "No hay proyectos asignados a este cliente",
+  "projectAssignedSuccessMessage": "Proyecto asignado exitosamente",
+  "projectAssignedErrorMessage": "Error al asignar el proyecto",
+  "projectRemovedSuccessMessage": "Proyecto eliminado exitosamente",
+  "projectRemovedErrorMessage": "Error al eliminar el proyecto"
 }
   

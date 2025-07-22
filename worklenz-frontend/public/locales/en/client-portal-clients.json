@@ -202,6 +202,31 @@
   "noClientsTitle": "No Clients Found",
   "noClientsDescription": "You haven't added any clients yet. Add your first client to start managing their portal access.",
   "errorLoadingClients": "Error Loading Clients",
-  "errorLoadingClientsDescription": "There was an error loading your clients. Please try again later."
+  "errorLoadingClientsDescription": "There was an error loading your clients. Please try again later.",
+  
+  "projectSettingsTitle": "Project Settings",
+  "assignProjectTitle": "Assign New Project",
+  "selectProjectLabel": "Select Project",
+  "selectProjectPlaceholder": "Choose a project to assign",
+  "assignButton": "Assign Project",
+  "assignedProjectsTitle": "Assigned Projects",
+  "projectNameColumn": "Project Name",
+  "statusColumn": "Status",
+  "progressColumn": "Progress",
+  "tasksCompletedText": "tasks",
+  "actionsColumn": "Actions",
+  "viewProjectTooltip": "View Project",
+  "viewButton": "View",
+  "removeProjectConfirmationTitle": "Remove Project",
+  "removeProjectConfirmationDescription": "Are you sure you want to remove this project from the client?",
+  "removeConfirmationOk": "Remove",
+  "removeConfirmationCancel": "Cancel",
+  "removeProjectTooltip": "Remove Project",
+  "removeButton": "Remove",
+  "noAssignedProjectsText": "No projects assigned to this client",
+  "projectAssignedSuccessMessage": "Project assigned successfully",
+  "projectAssignedErrorMessage": "Failed to assign project",
+  "projectRemovedSuccessMessage": "Project removed successfully",
+  "projectRemovedErrorMessage": "Failed to remove project"
 }
   

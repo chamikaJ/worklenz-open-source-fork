@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Steps, Spin, Alert, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useGetServiceDetailsQuery, useUpdateOrganizationServiceMutation } from '../../../../api/client-portal/client-portal-api';
+import { useGetOrganizationServiceByIdQuery, useUpdateOrganizationServiceMutation } from '../../../../api/client-portal/client-portal-api';
 import { TempServicesType } from '../../../../types/client-portal/temp-client-portal.types';
 import ServiceDetailsStep from '../add-service/modal-stepper/service-details-step';
 import RequestFormStep from '../add-service/modal-stepper/request-form-step';
@@ -15,7 +15,7 @@ const ClientPortalEditService = () => {
   const navigate = useNavigate();
   
   // Fetch service details
-  const { data: serviceData, isLoading, error } = useGetServiceDetailsQuery(id!);
+  const { data: serviceData, isLoading, error } = useGetOrganizationServiceByIdQuery(id!);
   
   const [current, setCurrent] = useState(0);
   const [service, setService] = useState<TempServicesType>({
@@ -91,13 +91,18 @@ const ClientPortalEditService = () => {
 
   // Handle error state
   if (error) {
+    const isNotImplemented = (error as any)?.status === 404;
     return (
       <div style={{ padding: 24 }}>
         <Card>
           <Alert
-            message={t('errorLoadingService') || 'Error Loading Service'}
-            description={t('errorLoadingServiceDescription') || 'There was an error loading the service. Please try again later.'}
-            type="error"
+            message={isNotImplemented ? 'Feature Not Yet Available' : (t('errorLoadingService') || 'Error Loading Service')}
+            description={
+              isNotImplemented 
+                ? 'The organization services management feature is currently under development. Please check back later.'
+                : (t('errorLoadingServiceDescription') || 'There was an error loading the service. Please try again later.')
+            }
+            type={isNotImplemented ? "info" : "error"}
             showIcon
           />
         </Card>
@@ -106,7 +111,7 @@ const ClientPortalEditService = () => {
   }
 
   // Handle service not found
-  if (!serviceData?.body) {
+  if (!isLoading && !serviceData?.body) {
     return (
       <div style={{ padding: 24 }}>
         <Card>

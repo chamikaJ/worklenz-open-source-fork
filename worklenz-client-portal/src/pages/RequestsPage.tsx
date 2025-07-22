@@ -5,7 +5,7 @@ import { useGetRequestsQuery } from '@/store/api';
 import { useNavigate } from 'react-router-dom';
 import { ClientRequest } from '@/types';
 
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 
 const RequestsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -83,21 +83,35 @@ const RequestsPage: React.FC = () => {
 
   if (error) {
     return (
-      <Card>
-        <Alert
-          message="Error loading requests"
-          description="Failed to load requests. Please try again."
-          type="error"
-          showIcon
-        />
-      </Card>
+      <Flex vertical gap={24} style={{ width: '100%' }}>
+        <Flex vertical gap={8}>
+          <Title level={1} style={{ margin: 0 }}>Requests</Title>
+          <Paragraph type="secondary" style={{ margin: 0 }}>
+            Submit and track your service requests
+          </Paragraph>
+        </Flex>
+        
+        <Card>
+          <Alert
+            message="Error loading requests"
+            description="Failed to load requests. Please try again."
+            type="error"
+            showIcon
+          />
+        </Card>
+      </Flex>
     );
   }
 
   return (
-    <Card>
-      <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
-        <Title level={2} style={{ margin: 0 }}>Requests</Title>
+    <Flex vertical gap={24} style={{ width: '100%' }}>
+      <Flex justify="space-between" align="center">
+        <Flex vertical gap={8}>
+          <Title level={1} style={{ margin: 0 }}>Requests</Title>
+          <Paragraph type="secondary" style={{ margin: 0 }}>
+            Submit and track your service requests
+          </Paragraph>
+        </Flex>
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -106,6 +120,8 @@ const RequestsPage: React.FC = () => {
           New Request
         </Button>
       </Flex>
+      
+      <Card>
       
       <Spin spinning={isLoading}>
         {data?.body?.data && data.body.data.length > 0 ? (
@@ -144,7 +160,8 @@ const RequestsPage: React.FC = () => {
           </Empty>
         )}
       </Spin>
-    </Card>
+      </Card>
+    </Flex>
   );
 };
 

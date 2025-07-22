@@ -1,14 +1,22 @@
 import React from 'react';
-import { Card, Typography } from 'antd';
+import { Card, Typography, Flex } from 'antd';
 
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 
 const ProjectsPage: React.FC = () => {
   return (
-    <Card>
-      <Title level={2}>Projects</Title>
-      <p>Projects page coming soon...</p>
-    </Card>
+    <Flex vertical gap={24} style={{ width: '100%' }}>
+      <Flex vertical gap={8}>
+        <Title level={1} style={{ margin: 0 }}>Projects</Title>
+        <Paragraph type="secondary" style={{ margin: 0 }}>
+          Manage and track your project progress
+        </Paragraph>
+      </Flex>
+      
+      <Card style={{ height: 'calc(100vh - 248px)' }}>
+        <p>Projects page coming soon...</p>
+      </Card>
+    </Flex>
   );
 };
 

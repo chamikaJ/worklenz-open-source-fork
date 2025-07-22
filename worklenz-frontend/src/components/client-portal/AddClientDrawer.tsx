@@ -167,7 +167,7 @@ const AddClientDrawer = () => {
 
         {/* Client Portal Link Section */}
         <Flex vertical gap={16} style={{ marginTop: 24 }}>
-          <Typography.Title level={5}>
+          <Typography.Title level={4} style={{ margin: 0 }}>
             {t('clientPortalAccessTitle') || 'Client Portal Access'}
           </Typography.Title>
           

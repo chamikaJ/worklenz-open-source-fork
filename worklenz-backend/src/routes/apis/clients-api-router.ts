@@ -25,6 +25,7 @@ clientsApiRouter.put("/portal/requests/:id/assign", idParamValidator, safeContro
 
 // Organization-side Client Portal Service Management
 clientsApiRouter.get("/portal/services", safeControllerFunction(ClientsController.getClientServices));
+clientsApiRouter.get("/portal/services/:id", idParamValidator, safeControllerFunction(ClientsController.getClientServiceById));
 clientsApiRouter.post("/portal/services", safeControllerFunction(ClientsController.createClientService));
 clientsApiRouter.put("/portal/services/:id", idParamValidator, safeControllerFunction(ClientsController.updateClientService));
 clientsApiRouter.delete("/portal/services/:id", idParamValidator, safeControllerFunction(ClientsController.deleteClientService));

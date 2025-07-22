@@ -69,16 +69,18 @@ const ClientPortalClients = () => {
       <div style={{ marginBottom: isDesktop ? 32 : 24 }}>
         <Flex justify="space-between" align="center" wrap="wrap" gap={16}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <Title
-              level={isDesktop ? 2 : 3}
-              style={{
-                margin: 0,
-                marginBottom: 8,
-                fontSize: isDesktop ? '28px' : '24px',
-              }}
-            >
-              {t('pageTitle') || 'Clients'}
-            </Title>
+            <Flex align="center" gap={12} style={{ marginBottom: 8 }}>
+              <UserOutlined style={{ fontSize: 20 }} />
+              <Title
+                level={4}
+                style={{
+                  margin: 0,
+                  fontSize: '20px',
+                }}
+              >
+                {t('pageTitle') || 'Clients'}
+              </Title>
+            </Flex>
             <Typography.Text
               type="secondary"
               style={{

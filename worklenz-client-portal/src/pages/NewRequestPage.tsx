@@ -34,7 +34,7 @@ const NewRequestPage: React.FC = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   const { data: servicesData, isLoading: servicesLoading } =
-    useGetServicesQuery({ page: 1, limit: 100 });
+    useGetServicesQuery();
   const [createRequest, { isLoading: creating }] = useCreateRequestMutation();
 
   const onFinish = async (values: RequestFormValues) => {
@@ -108,7 +108,7 @@ const NewRequestPage: React.FC = () => {
                 showSearch
                 optionFilterProp="children"
               >
-                {servicesData?.body?.data?.map((service) => (
+                {servicesData?.body?.map((service: { id: string; name: string }) => (
                   <Select.Option key={service.id} value={service.id}>
                     {service.name}
                   </Select.Option>

@@ -1,5 +1,6 @@
 import { Flex, Typography, Card } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { FileTextOutlined } from '@ant-design/icons';
 import { useResponsive } from '../../../hooks/useResponsive';
 import RequestsTable from './requests-table';
 
@@ -23,15 +24,18 @@ const ClientPortalRequests = () => {
           gap={16}
         >
           <div style={{ flex: 1, minWidth: 0 }}>
-            <Typography.Title 
-              level={isDesktop ? 2 : 3} 
-              style={{ 
-                margin: 0,
-                fontSize: isDesktop ? '28px' : '24px',
-              }}
-            >
-              {t('title') || 'Requests'}
-            </Typography.Title>
+            <Flex align="center" gap={12} style={{ marginBottom: 8 }}>
+              <FileTextOutlined style={{ fontSize: 20 }} />
+              <Typography.Title 
+                level={4} 
+                style={{ 
+                  margin: 0,
+                  fontSize: '20px',
+                }}
+              >
+                {t('title') || 'Requests'}
+              </Typography.Title>
+            </Flex>
             <Typography.Text 
               type="secondary"
               style={{ 

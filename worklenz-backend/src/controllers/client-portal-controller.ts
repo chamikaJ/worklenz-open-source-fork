@@ -9,6 +9,7 @@ import { IEmailTemplateType } from "../interfaces/email-template-type";
 import { getBaseUrl, getClientPortalBaseUrl } from "../cron_jobs/helpers";
 import { uploadBase64, getClientPortalLogoKey } from "../shared/storage";
 import { log_error } from "../shared/utils";
+import { IWorkLenzRequest } from "../interfaces/worklenz-request";
 
 class ClientPortalController {
 
@@ -730,7 +731,7 @@ class ClientPortalController {
   }
 
   // Settings
-  static async getSettings(req: Request, res: Response) {
+  static async getSettings(req: IWorkLenzRequest, res: Response) {
     try {
       const organizationTeamId = req.user?.organization_team_id || req.user?.team_id;
       if (!organizationTeamId) {
@@ -757,14 +758,14 @@ class ClientPortalController {
         privacy_policy: null
       };
 
-      return res.json(new ServerResponse(true, settings, "Settings retrieved successfully"));
+      return res.json(new ServerResponse(true, settings, null));
     } catch (error) {
       log_error(error);
       return res.status(500).json(new ServerResponse(false, null, "Failed to retrieve settings"));
     }
   }
 
-  static async updateSettings(req: Request, res: Response) {
+  static async updateSettings(req: IWorkLenzRequest, res: Response) {
     try {
       const organizationTeamId = req.user?.organization_team_id || req.user?.team_id;
       const teamId = req.user?.team_id;
@@ -824,7 +825,7 @@ class ClientPortalController {
     }
   }
 
-  static async uploadLogo(req: Request, res: Response) {
+  static async uploadLogo(req: IWorkLenzRequest, res: Response) {
     try {
       const organizationTeamId = req.user?.organization_team_id || req.user?.team_id;
       if (!organizationTeamId) {
