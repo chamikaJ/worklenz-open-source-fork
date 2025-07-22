@@ -40,8 +40,8 @@ const InvitePage: React.FC = () => {
     ],
     confirmPassword: [
       { required: true, message: t('invite.confirm_password_required') },
-      ({ getFieldValue }: any) => ({
-        validator(_: any, value: string) {
+      ({ getFieldValue }: { getFieldValue: (field: string) => string }) => ({
+        validator(_: unknown, value: string) {
           if (!value || getFieldValue('password') === value) {
             return Promise.resolve();
           }

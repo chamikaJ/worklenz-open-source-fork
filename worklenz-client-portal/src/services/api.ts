@@ -103,7 +103,7 @@ class ClientPortalAPI {
   }
 
   // Generic request method
-  private async request<T>(endpoint: string, options: any = {}): Promise<ApiResponse<T>> {
+  private async request<T>(endpoint: string, options: Record<string, unknown> = {}): Promise<ApiResponse<T>> {
     const response = await this.api.request({
       url: endpoint,
       ...options,

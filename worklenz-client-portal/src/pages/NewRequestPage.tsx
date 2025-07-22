@@ -110,7 +110,7 @@ const NewRequestPage: React.FC = () => {
                 showSearch
                 optionFilterProp="children"
               >
-                {(servicesData?.body as any)?.map((service: any) => (
+                {servicesData?.body?.map((service: { id: string; name: string }) => (
                   <Select.Option key={service.id} value={service.id}>
                     {service.name}
                   </Select.Option>

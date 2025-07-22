@@ -55,7 +55,7 @@ export const clientPortalApi = createApi({
 
     getServiceDetails: builder.query<ApiResponse<ClientService>, string>({
       query: (id) => `/client-portal/services/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Services', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Services', id }],
     }),
 
     // Requests
@@ -78,7 +78,7 @@ export const clientPortalApi = createApi({
 
     getRequestDetails: builder.query<ApiResponse<ClientRequest>, string>({
       query: (id) => `/client-portal/requests/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Requests', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Requests', id }],
     }),
 
     updateRequest: builder.mutation<ApiResponse<ClientRequest>, { id: string; data: Partial<ClientRequest> }>({
@@ -87,7 +87,7 @@ export const clientPortalApi = createApi({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [
+      invalidatesTags: (_result, _error, { id }) => [
         { type: 'Requests', id },
         'Requests',
         'Dashboard'
@@ -113,7 +113,7 @@ export const clientPortalApi = createApi({
 
     getProjectDetails: builder.query<ApiResponse<ClientProject>, string>({
       query: (id) => `/client-portal/projects/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Projects', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Projects', id }],
     }),
 
     // Invoices
@@ -127,7 +127,7 @@ export const clientPortalApi = createApi({
 
     getInvoiceDetails: builder.query<ApiResponse<ClientInvoice>, string>({
       query: (id) => `/client-portal/invoices/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Invoices', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Invoices', id }],
     }),
 
     payInvoice: builder.mutation<ApiResponse<void>, { id: string; paymentData: unknown }>({
@@ -136,7 +136,7 @@ export const clientPortalApi = createApi({
         method: 'POST',
         body: paymentData,
       }),
-      invalidatesTags: (result, error, { id }) => [
+      invalidatesTags: (_result, _error, { id }) => [
         { type: 'Invoices', id },
         'Invoices',
         'Dashboard'
@@ -158,7 +158,7 @@ export const clientPortalApi = createApi({
 
     getChatDetails: builder.query<ApiResponse<ClientChat>, string>({
       query: (id) => `/client-portal/chats/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Chats', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Chats', id }],
     }),
 
     sendMessage: builder.mutation<ApiResponse<void>, { chatId: string; messageData: { content: string; attachments?: string[] } }>({
@@ -167,7 +167,7 @@ export const clientPortalApi = createApi({
         method: 'POST',
         body: messageData,
       }),
-      invalidatesTags: (result, error, { chatId }) => [
+      invalidatesTags: (_result, _error, { chatId }) => [
         { type: 'Chats', chatId },
         'Chats'
       ],
@@ -175,7 +175,7 @@ export const clientPortalApi = createApi({
 
     getMessages: builder.query<ApiResponse<unknown[]>, string>({
       query: (chatId) => `/client-portal/chats/${chatId}/messages`,
-      providesTags: (result, error, chatId) => [{ type: 'Chats', id: chatId }],
+      providesTags: (_result, _error, chatId) => [{ type: 'Chats', id: chatId }],
     }),
 
     // Settings

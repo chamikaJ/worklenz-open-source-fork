@@ -3,7 +3,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { TableProps } from 'antd/lib';
 import { useTranslation } from 'react-i18next';
 import ClientPortalStatusTags from '@/components/client-portal/ClientPortalStatusTags';
-import { useGetServicesQuery, useDeleteOrganizationServiceMutation } from '../../../api/client-portal/client-portal-api';
+import { useGetOrganizationServicesQuery, useDeleteOrganizationServiceMutation } from '../../../api/client-portal/client-portal-api';
 import { PlusOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,7 +12,7 @@ const ServicesTable = () => {
   const { t } = useTranslation('client-portal-services');
 
   // Fetch services from API
-  const { data: servicesData, isLoading, error } = useGetServicesQuery();
+  const { data: servicesData, isLoading, error } = useGetOrganizationServicesQuery({});
   const [deleteService] = useDeleteOrganizationServiceMutation();
 
   const navigate = useNavigate();
@@ -125,20 +125,26 @@ const ServicesTable = () => {
 
   // Handle error state
   if (error) {
+    const isNotImplemented = (error as any)?.status === 404;
     return (
       <Card style={{ height: 'calc(100vh - 280px)' }}>
         <Alert
-          message={t('errorLoadingServices')}
-          description={t('errorLoadingServicesDescription')}
-          type="error"
+          message={isNotImplemented ? 'Feature Not Yet Available' : (t('errorLoadingServices') || 'Error Loading Services')}
+          description={
+            isNotImplemented 
+              ? 'The organization services management feature is currently under development. Please check back later.'
+              : (t('errorLoadingServicesDescription') || 'There was an error loading the services. Please try again later.')
+          }
+          type={isNotImplemented ? "info" : "error"}
           showIcon
         />
       </Card>
     );
   }
 
-  // Extract services from API response - backend returns IServerResponse with {total, data} structure
-  const servicesResponse = (servicesData as any)?.body || { total: 0, data: [] };
+  // Extract services from API response
+  // The response structure from backend: { total: number, data: Service[] }
+  const servicesResponse = servicesData?.body || { total: 0, data: [] };
   const services = servicesResponse.data || [];
 
   // Handle empty state

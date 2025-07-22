@@ -1,7 +1,6 @@
-
 export class TokenManager {
-  private static readonly TOKEN_KEY = 'clientToken';
-  private static readonly TOKEN_EXPIRY_KEY = 'clientTokenExpiry';
+  private static readonly TOKEN_KEY = "clientToken";
+  private static readonly TOKEN_EXPIRY_KEY = "clientTokenExpiry";
   private static readonly REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes before expiry
 
   static setToken(token: string, expiresAt?: string): void {
@@ -52,7 +51,7 @@ export class TokenManager {
     const currentTime = new Date().getTime();
 
     // Refresh if token expires within the threshold
-    return (expiryTime - currentTime) < this.REFRESH_THRESHOLD;
+    return expiryTime - currentTime < this.REFRESH_THRESHOLD;
   }
 
   static getTimeUntilExpiry(): number {
@@ -67,9 +66,9 @@ export class TokenManager {
 
   static formatTimeUntilExpiry(): string {
     const timeLeft = this.getTimeUntilExpiry();
-    
-    if (timeLeft === Infinity) return 'Never expires';
-    if (timeLeft <= 0) return 'Expired';
+
+    if (timeLeft === Infinity) return "Never expires";
+    if (timeLeft <= 0) return "Expired";
 
     const hours = Math.floor(timeLeft / (60 * 60 * 1000));
     const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
@@ -84,7 +83,10 @@ export class TokenManager {
     }
   }
 
-  static startTokenExpiryCheck(onExpiry: () => void, checkInterval: number = 60000): () => void {
+  static startTokenExpiryCheck(
+    onExpiry: () => void,
+    checkInterval: number = 60000
+  ): () => void {
     const interval = setInterval(() => {
       if (this.isTokenExpired()) {
         onExpiry();
@@ -95,7 +97,10 @@ export class TokenManager {
     return () => clearInterval(interval);
   }
 
-  static startTokenRefreshCheck(onRefresh: () => void, checkInterval: number = 60000): () => void {
+  static startTokenRefreshCheck(
+    onRefresh: () => void,
+    checkInterval: number = 60000
+  ): () => void {
     const interval = setInterval(() => {
       if (this.shouldRefreshToken()) {
         onRefresh();

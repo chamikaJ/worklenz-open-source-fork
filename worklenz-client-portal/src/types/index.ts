@@ -125,6 +125,7 @@ export interface ClientSettings {
   email: string;
   phone: string;
   address: string;
+  logo_url?: string;
   email_notifications: boolean;
   project_updates: boolean;
   invoice_notifications: boolean;

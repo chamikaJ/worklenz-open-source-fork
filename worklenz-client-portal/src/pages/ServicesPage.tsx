@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGetServicesQuery } from '../store/api';
 import { ClientService } from '../types';
 
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 
 const ServicesPage: React.FC = () => {
   const { t } = useTranslation();
@@ -43,10 +43,11 @@ const ServicesPage: React.FC = () => {
 
   return (
     <Flex vertical gap={24} style={{ width: '100%' }}>
-      <Flex align="center" justify="space-between" style={{ width: '100%' }}>
-        <Title level={4} style={{ marginBlock: 0 }}>
-          {t('services.title', { items: services.length, defaultValue: `Services (${services.length})` })}
-        </Title>
+      <Flex vertical gap={8}>
+        <Title level={1} style={{ margin: 0 }}>Services</Title>
+        <Paragraph type="secondary" style={{ margin: 0 }}>
+          {t('services.description', { count: services.length, defaultValue: `Browse our available services (${services.length})` })}
+        </Paragraph>
       </Flex>
 
       <Card style={{ height: 'calc(100vh - 248px)', overflowY: 'auto' }}>

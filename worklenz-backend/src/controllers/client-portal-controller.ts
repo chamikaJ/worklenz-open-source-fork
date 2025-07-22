@@ -1401,7 +1401,7 @@ class ClientPortalController {
         privacy_policy: null
       };
 
-      return res.json(new ServerResponse(true, settings, "Settings retrieved successfully"));
+      return res.json(new ServerResponse(true, settings, null));
     } catch (error) {
       log_error(error);
       return res.status(500).json(new ServerResponse(false, null, "Failed to retrieve settings"));

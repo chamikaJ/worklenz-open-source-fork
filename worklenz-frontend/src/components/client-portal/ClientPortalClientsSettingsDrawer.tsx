@@ -71,17 +71,17 @@ const ClientPortalClientsSettingsDrawer = () => {
             autoFocus
           />
         ) : (
-          <Typography.Text
+          <Typography.Title
+            level={2}
             style={{
-              fontWeight: 500,
-              fontSize: 16,
+              margin: 0,
               textTransform: 'capitalize',
               cursor: 'pointer',
             }}
             onClick={() => setIsEditing(true)}
           >
             {selectedClientObj?.name || 'Unnamed Client'}
-          </Typography.Text>
+          </Typography.Title>
         )
       }
       width={900}
@@ -90,7 +90,12 @@ const ClientPortalClientsSettingsDrawer = () => {
     >
       <Flex vertical gap={24}>
         <Flex vertical gap={8}>
-          <Typography.Text>{t('assignProjectLabel')}</Typography.Text>
+          <Typography.Title level={4} style={{ margin: 0 }}>
+            {t('assignProjectLabel') || 'Assign Project'}
+          </Typography.Title>
+          <Typography.Text type="secondary">
+            {t('assignProjectDescription') || 'Select a project to assign to this client'}
+          </Typography.Text>
           <Select
             showSearch
             value={null} // reset after selection

@@ -13,7 +13,7 @@ import {
   Space,
   Statistic,
   message
-} from 'antd';
+} from '@/shared/antd-imports';
 import { 
   UserOutlined, 
   MailOutlined, 
@@ -23,7 +23,7 @@ import {
   FileTextOutlined,
   FileDoneOutlined,
   LockOutlined
-} from '@ant-design/icons';
+} from '@/shared/antd-imports';
 import clientPortalAPI from '@/services/api';
 import { ClientProfile } from '@/types';
 

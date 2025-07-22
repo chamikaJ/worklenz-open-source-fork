@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Spin, Alert } from 'antd';
+import { Card, Row, Col, Statistic, Spin, Alert, Typography, Flex } from '@/shared/antd-imports';
 import { 
   FileTextOutlined, 
   ProjectOutlined, 
@@ -10,6 +10,8 @@ import {
 } from '@ant-design/icons';
 import clientPortalAPI from '@/services/api';
 import { DashboardStats } from '@/types';
+
+const { Title, Paragraph } = Typography;
 
 const DashboardPage: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
@@ -73,9 +75,13 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Welcome to your client portal dashboard</p>
+    <Flex vertical gap={24} style={{ width: '100%' }}>
+      <Flex vertical gap={8}>
+        <Title level={1} style={{ margin: 0 }}>Dashboard</Title>
+        <Paragraph type="secondary" style={{ margin: 0 }}>
+          Welcome to your client portal dashboard
+        </Paragraph>
+      </Flex>
       
       {/* Projects Overview */}
       <Row gutter={[16, 16]}>
@@ -196,7 +202,7 @@ const DashboardPage: React.FC = () => {
           </Card>
         </Col>
       </Row>
-    </div>
+    </Flex>
   );
 };
 

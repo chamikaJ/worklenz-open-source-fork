@@ -346,6 +346,43 @@ export default class ClientsController extends WorklenzControllerBase {
   }
 
   @HandleExceptions()
+  public static async getClientServiceById(req: IWorkLenzRequest, res: IWorkLenzResponse): Promise<IWorkLenzResponse> {
+    const teamId = req.user?.team_id;
+    const serviceId = req.params.id;
+
+    if (!serviceId) {
+      return res.status(400).send(new ServerResponse(false, null, "Service ID is required"));
+    }
+
+    const q = `
+      SELECT s.id,
+             s.name,
+             s.description,
+             s.status,
+             s.is_public,
+             s.service_data,
+             s.created_at,
+             s.updated_at,
+             s.created_by,
+             u.name as created_by_name,
+             (SELECT COUNT(*) FROM client_portal_requests WHERE service_id = s.id) as requests_count,
+             (SELECT COUNT(*) FROM client_portal_requests WHERE service_id = s.id AND status = 'pending') as pending_requests
+      FROM client_portal_services s
+      LEFT JOIN users u ON s.created_by = u.id
+      WHERE s.id = $1 AND s.organization_team_id = $2
+    `;
+
+    const result = await db.query(q, [serviceId, teamId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).send(new ServerResponse(false, null, "Service not found"));
+    }
+
+    const service = result.rows[0];
+    return res.status(200).send(new ServerResponse(true, service));
+  }
+
+  @HandleExceptions()
   public static async createClientService(req: IWorkLenzRequest, res: IWorkLenzResponse): Promise<IWorkLenzResponse> {
     const teamId = req.user?.team_id;
     const userId = req.user?.id;

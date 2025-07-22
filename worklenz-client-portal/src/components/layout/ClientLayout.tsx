@@ -52,9 +52,6 @@ const ClientLayout: React.FC = () => {
   const currentLanguage = useAppSelector((state: RootState) => state.ui.language);
   const notifications = useAppSelector((state: RootState) => state.ui.notifications);
   const user = useAppSelector((state: RootState) => state.auth.user);
-  
-  // Get client portal settings for custom logo
-  const { } = useGetSettingsQuery();
 
   // RTK Query hooks
   const { data: profileData } = useGetProfileQuery();

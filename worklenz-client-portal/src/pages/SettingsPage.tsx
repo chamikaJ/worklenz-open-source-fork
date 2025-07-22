@@ -6,10 +6,10 @@ import {
   Space, 
   Row, 
   Col 
-} from 'antd';
+} from '@/shared/antd-imports';
 import { 
   ShareAltOutlined 
-} from '@ant-design/icons';
+} from '@/shared/antd-imports';
 
 const { Title, Text } = Typography;
 

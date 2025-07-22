@@ -8,18 +8,17 @@ import {
   Button, 
   Input, 
   Select, 
- 
   Alert,
   Progress,
   Tooltip
-} from 'antd';
+} from '@/shared/antd-imports';
 import { 
   EyeOutlined, 
   SearchOutlined,
   ProjectOutlined,
   CalendarOutlined,
   TeamOutlined
-} from '@ant-design/icons';
+} from '@/shared/antd-imports';
 import { useNavigate } from 'react-router-dom';
 import clientPortalAPI from '@/services/api';
 import { ClientProject } from '@/types';

@@ -182,5 +182,12 @@
   "noDataText": "Nenhum dado disponível",
   "loadingDataText": "Carregando dados...",
   "errorLoadingDataText": "Erro ao carregar dados",
-  "retryButton": "Tentar Novamente"
+  "retryButton": "Tentar Novamente",
+  
+  "assignProjectTitle": "Atribuir Novo Projeto",
+  "assignedProjectsTitle": "Projetos Atribuídos",
+  "statusColumn": "Status",
+  "removeConfirmationOk": "Remover",
+  "removeConfirmationCancel": "Cancelar",
+  "removeProjectTooltip": "Remover Projeto"
 }

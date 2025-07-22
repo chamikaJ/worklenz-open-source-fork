@@ -182,5 +182,12 @@
   "noDataText": "无可用数据",
   "loadingDataText": "正在加载数据...",
   "errorLoadingDataText": "加载数据时出错",
-  "retryButton": "重试"
+  "retryButton": "重试",
+  
+  "assignProjectTitle": "分配新项目",
+  "assignedProjectsTitle": "已分配项目",
+  "statusColumn": "状态",
+  "removeConfirmationOk": "移除",
+  "removeConfirmationCancel": "取消",
+  "removeProjectTooltip": "移除项目"
 }

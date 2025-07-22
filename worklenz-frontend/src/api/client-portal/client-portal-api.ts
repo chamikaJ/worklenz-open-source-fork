@@ -701,6 +701,11 @@ export const clientPortalApi = createApi({
       providesTags: ['Services'],
     }),
 
+    getOrganizationServiceById: builder.query<any, string>({
+      query: (id) => `/clients/portal/services/${id}`,
+      providesTags: (result, error, id) => [{ type: 'Services', id }],
+    }),
+
     createOrganizationService: builder.mutation<any, {
       name: string;
       description?: string;
@@ -837,6 +842,7 @@ export const {
   useAssignOrganizationRequestMutation,
   useGetOrganizationRequestsStatsQuery,
   useGetOrganizationServicesQuery,
+  useGetOrganizationServiceByIdQuery,
   useCreateOrganizationServiceMutation,
   useUpdateOrganizationServiceMutation,
   useDeleteOrganizationServiceMutation,

@@ -1,4 +1,4 @@
-import { ConfigProvider, Flex, Menu, Badge, Button, Drawer } from 'antd';
+import { ConfigProvider, Flex, Menu, Badge, Button, Drawer, Typography } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import { colors } from '../../../styles/colors';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,8 @@ import { RightOutlined, MenuFoldOutlined, MenuUnfoldOutlined, MenuOutlined } fro
 import { useAppSelector } from '../../../hooks/useAppSelector';
 import { themeWiseColor } from '../../../utils/themeWiseColor';
 import { useResponsive } from '../../../hooks/useResponsive';
+
+const { Title } = Typography;
 
 interface ClientPortalSidebarProps {
   items?: ClientPortalMenuItems[];
@@ -130,15 +132,17 @@ const ClientPortalSidebar: React.FC<ClientPortalSidebarProps> = ({
         }}
       >
         {!collapsed && (
-          <div
+          <Title 
+            level={3} 
             style={{
-              fontWeight: 600,
+              margin: 0,
               fontSize: 18,
+              fontWeight: 600,
               color: themeWiseColor('#222', '#fff', themeMode),
             }}
           >
             {t('client-portal')}
-          </div>
+          </Title>
         )}
         {onToggleCollapse && (
           <Button
