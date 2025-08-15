@@ -128,7 +128,29 @@ class ClientPortalAPI {
     }
   }
 
-  async validateInvite(token: string): Promise<ApiResponse<{ valid: boolean; email?: string; organizationName?: string }>> {
+  async validateInvite(token: string): Promise<ApiResponse<{ valid: boolean; email?: string; organizationName?: string; isOrganizationInvite?: boolean; redirectTo?: string }>> {
+    // Check if this is an organization invite token by decoding the JWT payload
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.type === 'organization_invite') {
+        // For organization invites, just validate the token structure and return org info
+        // Don't call the backend yet, let the component handle the actual invite processing
+        return {
+          done: true,
+          body: { 
+            valid: true, 
+            organizationName: payload.organizationName,
+            isOrganizationInvite: true
+          },
+          message: 'Organization invite token is valid',
+          title: null
+        };
+      }
+    } catch (error) {
+      console.log('Could not decode token as organization invite, trying regular invite validation');
+    }
+    
+    // For regular invites, use the existing validation endpoint
     const response = await this.api.get(`/invitation/validate?token=${token}`);
     return response.data;
   }
@@ -138,7 +160,29 @@ class ClientPortalAPI {
     name: string; 
     password: string; 
   }): Promise<ApiResponse<{ user: ClientUser; token: string; expiresAt: string }>> {
+    // Check if this is an organization invite token
+    try {
+      const payload = JSON.parse(atob(inviteData.token.split('.')[1]));
+      if (payload.type === 'organization_invite') {
+        // For organization invites, just handle the invite (user should already be authenticated)
+        const response = await this.api.post('/handle-organization-invite', { token: inviteData.token });
+        if (response.data.body.redirectTo === 'login') {
+          // User needs to login first, redirect them
+          window.location.href = '/auth/login';
+          return response.data;
+        }
+        return response.data;
+      }
+    } catch (error) {
+      console.log('Not an organization invite, processing as regular invite');
+    }
+    
     const response = await this.api.post('/invitation/accept', inviteData);
+    return response.data;
+  }
+
+  async handleOrganizationInvite(token: string): Promise<ApiResponse<{ redirectTo: string; message: string }>> {
+    const response = await this.api.post('/handle-organization-invite', { token });
     return response.data;
   }
 

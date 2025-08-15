@@ -17,6 +17,7 @@ interface AuthState {
     organizationName?: string;
     clientName?: string;
     companyName?: string;
+    isOrganizationInvite?: boolean;
   } | null;
   tokenExpiry: string | null;
 }

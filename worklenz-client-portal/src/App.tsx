@@ -91,6 +91,14 @@ const AppContent: React.FC = () => {
               </PublicRoute>
             } 
           />
+          <Route 
+            path="/organization-invite" 
+            element={
+              <PublicRoute restricted>
+                <InvitePage />
+              </PublicRoute>
+            } 
+          />
           
           {/* Protected Routes */}
           <Route

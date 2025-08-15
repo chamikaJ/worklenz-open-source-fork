@@ -10,6 +10,7 @@ import { uploadBase64, getClientPortalLogoKey } from "../shared/storage";
 import { log_error } from "../shared/utils";
 import { IWorkLenzRequest } from "../interfaces/worklenz-request";
 import { IWorkLenzResponse } from "../interfaces/worklenz-response";
+import crypto from "crypto";
 
 class ClientPortalController {
 
@@ -2449,6 +2450,100 @@ class ClientPortalController {
     }
   }
 
+  static async handleOrganizationInvite(req: IWorkLenzRequest, res: IWorkLenzResponse) {
+    try {
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json(new ServerResponse(false, null, "Invalid invitation token"));
+      }
+
+      // Verify the organization invitation token
+      const decoded = TokenService.verifyOrganizationInviteToken(token);
+      
+      if (!decoded) {
+        return res.status(400).json(new ServerResponse(false, null, "Invalid or expired invitation token"));
+      }
+
+      // Check if token exists in database and is still valid
+      const inviteQuery = `
+        SELECT oi.*, t.name as organization_name
+        FROM organization_invitations oi
+        JOIN teams t ON oi.team_id = t.id
+        WHERE oi.token = $1 AND oi.expires_at > NOW()
+      `;
+      const inviteResult = await db.query(inviteQuery, [token]);
+
+      if (!inviteResult.rows.length) {
+        return res.status(400).json(new ServerResponse(false, null, "Invalid or expired invitation"));
+      }
+
+      const invitation = inviteResult.rows[0];
+
+      // Check if user is already authenticated
+      const userId = req.user?.id;
+      
+      if (userId) {
+        // User is already authenticated - check if they are linked to this organization's client portal
+        const clientCheckQuery = `
+          SELECT cu.* 
+          FROM client_users cu
+          JOIN clients c ON cu.client_id = c.id
+          WHERE cu.user_id = $1 AND c.team_id = $2
+        `;
+        const clientResult = await db.query(clientCheckQuery, [userId, invitation.team_id]);
+
+        if (clientResult.rows.length > 0) {
+          // User is already linked to this organization's client portal
+          return res.json(new ServerResponse(true, {
+            redirectTo: 'client-portal',
+            message: 'You already have access to this organization\'s client portal'
+          }));
+        }
+
+        // User is authenticated but not linked to client portal
+        // Create a client record and link the user
+        const userQuery = `SELECT email, name FROM users WHERE id = $1`;
+        const userResult = await db.query(userQuery, [userId]);
+        const user = userResult.rows[0];
+
+        if (user) {
+          // Create client record
+          const createClientQuery = `
+            INSERT INTO clients (id, team_id, name, email, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, 'active', NOW(), NOW())
+            RETURNING id
+          `;
+          const clientId = crypto.randomUUID();
+          await db.query(createClientQuery, [clientId, invitation.team_id, user.name, user.email]);
+
+          // Link user to client portal
+          const linkUserQuery = `
+            INSERT INTO client_users (user_id, client_id, email, name, role, created_at)
+            VALUES ($1, $2, $3, $4, 'member', NOW())
+          `;
+          await db.query(linkUserQuery, [userId, clientId, user.email, user.name]);
+
+          return res.json(new ServerResponse(true, {
+            redirectTo: 'client-portal',
+            message: 'Successfully linked to organization\'s client portal'
+          }));
+        }
+      }
+
+      // User is not authenticated - they need to login/register first
+      return res.json(new ServerResponse(true, {
+        redirectTo: 'login',
+        message: 'Please login or create an account to accept the invitation',
+        organizationName: invitation.organization_name
+      }));
+
+    } catch (error) {
+      console.error("Error handling organization invitation:", error);
+      return res.status(500).json(new ServerResponse(false, null, "Failed to process organization invitation"));
+    }
+  }
+
   static async sendClientInvitationEmail(client: any, teamId: string, invitedBy: string) {
     try {
       // Get team information
@@ -4170,6 +4265,39 @@ class ClientPortalController {
     } catch (error) {
       console.error("Error during client login:", error);
       return res.status(500).json(new ServerResponse(false, null, "Login failed"));
+    }
+  }
+
+  static async refreshClientToken(req: AuthenticatedClientRequest, res: IWorkLenzResponse) {
+    try {
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json(new ServerResponse(false, null, "Token is required"));
+      }
+
+      // Verify the current token
+      const decoded = TokenService.verifyClientToken(token);
+      if (!decoded) {
+        return res.status(401).json(new ServerResponse(false, null, "Invalid or expired token"));
+      }
+
+      // Generate new token with updated expiry
+      const newToken = TokenService.generateClientToken({
+        clientId: decoded.clientId,
+        organizationId: decoded.organizationId,
+        email: decoded.email,
+        permissions: decoded.permissions || [],
+        type: "client" as const
+      });
+
+      return res.json(new ServerResponse(true, {
+        token: newToken,
+        expiresAt: new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString() // 24 hours from now
+      }, "Token refreshed successfully"));
+    } catch (error) {
+      console.error("Error refreshing client token:", error);
+      return res.status(401).json(new ServerResponse(false, null, "Token refresh failed"));
     }
   }
 

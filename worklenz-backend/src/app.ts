@@ -117,8 +117,12 @@ function isLoggedIn(req: Request, _res: Response, next: NextFunction) {
   
   if (req.path.includes("/client-portal/invitation/") || 
       req.path.includes("/client-portal/auth/login") ||
+      req.path.includes("/client-portal/auth/refresh") ||
+      req.path.includes("/client-portal/handle-organization-invite") ||
       fullPath.includes("/client-portal/invitation/") ||
-      fullPath.includes("/client-portal/auth/login")) {
+      fullPath.includes("/client-portal/auth/login") ||
+      fullPath.includes("/client-portal/auth/refresh") ||
+      fullPath.includes("/client-portal/handle-organization-invite")) {
     return next();
   }
   return req.user ? next() : next(createError(401));
@@ -133,13 +137,17 @@ const {
   getTokenFromRequest: (req: Request) => req.headers["x-csrf-token"] as string || (req.body && req.body["_csrf"])
 });
 
-// Apply CSRF selectively (exclude webhooks and public routes)
+// Apply CSRF selectively (exclude webhooks, public routes, and client portal invitation routes)
 app.use((req, res, next) => {
   if (
     req.path.startsWith("/webhook/") ||
     req.path.startsWith("/secure/") ||
     req.path.startsWith("/api/") ||
-    req.path.startsWith("/public/")
+    req.path.startsWith("/public/") ||
+    req.path.includes("/client-portal/invitation/") ||
+    req.path.includes("/client-portal/auth/login") ||
+    req.path.includes("/client-portal/auth/refresh") ||
+    req.path.includes("/client-portal/handle-organization-invite")
   ) {
     next();
   } else {

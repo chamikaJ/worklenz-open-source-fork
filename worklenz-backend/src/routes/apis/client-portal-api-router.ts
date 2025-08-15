@@ -9,6 +9,8 @@ const router = express.Router();
 router.get("/invitation/validate", safeControllerFunction(ClientPortalController.validateInvitation));
 router.post("/invitation/accept", safeControllerFunction(ClientPortalController.acceptInvitation));
 router.post("/auth/login", safeControllerFunction(ClientPortalController.clientLogin));
+router.post("/auth/refresh", safeControllerFunction(ClientPortalController.refreshClientToken));
+router.post("/handle-organization-invite", safeControllerFunction(ClientPortalController.handleOrganizationInvite));
 
 // Protected routes (authentication required)
 router.use(authenticateClient);

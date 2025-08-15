@@ -93,6 +93,26 @@ class TokenService {
     }
   }
 
+  // Verify organization invitation token
+  verifyOrganizationInviteToken(token: string): OrganizationInviteTokenPayload | null {
+    try {
+      const decoded = jwt.verify(token, this.INVITE_SECRET, {
+        issuer: "worklenz-client-portal",
+        audience: "organization_invite"
+      }) as OrganizationInviteTokenPayload;
+      
+      // Check if token is expired
+      if (Date.now() > decoded.expiresAt) {
+        return null;
+      }
+      
+      return decoded;
+    } catch (error) {
+      console.error("Organization invite token verification failed:", error);
+      return null;
+    }
+  }
+
   // Create invitation record in database
   async createInvitation(inviteData: {
     clientId: string;
