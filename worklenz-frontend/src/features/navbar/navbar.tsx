@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Col, ConfigProvider, Flex, Menu } from '@/shared/antd-imports';
 import { createPortal } from 'react-dom';
 
-import InviteTeamMembersModal from '../../components/common/invite-team-members-modal';
+import InviteTeamMembers from '../../components/common/invite-team-members/invite-team-members';
 import InviteButton from './invite/InviteButton';
 import MobileMenuButton from './mobile-menu/MobileMenuButton';
 import NavbarLogo from './NavbarLogo';
@@ -183,7 +183,7 @@ const Navbar = () => {
         </Flex>
       </Flex>
 
-      {isOwnerOrAdmin && createPortal(<InviteTeamMembersModal />, document.body, 'invite-team-members-modal')}
+      {isOwnerOrAdmin && createPortal(<InviteTeamMembers />, document.body, 'invite-team-members')}
       {createPortal(<NotificationDrawer />, document.body, 'notification-drawer')}
     </Col>
   );
