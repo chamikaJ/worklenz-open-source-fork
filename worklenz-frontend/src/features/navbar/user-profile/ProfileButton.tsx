@@ -22,8 +22,6 @@ interface ProfileButtonProps {
 
 const ProfileButton = ({ isOwnerOrAdmin }: ProfileButtonProps) => {
   const { t } = useTranslation('navbar');
-  const authService = useAuthService();
-  const dispatch = useAppDispatch();
   const currentSession = useAppSelector((state: RootState) => state.userReducer);
   const { isLicenseExpired } = useAuthStatus();
 
@@ -89,7 +87,6 @@ const ProfileButton = ({ isOwnerOrAdmin }: ProfileButtonProps) => {
         >
           {isOwnerOrAdmin && !isLicenseExpired && (
             <Link to="/worklenz/admin-center/overview" style={getLinkStyle()}>
-              <DashboardOutlined />
               {t('adminCenter')}
             </Link>
           )}
@@ -104,7 +101,6 @@ const ProfileButton = ({ isOwnerOrAdmin }: ProfileButtonProps) => {
             </Link>
           )}
           <Link to="/auth/logging-out" style={getLinkStyle()}>
-            <LogoutOutlined />
             {t('logOut')}
           </Link>
         </Card>
