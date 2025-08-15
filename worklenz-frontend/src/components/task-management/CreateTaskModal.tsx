@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Modal, Form, Input, Button, Tabs, Space, Divider, Typography, Flex, DatePicker, Select } from 'antd';
-import { PlusOutlined, DragOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, Button, Tabs, Space, Divider, Typography, Flex, DatePicker, Select } from '@/shared/antd-imports';
+import { PlusOutlined, DragOutlined } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -14,11 +14,13 @@ import LabelsSelector from '@/components/LabelsSelector';
 import { createStatus, fetchStatuses, fetchStatusesCategories } from '@/features/taskAttributes/taskStatusSlice';
 import { statusApiService } from '@/api/taskAttributes/status/status.api.service';
 import { ITaskStatusUpdateModel } from '@/types/tasks/task-status-update-model.types';
-import { Modal as AntModal } from 'antd';
+import { Modal as AntModal } from '@/shared/antd-imports';
 import { useSocket } from '@/socket/socketContext';
 import { SocketEvents } from '@/shared/socket-events';
 import { useAuthService } from '@/hooks/useAuth';
 import { fetchTasksV3 } from '@/features/task-management/task-management.slice';
+import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
+import { evt_project_task_create } from '@/shared/worklenz-analytics-events';
 import './CreateTaskModal.css';
 
 const { Title, Text } = Typography;
@@ -351,6 +353,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [form] = Form.useForm();
   const [activeTab, setActiveTab] = useState('task-info');
   const dispatch = useAppDispatch();
+  const { trackMixpanelEvent } = useMixpanelTracking();
   
   // Redux state
   const isDarkMode = useAppSelector(state => state.themeReducer?.mode === 'dark');
@@ -381,6 +384,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         reporter_id: user.id,
       };
 
+      // Track analytics event
+      trackMixpanelEvent(evt_project_task_create);
+      
       // Create task via socket
       socket.emit(SocketEvents.QUICK_TASK.toString(), taskData);
       

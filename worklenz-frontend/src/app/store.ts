@@ -7,6 +7,7 @@ import userReducer from '@features/user/userSlice';
 
 // Home Page
 import homePageReducer from '@features/home-page/home-page.slice';
+import userActivityReducer from '@features/home-page/user-activity.slice';
 
 // Account Setup
 import accountSetupReducer from '@features/account-setup/account-setup.slice';
@@ -82,6 +83,7 @@ import groupingReducer from '@/features/task-management/grouping.slice';
 import selectionReducer from '@/features/task-management/selection.slice';
 import homePageApiService from '@/api/home-page/home-page.api.service';
 import { projectsApi } from '@/api/projects/projects.v1.api.service';
+import { userActivityApiService } from '@/api/home-page/user-activity.api.service';
 
 import projectViewReducer from '@features/project/project-view-slice';
 import taskManagementFieldsReducer from '@features/task-management/taskListFields.slice';
@@ -102,7 +104,8 @@ export const store = configureStore({
     }).concat(
       homePageApiService.middleware, 
       projectsApi.middleware,
-      clientPortalApi.middleware
+      clientPortalApi.middleware,
+      userActivityApiService.middleware
     ),
   reducer: {
     // Auth & User
@@ -117,7 +120,9 @@ export const store = configureStore({
     [homePageApiService.reducerPath]: homePageApiService.reducer,
     [projectsApi.reducerPath]: projectsApi.reducer,
     [clientPortalApi.reducerPath]: clientPortalApi.reducer,
-    
+    userActivityReducer: userActivityReducer,
+    [userActivityApiService.reducerPath]: userActivityApiService.reducer,
+
     // Core UI
     themeReducer: themeReducer,
     localesReducer: localesReducer,

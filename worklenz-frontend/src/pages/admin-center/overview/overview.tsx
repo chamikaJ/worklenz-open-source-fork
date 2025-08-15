@@ -1,6 +1,6 @@
-import { EditOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
+import { EditOutlined, MailOutlined, PhoneOutlined } from '@/shared/antd-imports';
 import { PageHeader } from '@ant-design/pro-components';
-import { Button, Card, Input, Space, Tooltip, Typography } from 'antd';
+import { Button, Card, Input, Space, Tooltip, Typography } from '@/shared/antd-imports';
 import React, { useEffect, useState } from 'react';
 import OrganizationAdminsTable from '@/components/admin-center/overview/organization-admins-table/organization-admins-table';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -12,6 +12,8 @@ import { adminCenterApiService } from '@/api/admin-center/admin-center.api.servi
 import { IOrganization, IOrganizationAdmin } from '@/types/admin-center/admin-center.types';
 import logger from '@/utils/errorLogger';
 import { tr } from 'date-fns/locale';
+import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
+import { evt_admin_center_overview_visit } from '@/shared/worklenz-analytics-events';
 
 const { Text } = Typography;
 
@@ -19,6 +21,7 @@ const Overview: React.FC = () => {
   const [organization, setOrganization] = useState<IOrganization | null>(null);
   const [organizationAdmins, setOrganizationAdmins] = useState<IOrganizationAdmin[] | null>(null);
   const [loadingAdmins, setLoadingAdmins] = useState(false);
+  const { trackMixpanelEvent } = useMixpanelTracking();
 
   const themeMode = useAppSelector((state: RootState) => state.themeReducer.mode);
   const { t } = useTranslation('admin-center/overview');
@@ -49,9 +52,10 @@ const Overview: React.FC = () => {
   };
 
   useEffect(() => {
+    trackMixpanelEvent(evt_admin_center_overview_visit);
     getOrganizationDetails();
     getOrganizationAdmins();
-  }, []);
+  }, [trackMixpanelEvent]);
 
   return (
     <div style={{ width: '100%' }}>

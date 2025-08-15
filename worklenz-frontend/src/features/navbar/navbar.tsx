@@ -1,17 +1,17 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Col, ConfigProvider, Flex, Menu, MenuProps, Alert } from 'antd';
+import { Col, ConfigProvider, Flex, Menu } from '@/shared/antd-imports';
 import { createPortal } from 'react-dom';
 
 import InviteTeamMembers from '../../components/common/invite-team-members/invite-team-members';
 import InviteButton from './invite/InviteButton';
-import MobileMenuButton from './mobileMenu/MobileMenuButton';
-import NavbarLogo from './navbar-logo';
+import MobileMenuButton from './mobile-menu/MobileMenuButton';
+import NavbarLogo from './NavbarLogo';
 import NotificationButton from '../../components/navbar/notifications/notifications-drawer/notification/notification-button';
-import ProfileButton from './user-profile/profile-button';
-import SwitchTeamButton from './switchTeam/SwitchTeamButton';
-import UpgradePlanButton from './upgradePlan/UpgradePlanButton';
+import ProfileButton from './user-profile/ProfileButton';
+import SwitchTeamButton from './switch-team/SwitchTeamButton';
+import UpgradePlanButton from './upgrade-plan/UpgradePlanButton';
 import NotificationDrawer from '../../components/navbar/notifications/notifications-drawer/notification/notfication-drawer';
 
 import { useResponsive } from '@/hooks/useResponsive';
@@ -21,8 +21,8 @@ import { useAuthService } from '@/hooks/useAuth';
 import { authApiService } from '@/api/auth/auth.api.service';
 import { ISUBSCRIPTION_TYPE } from '@/shared/constants';
 import logger from '@/utils/errorLogger';
-import TimerButton from './timers/timer-button';
-import HelpButton from './help/HelpButton';
+import TimerButton from './timers/TimerButton';
+import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
 
 const Navbar = () => {
   const [current, setCurrent] = useState<string>('home');
@@ -33,9 +33,12 @@ const Navbar = () => {
   const { isDesktop, isMobile, isTablet } = useResponsive();
   const { t } = useTranslation('navbar');
   const authService = useAuthService();
+  const { setIdentity } = useMixpanelTracking();
   const [navRoutesList, setNavRoutesList] = useState<NavRoutesType[]>(navRoutes);
   const [isOwnerOrAdmin, setIsOwnerOrAdmin] = useState<boolean>(authService.isOwnerOrAdmin());
-  const showUpgradeTypes = [ISUBSCRIPTION_TYPE.TRIAL];
+  const showUpgradeTypes = [
+    ISUBSCRIPTION_TYPE.TRIAL,
+  ];
 
   useEffect(() => {
     authApiService
@@ -43,6 +46,7 @@ const Navbar = () => {
       .then(authorizeResponse => {
         if (authorizeResponse.authenticated) {
           authService.setCurrentSession(authorizeResponse.user);
+          setIdentity(authorizeResponse.user);
           setIsOwnerOrAdmin(!!(authorizeResponse.user.is_admin || authorizeResponse.user.owner));
         }
       })
@@ -153,8 +157,8 @@ const Navbar = () => {
                   <Flex align="center">
                     <SwitchTeamButton />
                     <NotificationButton />
-                    {/* <TimerButton /> */}
-                    <HelpButton />
+                    <TimerButton />
+                    {/* <HelpButton /> */}
                     <ProfileButton isOwnerOrAdmin={isOwnerOrAdmin} />
                   </Flex>
                 </Flex>

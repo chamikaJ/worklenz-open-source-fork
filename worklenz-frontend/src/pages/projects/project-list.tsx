@@ -16,14 +16,14 @@ import {
   Table,
   TablePaginationConfig,
   Tooltip,
-} from 'antd';
+} from '@/shared/antd-imports';
 import { PageHeader } from '@ant-design/pro-components';
 import {
   SearchOutlined,
   SyncOutlined,
   UnorderedListOutlined,
   AppstoreOutlined,
-} from '@ant-design/icons';
+} from '@/shared/antd-imports';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 
 import ProjectDrawer from '@/components/projects/project-drawer/project-drawer';
@@ -48,6 +48,7 @@ import {
   PROJECT_SORT_FIELD,
   PROJECT_SORT_ORDER,
 } from '@/shared/constants';
+
 import { IProjectFilter } from '@/types/project/project.types';
 import { IProjectViewModel } from '@/types/project/projectViewModel.types';
 
@@ -76,6 +77,11 @@ import {
 } from '@/shared/worklenz-analytics-events';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
 import ProjectGroupList from '@/components/project-list/project-group/project-group-list';
+
+// Lazy load the survey modal
+const SurveyPromptModal = React.lazy(() =>
+  import('@/components/survey/SurveyPromptModal').then(m => ({ default: m.SurveyPromptModal }))
+);
 
 const createFilters = (items: { id: string; name: string }[]) =>
   items.map(item => ({ text: item.name, value: item.id })) as ColumnFilterItem[];
@@ -802,7 +808,7 @@ const ProjectList: React.FC = () => {
   }, [loadingProjects, isFetchingProjects, viewMode, groupedProjects.loading, isLoading]);
 
   return (
-    <div style={{ marginBlock: 65, minHeight: '90vh' }}>
+    <div style={{ minHeight: '90vh' }}>
       <PageHeader
         className="site-page-header"
         title={`${projectCount} ${t('projects')}`}
@@ -893,6 +899,7 @@ const ProjectList: React.FC = () => {
       </Card>
 
       {createPortal(<ProjectDrawer onClose={handleDrawerClose} />, document.body, 'project-drawer')}
+      {createPortal(<SurveyPromptModal />, document.body, 'project-survey-modal')}
     </div>
   );
 };

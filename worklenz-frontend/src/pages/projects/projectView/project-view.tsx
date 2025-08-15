@@ -10,7 +10,6 @@ import {
   Tabs,
   PushpinFilled,
   PushpinOutlined,
-  type TabsProps,
 } from '@/shared/antd-imports';
 
 import { useAppDispatch } from '@/hooks/useAppDispatch';
@@ -40,7 +39,6 @@ import { setProjectId as setInsightsProjectId } from '@/features/projects/insigh
 import { SuspenseFallback } from '@/components/suspense-fallback/suspense-fallback';
 import { useTranslation } from 'react-i18next';
 import { useTimerInitialization } from '@/hooks/useTimerInitialization';
-
 
 // Import critical components synchronously to avoid suspense interruptions
 import TaskDrawer from '@components/task-drawer/task-drawer';
@@ -362,14 +360,14 @@ const ProjectView = React.memo(() => {
   // Show loading state while project is being fetched or translations are loading
   if (projectLoading || !isInitialized || !translationsReady) {
     return (
-      <div style={{ marginBlockStart: 70, marginBlockEnd: 12, minHeight: '80vh' }}>
+      <div style={{ marginBlockEnd: 12, minHeight: '80vh' }}>
         <SuspenseFallback />
       </div>
     );
   }
 
   return (
-    <div style={{ marginBlockStart: 70, marginBlockEnd: 12, minHeight: '80vh' }}>
+    <div style={{ marginBlockEnd: 12, minHeight: '80vh' }}>
       <ProjectViewHeader />
 
       <Tabs
