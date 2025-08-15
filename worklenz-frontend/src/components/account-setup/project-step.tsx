@@ -148,7 +148,9 @@ export const ProjectStep: React.FC<Props> = ({ onEnter, styles, isDarkMode = fal
         toggleTemplateSelector(false);
         trackMixpanelEvent(evt_account_setup_template_complete);
         try {
-          const authResponse = await dispatch(verifyAuthentication()).unwrap() as IAuthorizeResponse;
+          const authResponse = (await dispatch(
+            verifyAuthentication()
+          ).unwrap()) as IAuthorizeResponse;
           if (authResponse?.authenticated && authResponse?.user) {
             setSession(authResponse.user);
             dispatch(setUser(authResponse.user));

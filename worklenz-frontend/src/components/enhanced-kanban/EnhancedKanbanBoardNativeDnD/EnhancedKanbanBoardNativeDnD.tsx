@@ -47,7 +47,9 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null);
   const [hoveredTaskIdx, setHoveredTaskIdx] = useState<number | null>(null);
   const [dragType, setDragType] = useState<'group' | 'task' | null>(null);
-  const { statusCategories, status: existingStatuses } = useAppSelector((state) => state.taskStatusReducer);
+  const { statusCategories, status: existingStatuses } = useAppSelector(
+    state => state.taskStatusReducer
+  );
 
   // Set up socket event handlers for real-time updates
   useTaskSocketHandlers();
@@ -199,12 +201,17 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
       setHoveredTaskIdx(0);
     } else {
       setHoveredTaskIdx(taskIdx);
-    };
+    }
   };
-  const handleTaskDrop = async (e: React.DragEvent, targetGroupId: string, targetTaskIdx: number | null) => {
+  const handleTaskDrop = async (
+    e: React.DragEvent,
+    targetGroupId: string,
+    targetTaskIdx: number | null
+  ) => {
     if (dragType !== 'task') return;
     e.preventDefault();
-    if (!draggedTaskId || !draggedTaskGroupId || hoveredGroupId === null || hoveredTaskIdx === null) return;
+    if (!draggedTaskId || !draggedTaskGroupId || hoveredGroupId === null || hoveredTaskIdx === null)
+      return;
 
     // Calculate new order and dispatch
     const sourceGroup = taskGroups.find(g => g.id === draggedTaskGroupId);
@@ -421,4 +428,4 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
   );
 };
 
-export default EnhancedKanbanBoardNativeDnD; 
+export default EnhancedKanbanBoardNativeDnD;

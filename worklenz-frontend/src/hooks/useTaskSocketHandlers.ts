@@ -387,8 +387,9 @@ export const useTaskSocketHandlers = () => {
           if (response.priority_id) {
             // Find group by priority name (groupValue should match the priority name)
             targetGroup = groups.find(
-              group => group.groupValue?.toLowerCase() === newPriorityValue.toLowerCase() ||
-                       group.title?.toLowerCase() === newPriorityValue.toLowerCase()
+              group =>
+                group.groupValue?.toLowerCase() === newPriorityValue.toLowerCase() ||
+                group.title?.toLowerCase() === newPriorityValue.toLowerCase()
             );
           } else {
             // Find "Unmapped" group for tasks without a priority
@@ -441,11 +442,13 @@ export const useTaskSocketHandlers = () => {
       // Update task-management slice for task-list-v2 components
       const currentTask = store.getState().taskManagement.entities[task.id];
       if (currentTask) {
-        dispatch(updateTask({
-          ...currentTask,
-          dueDate: task.end_date,
-          updatedAt: new Date().toISOString(),
-        }));
+        dispatch(
+          updateTask({
+            ...currentTask,
+            dueDate: task.end_date,
+            updatedAt: new Date().toISOString(),
+          })
+        );
       }
     },
     [dispatch]
@@ -534,10 +537,11 @@ export const useTaskSocketHandlers = () => {
             if (newPhaseValue && newPhaseValue.trim() !== '') {
               // Find group by phase name (groupValue should match the phase name)
               targetGroup = groups.find(
-                group => group.groupValue === newPhaseValue || 
-                         group.title === newPhaseValue ||
-                         group.groupValue?.toLowerCase() === newPhaseValue.toLowerCase() ||
-                         group.title?.toLowerCase() === newPhaseValue.toLowerCase()
+                group =>
+                  group.groupValue === newPhaseValue ||
+                  group.title === newPhaseValue ||
+                  group.groupValue?.toLowerCase() === newPhaseValue.toLowerCase() ||
+                  group.title?.toLowerCase() === newPhaseValue.toLowerCase()
               );
             } else {
               // Find "Unmapped" group for tasks without a phase
@@ -604,17 +608,20 @@ export const useTaskSocketHandlers = () => {
     (subscribers: InlineMember[]) => {
       if (!subscribers) return;
       dispatch(setTaskSubscribers(subscribers));
-      
+
       // Note: We don't have task_id in this event, so we can't update the task-management slice
       // The has_subscribers field will be updated when the task is refetched
     },
     [dispatch]
   );
 
-
-
   const handleEstimationChange = useCallback(
-    (data: { id: string; parent_task: string | null; total_hours: number; total_minutes: number }) => {
+    (data: {
+      id: string;
+      parent_task: string | null;
+      total_hours: number;
+      total_minutes: number;
+    }) => {
       if (!data) return;
 
       // Update the old task slice (for backward compatibility)
@@ -647,7 +654,7 @@ export const useTaskSocketHandlers = () => {
   const handleTaskDescriptionChange = useCallback(
     (data: { id: string; parent_task: string; description: string }) => {
       if (!data) return;
-      
+
       // Update the old task slice (for backward compatibility)
       dispatch(updateTaskDescription(data));
 
@@ -723,13 +730,15 @@ export const useTaskSocketHandlers = () => {
           const temporarySubtasks = parentTask.sub_tasks.filter(
             (st: Task) => st.isTemporary && st.name === subtask.title
           );
-          
+
           // Remove each temporary subtask
           temporarySubtasks.forEach((tempSubtask: Task) => {
-            dispatch(removeTemporarySubtask({ 
-              parentTaskId: data.parent_task_id, 
-              tempId: tempSubtask.id 
-            }));
+            dispatch(
+              removeTemporarySubtask({
+                parentTaskId: data.parent_task_id,
+                tempId: tempSubtask.id,
+              })
+            );
           });
         }
 
@@ -802,7 +811,6 @@ export const useTaskSocketHandlers = () => {
           groupId = data.phase_id || 'Unmapped';
         }
 
-
         // Use addTaskToGroup with the actual group UUID
         dispatch(addTaskToGroup({ task, groupId: groupId || '' }));
 
@@ -872,12 +880,17 @@ export const useTaskSocketHandlers = () => {
   }, []);
 
   // Handler for timer start events
-  const handleTimerStart = useCallback((data: string) => {
-    try {
-      const { task_id, start_time } = typeof data === 'string' ? JSON.parse(data) : data;
-      if (!task_id) return;
+  const handleTimerStart = useCallback(
+    (data: string) => {
+      try {
+        const { task_id, start_time } = typeof data === 'string' ? JSON.parse(data) : data;
+        if (!task_id) return;
 
-      const timerTimestamp = start_time ? (typeof start_time === 'number' ? start_time : parseInt(start_time)) : Date.now();
+        const timerTimestamp = start_time
+          ? typeof start_time === 'number'
+            ? start_time
+            : parseInt(start_time)
+          : Date.now();
 
       // Update the task-management slice to include timer state
       const currentTask = store.getState().taskManagement.entities[task_id];
@@ -930,66 +943,72 @@ export const useTaskSocketHandlers = () => {
   }, [dispatch]);
 
   // Handler for task sort order change events
-  const handleTaskSortOrderChange = useCallback((data: any[]) => {
-    try {
-      if (!Array.isArray(data) || data.length === 0) return;
+  const handleTaskSortOrderChange = useCallback(
+    (data: any[]) => {
+      try {
+        if (!Array.isArray(data) || data.length === 0) return;
 
-      // Get canonical lists from Redux
-      const state = store.getState();
-      const priorityList = state.priorityReducer?.priorities || [];
-      const phaseList = state.phaseReducer?.phaseList || [];
-      const statusList = state.taskStatusReducer?.status || [];
+        // DEBUG: Log the data received from the backend
+        console.log('[TASK_SORT_ORDER_CHANGE] Received data:', data);
 
-      // The backend sends an array of tasks with updated sort orders and possibly grouping fields
-      data.forEach((taskData: any) => {
-        const currentTask = state.taskManagement.entities[taskData.id];
-        if (currentTask) {
-          let updatedTask: Task = {
-            ...currentTask,
-            order: taskData.sort_order || taskData.current_sort_order || currentTask.order,
-            updatedAt: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
+        // Get canonical lists from Redux
+        const state = store.getState();
+        const priorityList = state.priorityReducer?.priorities || [];
+        const phaseList = state.phaseReducer?.phaseList || [];
+        const statusList = state.taskStatusReducer?.status || [];
 
-          // Update grouping fields if present
-          if (typeof taskData.priority_id !== 'undefined') {
-            const found = priorityList.find(p => p.id === taskData.priority_id);
-            if (found) {
-              updatedTask.priority = found.name;
-              // updatedTask.priority_id = found.id; // Only if Task type has priority_id
-            } else {
-              updatedTask.priority = taskData.priority_id || '';
-              // updatedTask.priority_id = taskData.priority_id;
+        // The backend sends an array of tasks with updated sort orders and possibly grouping fields
+        data.forEach((taskData: any) => {
+          const currentTask = state.taskManagement.entities[taskData.id];
+          if (currentTask) {
+            let updatedTask: Task = {
+              ...currentTask,
+              order: taskData.sort_order || taskData.current_sort_order || currentTask.order,
+              updatedAt: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+
+            // Update grouping fields if present
+            if (typeof taskData.priority_id !== 'undefined') {
+              const found = priorityList.find(p => p.id === taskData.priority_id);
+              if (found) {
+                updatedTask.priority = found.name;
+                // updatedTask.priority_id = found.id; // Only if Task type has priority_id
+              } else {
+                updatedTask.priority = taskData.priority_id || '';
+                // updatedTask.priority_id = taskData.priority_id;
+              }
             }
-          }
-          if (typeof taskData.phase_id !== 'undefined') {
-            const found = phaseList.find(p => p.id === taskData.phase_id);
-            if (found) {
-              updatedTask.phase = found.name;
-              // updatedTask.phase_id = found.id; // Only if Task type has phase_id
-            } else {
-              updatedTask.phase = taskData.phase_id || '';
-              // updatedTask.phase_id = taskData.phase_id;
+            if (typeof taskData.phase_id !== 'undefined') {
+              const found = phaseList.find(p => p.id === taskData.phase_id);
+              if (found) {
+                updatedTask.phase = found.name;
+                // updatedTask.phase_id = found.id; // Only if Task type has phase_id
+              } else {
+                updatedTask.phase = taskData.phase_id || '';
+                // updatedTask.phase_id = taskData.phase_id;
+              }
             }
-          }
-          if (typeof taskData.status_id !== 'undefined') {
-            const found = statusList.find(s => s.id === taskData.status_id);
-            if (found) {
-              updatedTask.status = found.name;
-              // updatedTask.status_id = found.id; // Only if Task type has status_id
-            } else {
-              updatedTask.status = taskData.status_id || '';
-              // updatedTask.status_id = taskData.status_id;
+            if (typeof taskData.status_id !== 'undefined') {
+              const found = statusList.find(s => s.id === taskData.status_id);
+              if (found) {
+                updatedTask.status = found.name;
+                // updatedTask.status_id = found.id; // Only if Task type has status_id
+              } else {
+                updatedTask.status = taskData.status_id || '';
+                // updatedTask.status_id = taskData.status_id;
+              }
             }
-          }
 
-          dispatch(updateTask(updatedTask));
-        }
-      });
-    } catch (error) {
-      logger.error('Error handling task sort order change event:', error);
-    }
-  }, [dispatch]);
+            dispatch(updateTask(updatedTask));
+          }
+        });
+      } catch (error) {
+        logger.error('Error handling task sort order change event:', error);
+      }
+    },
+    [dispatch]
+  );
 
   // Register socket event listeners
   useEffect(() => {
@@ -1021,11 +1040,13 @@ export const useTaskSocketHandlers = () => {
       },
       { event: SocketEvents.QUICK_TASK.toString(), handler: handleNewTaskReceived },
       { event: SocketEvents.TASK_PROGRESS_UPDATED.toString(), handler: handleTaskProgressUpdated },
-      { event: SocketEvents.TASK_CUSTOM_COLUMN_UPDATE.toString(), handler: handleCustomColumnUpdate },
+      {
+        event: SocketEvents.TASK_CUSTOM_COLUMN_UPDATE.toString(),
+        handler: handleCustomColumnUpdate,
+      },
       { event: SocketEvents.TASK_TIMER_START.toString(), handler: handleTimerStart },
       { event: SocketEvents.TASK_TIMER_STOP.toString(), handler: handleTimerStop },
       { event: SocketEvents.TASK_SORT_ORDER_CHANGE.toString(), handler: handleTaskSortOrderChange },
-
     ];
 
     // Register all event listeners
@@ -1060,6 +1081,5 @@ export const useTaskSocketHandlers = () => {
     handleTimerStart,
     handleTimerStop,
     handleTaskSortOrderChange,
-
   ]);
 };

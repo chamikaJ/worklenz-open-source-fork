@@ -7,7 +7,13 @@ import {
   EntityId,
   createSelector,
 } from '@reduxjs/toolkit';
-import { Task, TaskManagementState, TaskGroup, TaskGrouping, getSortOrderField } from '@/types/task-management.types';
+import {
+  Task,
+  TaskManagementState,
+  TaskGroup,
+  TaskGrouping,
+  getSortOrderField,
+} from '@/types/task-management.types';
 import { ITaskListColumn } from '@/types/tasks/taskList.types';
 import { RootState } from '@/app/store';
 import {
@@ -151,7 +157,7 @@ export const fetchTasks = createAsyncThunk(
         group.tasks.map((task: any) => ({
           id: task.id,
           task_key: task.task_key || '',
-          title: (task.title && task.title.trim()) ? task.title.trim() : DEFAULT_TASK_NAME,
+          title: task.title && task.title.trim() ? task.title.trim() : DEFAULT_TASK_NAME,
           description: task.description || '',
           status: statusIdToNameMap[task.status] || 'todo',
           priority: priorityIdToNameMap[task.priority] || 'medium',
@@ -261,11 +267,11 @@ export const fetchTasksV3 = createAsyncThunk(
       // Ensure tasks are properly normalized
       const tasks: Task[] = response.body.allTasks.map((task: any) => {
         const now = new Date().toISOString();
-        
+
         const transformedTask = {
           id: task.id,
           task_key: task.task_key || task.key || '',
-          title: (task.title && task.title.trim()) ? task.title.trim() : DEFAULT_TASK_NAME,
+          title: task.title && task.title.trim() ? task.title.trim() : DEFAULT_TASK_NAME,
           description: task.description || '',
           status: task.status || 'todo',
           priority: task.priority || 'medium',
@@ -273,18 +279,31 @@ export const fetchTasksV3 = createAsyncThunk(
           progress: typeof task.complete_ratio === 'number' ? task.complete_ratio : 0,
           assignees: task.assignees?.map((a: { team_member_id: string }) => a.team_member_id) || [],
           assignee_names: task.assignee_names || task.names || [],
-          labels: task.labels?.map((l: { id: string; label_id: string; name: string; color: string; end: boolean; names: string[] }) => ({
-            id: l.id || l.label_id,
-            name: l.name,
-            color: l.color || '#1890ff',
-            end: l.end,
-            names: l.names,
-          })) || [],
-          all_labels: task.all_labels?.map((l: { id: string; label_id: string; name: string; color_code: string }) => ({
-            id: l.id || l.label_id,
-            name: l.name,
-            color_code: l.color_code || '#1890ff',
-          })) || [],
+          labels:
+            task.labels?.map(
+              (l: {
+                id: string;
+                label_id: string;
+                name: string;
+                color: string;
+                end: boolean;
+                names: string[];
+              }) => ({
+                id: l.id || l.label_id,
+                name: l.name,
+                color: l.color || '#1890ff',
+                end: l.end,
+                names: l.names,
+              })
+            ) || [],
+          all_labels:
+            task.all_labels?.map(
+              (l: { id: string; label_id: string; name: string; color_code: string }) => ({
+                id: l.id || l.label_id,
+                name: l.name,
+                color_code: l.color_code || '#1890ff',
+              })
+            ) || [],
           dueDate: task.dueDate,
           startDate: task.startDate,
           timeTracking: {
@@ -312,7 +331,7 @@ export const fetchTasksV3 = createAsyncThunk(
           schedule_id: task.schedule_id || null,
           reporter: task.reporter || undefined,
         };
-        
+
         return transformedTask;
       });
 
@@ -521,10 +540,13 @@ const taskManagementSlice = createSlice({
     setTasks: (state, action: PayloadAction<Task[]>) => {
       const tasks = action.payload;
       state.ids = tasks.map(task => task.id);
-      state.entities = tasks.reduce((acc, task) => {
-        acc[task.id] = task;
-        return acc;
-      }, {} as Record<string, Task>);
+      state.entities = tasks.reduce(
+        (acc, task) => {
+          acc[task.id] = task;
+          return acc;
+        },
+        {} as Record<string, Task>
+      );
     },
     addTask: (state, action: PayloadAction<Task>) => {
       const task = action.payload;
@@ -533,11 +555,11 @@ const taskManagementSlice = createSlice({
     },
     addTaskToGroup: (state, action: PayloadAction<{ task: Task; groupId: string }>) => {
       const { task, groupId } = action.payload;
-      
+
       state.ids.push(task.id);
       state.entities[task.id] = task;
       let group = state.groups.find(g => g.id === groupId);
-      
+
       // If group doesn't exist and it's "Unmapped", create it dynamically
       if (!group && groupId === 'Unmapped') {
         const unmappedGroup = {
@@ -546,12 +568,12 @@ const taskManagementSlice = createSlice({
           taskIds: [],
           type: 'phase' as const,
           color: '#fbc84c69',
-          groupValue: 'Unmapped'
+          groupValue: 'Unmapped',
         };
         state.groups.push(unmappedGroup);
         group = unmappedGroup;
       }
-      
+
       if (group) {
         group.taskIds.push(task.id);
       }
@@ -561,14 +583,18 @@ const taskManagementSlice = createSlice({
       // Additionally, update the task within its group if necessary (e.g., if status changed)
       const updatedTask = action.payload;
       const oldTask = state.entities[updatedTask.id];
-  
-      if (oldTask && state.grouping?.id === IGroupBy.STATUS && oldTask.status !== updatedTask.status) {
+
+      if (
+        oldTask &&
+        state.grouping?.id === IGroupBy.STATUS &&
+        oldTask.status !== updatedTask.status
+      ) {
         // Remove from old status group
         const oldGroup = state.groups.find(group => group.id === oldTask.status);
         if (oldGroup) {
           oldGroup.taskIds = oldGroup.taskIds.filter(id => id !== updatedTask.id);
         }
-  
+
         // Add to new status group
         const newGroup = state.groups.find(group => group.id === updatedTask.status);
         if (newGroup) {
@@ -633,8 +659,8 @@ const taskManagementSlice = createSlice({
           group.id === targetGroupId
             ? [...group.taskIds, taskId]
             : group.id === sourceGroupId
-            ? group.taskIds.filter(id => id !== taskId)
-            : group.taskIds,
+              ? group.taskIds.filter(id => id !== taskId)
+              : group.taskIds,
       }));
     },
     optimisticTaskMove: (
@@ -652,8 +678,8 @@ const taskManagementSlice = createSlice({
           group.id === targetGroupId
             ? [...group.taskIds, taskId]
             : group.id === sourceGroupId
-            ? group.taskIds.filter(id => id !== taskId)
-            : group.taskIds,
+              ? group.taskIds.filter(id => id !== taskId)
+              : group.taskIds,
       }));
     },
     reorderTasksInGroup: (
@@ -666,15 +692,15 @@ const taskManagementSlice = createSlice({
       }>
     ) => {
       const { sourceTaskId, destinationTaskId, sourceGroupId, destinationGroupId } = action.payload;
-  
+
       // Get a mutable copy of entities for updates
       const newEntities = { ...state.entities };
-  
+
       const sourceTask = newEntities[sourceTaskId];
       const destinationTask = newEntities[destinationTaskId];
-  
+
       if (!sourceTask || !destinationTask) return;
-  
+
       if (sourceGroupId === destinationGroupId) {
         // Reordering within the same group
         const group = state.groups.find(g => g.id === sourceGroupId);
@@ -737,7 +763,7 @@ const taskManagementSlice = createSlice({
           });
         }
       }
-  
+
       // Update the state's entities after all modifications
       state.entities = newEntities;
     },
@@ -756,7 +782,7 @@ const taskManagementSlice = createSlice({
     setArchived: (state, action: PayloadAction<boolean>) => {
       state.archived = action.payload;
     },
-    toggleArchived: (state) => {
+    toggleArchived: state => {
       state.archived = !state.archived;
     },
     setSortField: (state, action: PayloadAction<string>) => {
@@ -788,10 +814,7 @@ const taskManagementSlice = createSlice({
         task.show_sub_tasks = !task.show_sub_tasks;
       }
     },
-    addSubtaskToParent: (
-      state,
-      action: PayloadAction<{ parentId: string; subtask: Task }>
-    ) => {
+    addSubtaskToParent: (state, action: PayloadAction<{ parentId: string; subtask: Task }>) => {
       const { parentId, subtask } = action.payload;
       const parent = state.entities[parentId];
       if (parent) {
@@ -842,7 +865,7 @@ const taskManagementSlice = createSlice({
           show_sub_tasks: false,
           isTemporary: true, // Mark as temporary
         };
-        
+
         // Add temporary subtask for immediate UI feedback
         if (!parent.sub_tasks) {
           parent.sub_tasks = [];
@@ -866,14 +889,17 @@ const taskManagementSlice = createSlice({
         state.ids = state.ids.filter(id => id !== tempId);
       }
     },
-    updateTaskAssignees: (state, action: PayloadAction<{
-      taskId: string;
-      assigneeIds: string[];
-      assigneeNames: InlineMember[];
-    }>) => {
+    updateTaskAssignees: (
+      state,
+      action: PayloadAction<{
+        taskId: string;
+        assigneeIds: string[];
+        assigneeNames: InlineMember[];
+      }>
+    ) => {
       const { taskId, assigneeIds, assigneeNames } = action.payload;
       const existingTask = state.entities[taskId];
-  
+
       if (existingTask) {
         state.entities[taskId] = {
           ...existingTask,
@@ -927,23 +953,26 @@ const taskManagementSlice = createSlice({
         if (field) {
           return {
             ...column,
-            pinned: field.visible
+            pinned: field.visible,
           };
         }
         return column;
       });
     },
     // Add action to update task counts (comments, attachments, etc.)
-    updateTaskCounts: (state, action: PayloadAction<{
-      taskId: string;
-      counts: {
-        comments_count?: number;
-        attachments_count?: number;
-        has_subscribers?: boolean;
-        has_dependencies?: boolean;
-        schedule_id?: string | null; // Add schedule_id for recurring tasks
-      };
-    }>) => {
+    updateTaskCounts: (
+      state,
+      action: PayloadAction<{
+        taskId: string;
+        counts: {
+          comments_count?: number;
+          attachments_count?: number;
+          has_subscribers?: boolean;
+          has_dependencies?: boolean;
+          schedule_id?: string | null; // Add schedule_id for recurring tasks
+        };
+      }>
+    ) => {
       const { taskId, counts } = action.payload;
       const task = state.entities[taskId];
       if (task) {
@@ -975,7 +1004,7 @@ const taskManagementSlice = createSlice({
       .addCase(fetchTasksV3.fulfilled, (state, action) => {
         state.loading = false;
         const { allTasks, groups, grouping } = action.payload;
-        
+
         // Preserve existing timer state from old tasks before replacing
         const oldTasks = state.entities;
         const tasksWithTimers = (allTasks || []).map(task => {
@@ -986,13 +1015,13 @@ const taskManagementSlice = createSlice({
               ...task,
               timeTracking: {
                 ...task.timeTracking,
-                activeTimer: oldTask.timeTracking.activeTimer
-              }
+                activeTimer: oldTask.timeTracking.activeTimer,
+              },
             };
           }
           return task;
         });
-        
+
         tasksAdapter.setAll(state as EntityState<Task, string>, tasksWithTimers); // Ensure allTasks is an array
         state.ids = tasksWithTimers.map(task => task.id); // Also update ids
         state.groups = groups;
@@ -1000,7 +1029,8 @@ const taskManagementSlice = createSlice({
       })
       .addCase(fetchTasksV3.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error?.message || (action.payload as string) || 'Failed to load tasks (V3)';
+        state.error =
+          action.error?.message || (action.payload as string) || 'Failed to load tasks (V3)';
         state.ids = [];
         state.entities = {};
         state.groups = [];
@@ -1052,7 +1082,7 @@ const taskManagementSlice = createSlice({
           // Update parent task with subtasks
           parentTask.sub_tasks = convertedSubtasks;
           parentTask.sub_tasks_count = convertedSubtasks.length;
-          
+
           // Add subtasks to entities so they can be accessed by ID
           convertedSubtasks.forEach(subtask => {
             state.entities[subtask.id] = subtask;
@@ -1066,9 +1096,10 @@ const taskManagementSlice = createSlice({
         // Clear loading state and set error
         const { taskId } = action.meta.arg;
         state.loadingSubtasks[taskId] = false;
-        state.error = action.error.message || action.payload || 'Failed to fetch subtasks. Please try again.';
+        state.error =
+          action.error.message || action.payload || 'Failed to fetch subtasks. Please try again.';
       })
-      .addCase(fetchTasks.pending, (state) => {
+      .addCase(fetchTasks.pending, state => {
         state.loading = true;
         state.error = null;
       })
@@ -1185,17 +1216,18 @@ export const {
 export const selectAllTasks = (state: RootState) => state.taskManagement.entities;
 
 // Memoized selector to prevent unnecessary re-renders
-export const selectAllTasksArray = createSelector(
-  [selectAllTasks],
-  (entities) => Object.values(entities)
+export const selectAllTasksArray = createSelector([selectAllTasks], entities =>
+  Object.values(entities)
 );
-export const selectTaskById = (state: RootState, taskId: string) => state.taskManagement.entities[taskId];
+export const selectTaskById = (state: RootState, taskId: string) =>
+  state.taskManagement.entities[taskId];
 export const selectTaskIds = (state: RootState) => state.taskManagement.ids;
 export const selectGroups = (state: RootState) => state.taskManagement.groups;
 export const selectGrouping = (state: RootState) => state.taskManagement.grouping;
 export const selectLoading = (state: RootState) => state.taskManagement.loading;
 export const selectError = (state: RootState) => state.taskManagement.error;
-export const selectSelectedPriorities = (state: RootState) => state.taskManagement.selectedPriorities;
+export const selectSelectedPriorities = (state: RootState) =>
+  state.taskManagement.selectedPriorities;
 export const selectSearch = (state: RootState) => state.taskManagement.search;
 export const selectSortField = (state: RootState) => state.taskManagement.sortField;
 export const selectSortOrder = (state: RootState) => state.taskManagement.sortOrder;
@@ -1237,9 +1269,9 @@ export const selectLoadingColumns = (state: RootState) => state.taskManagement.l
 export const selectColumnsInSync = (state: RootState) => {
   const columns = state.taskManagement.columns;
   const fields = state.taskManagementFields || [];
-  
+
   if (columns.length === 0 || fields.length === 0) return true;
-  
+
   return !fields.some(field => {
     const backendColumn = columns.find(c => c.key === field.key);
     if (backendColumn) {

@@ -1,3 +1,4 @@
+import RateCardSettings from '@/pages/settings/rate-card-settings/RateCardSettings';
 import {
   BankOutlined,
   FileZipOutlined,
@@ -13,10 +14,13 @@ import {
   UserSwitchOutlined,
   BulbOutlined,
   DeleteOutlined,
+  DollarCircleOutlined,
 } from '@/shared/antd-imports';
 import React, { ReactNode, lazy } from 'react';
 const ProfileSettings = lazy(() => import('../../pages/settings/profile/profile-settings'));
-const NotificationsSettings = lazy(() => import('../../pages/settings/notifications/notifications-settings'));
+const NotificationsSettings = lazy(
+  () => import('../../pages/settings/notifications/notifications-settings')
+);
 const ClientsSettings = lazy(() => import('../../pages/settings/clients/clients-settings'));
 const JobTitlesSettings = lazy(() => import('@/pages/settings/job-titles/job-titles-settings'));
 const LabelsSettings = lazy(() => import('../../pages/settings/labels/LabelsSettings'));
@@ -26,7 +30,9 @@ const TaskTemplatesSettings = lazy(() => import('@/pages/settings/task-templates
 const TeamMembersSettings = lazy(() => import('@/pages/settings/team-members/team-members-settings'));
 const TeamsSettings = lazy(() => import('../../pages/settings/teams/teams-settings'));
 const ChangePassword = lazy(() => import('@/pages/settings/change-password/change-password'));
-const LanguageAndRegionSettings = lazy(() => import('@/pages/settings/language-and-region/language-and-region-settings'));
+const LanguageAndRegionSettings = lazy(
+  () => import('@/pages/settings/language-and-region/language-and-region-settings')
+);
 const AppearanceSettings = lazy(() => import('@/pages/settings/appearance/appearance-settings'));
 const AccountDeletion = lazy(() => import('@/pages/settings/account-deletion/AccountDeletion'));
 
@@ -134,6 +140,13 @@ export const settingsItems: SettingMenuItems[] = [
     icon: React.createElement(TeamOutlined),
     element: React.createElement(TeamMembersSettings),
     adminOnly: true,
+  },
+  {
+    key: 'ratecard',
+    name: 'Rate Card',
+    endpoint: 'ratecard',
+    icon: React.createElement(DollarCircleOutlined),
+    element: React.createElement(RateCardSettings),
   },
   {
     key: 'teams',

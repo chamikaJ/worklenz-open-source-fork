@@ -36,7 +36,7 @@ interface UseTaskRowColumnsProps {
     isCustom?: boolean;
   }>;
   updateTaskCustomColumnValue?: (taskId: string, columnKey: string, value: string) => void;
-  
+
   // From useTaskRowState
   taskDisplayName: string;
   convertedTask: any;
@@ -49,16 +49,16 @@ interface UseTaskRowColumnsProps {
   taskName: string;
   setEditTaskName: (editing: boolean) => void;
   setTaskName: (name: string) => void;
-  
+
   // From useTaskRowActions
   handleCheckboxChange: (e: any) => void;
   handleTaskNameSave: () => void;
   handleTaskNameEdit: () => void;
-  
+
   // Drag and drop
   attributes: any;
   listeners: any;
-  
+
   // Depth for nested subtasks
   depth?: number;
 }
@@ -307,11 +307,11 @@ export const useTaskRowColumns = ({
         const column = visibleColumns.find(col => col.id === columnId);
         if (column && (column.custom_column || column.isCustom) && updateTaskCustomColumnValue) {
           return (
-            <CustomColumn
+            <DragHandleColumn
               width={width}
-              column={column}
-              task={task}
-              updateTaskCustomColumnValue={updateTaskCustomColumnValue}
+              isSubtask={isSubtask}
+              attributes={attributes}
+              listeners={listeners}
             />
           );
         }
@@ -365,4 +365,4 @@ export const useTaskRowColumns = ({
   ]);
 
   return { renderColumn };
-}; 
+};

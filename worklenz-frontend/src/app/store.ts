@@ -100,6 +100,10 @@ import clientViewReducer from '../features/client-view';
 // Client Portal API
 import { clientPortalApi } from '@/api/client-portal/client-portal-api';
 
+import projectFinanceRateCardReducer from '@/features/finance/project-finance-slice';
+import projectFinancesReducer from '@/features/projects/finance/project-finance.slice';
+import financeReducer from '@/features/projects/finance/finance-slice';
+
 export const store = configureStore({
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
@@ -208,6 +212,10 @@ export const store = configureStore({
 
     //client view
     clientViewReducer: clientViewReducer,
+    // Finance
+    projectFinanceRateCardReducer: projectFinanceRateCardReducer,
+    projectFinancesReducer: projectFinancesReducer,
+    financeReducer: financeReducer,
   },
 });
 

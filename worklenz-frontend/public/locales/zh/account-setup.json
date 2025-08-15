@@ -47,7 +47,7 @@
   "skipping": "跳过中...",
   "formTitle": "创建您的第一个任务。",
   "step3Title": "邀请您的团队一起工作",
-  "maxMembers": "（您最多可以邀请 5 名成员）",
+  "maxMembers": "（您最多可以邀请5名成员）",
   "maxTasks": "（您最多可以创建 5 个任务）",
 
   "membersStepTitle": "邀请您的团队",
@@ -83,7 +83,6 @@
   "useCaseOther": "其他",
   "selectedText": "已选择",
   "previousToolsQuestion": "您之前用过哪些工具？（可选）",
-  "previousToolsPlaceholder": "例如：Asana、Trello、Jira、Monday.com 等",
 
   "discoveryTitle": "最后一个问题……",
   "discoveryDescription": "帮助我们了解您是如何发现 Worklenz 的",
@@ -120,7 +119,6 @@
   "templateStartup": "初创启动",
   "templateStartupDesc": "MVP 开发、融资、增长",
 
-  "tasksStepTitle": "添加您的第一个任务",
   "tasksStepDescription": "将 \"{{projectName}}\" 拆分为可执行任务以开始",
   "taskPlaceholder": "任务 {{index}} - 例如：需要做什么？",
   "addAnotherTask": "添加另一个任务 ({{current}}/{{max}})",

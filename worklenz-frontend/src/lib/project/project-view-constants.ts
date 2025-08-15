@@ -1,10 +1,14 @@
 import React, { ReactNode, Suspense } from 'react';
 import { InlineSuspenseFallback } from '@/components/suspense-fallback/suspense-fallback';
 import i18n from '@/i18n';
+import { hasFinanceViewPermission } from '@/utils/finance-permissions';
+import { ILocalSession } from '@/types/auth/local-session.types';
+import { IProjectViewModel } from '@/types/project/projectViewModel.types';
 
 // Import core components synchronously to avoid suspense in main tabs
 import ProjectViewEnhancedBoard from '@/pages/projects/projectView/enhancedBoard/project-view-enhanced-board';
 import TaskListV2 from '@/components/task-list-v2/TaskListV2';
+import ProjectViewFinance from '@/pages/projects/projectView/finance/ProjectViewFinance';
 
 // Lazy load less critical components
 const ProjectViewInsights = React.lazy(
@@ -51,6 +55,7 @@ const getTabLabel = (key: string): string => {
         updates: 'Updates',
         roadmap: 'Roadmap',
         workload: 'Workload',
+        finance: 'Finance',
       };
       return fallbacks[key] || key;
     }
@@ -64,6 +69,7 @@ const getTabLabel = (key: string): string => {
       files: 'Files',
       members: 'Members',
       updates: 'Updates',
+      finance: 'Finance',
     };
     return fallbacks[key] || key;
   }
@@ -145,6 +151,16 @@ export const tabItems: TabItems[] = [
       React.createElement(ProjectViewWorkload)
     ),
   },
+  {
+    index: 8,
+    key: 'finance',
+    label: getTabLabel('finance'),
+    element: React.createElement(
+      Suspense,
+      { fallback: React.createElement(InlineSuspenseFallback) },
+      React.createElement(ProjectViewFinance)
+    )
+  }
 ];
 
 // Function to update tab labels when language changes
@@ -176,9 +192,30 @@ export const updateTabLabels = () => {
         case 'workload':
           item.label = getTabLabel('workload');
           break;
+        case 'finance':
+          item.label = getTabLabel('finance');
+          break;
       }
     });
   } catch (error) {
     console.error('Error updating tab labels:', error);
   }
+};
+
+// Function to get filtered tab items based on user permissions
+export const getFilteredTabItems = (
+  currentSession: ILocalSession | null,
+  currentProject?: IProjectViewModel | null
+): TabItems[] => {
+  const hasFinancePermission = hasFinanceViewPermission(currentSession, currentProject);
+  
+  return tabItems.filter(item => {
+    // Always show all tabs except finance
+    if (item.key !== 'finance') {
+      return true;
+    }
+    
+    // Only show finance tab if user has permission
+    return hasFinancePermission;
+  });
 };

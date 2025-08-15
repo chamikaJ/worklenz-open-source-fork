@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { RootState } from '@/app/store';
-import { toggleTheme } from '@/features/theme/themeSlice';
 
 import { getRole } from '@/utils/session-helper';
 
@@ -16,7 +15,6 @@ import './profile-button.css';
 import SingleAvatar from '@/components/common/single-avatar/single-avatar';
 import { useAuthService } from '@/hooks/useAuth';
 import { useAuthStatus } from '@/hooks/useAuthStatus';
-import { useEffect, useState } from 'react';
 
 interface ProfileButtonProps {
   isOwnerOrAdmin: boolean;

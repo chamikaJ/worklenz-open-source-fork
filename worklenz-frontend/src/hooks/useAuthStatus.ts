@@ -10,12 +10,22 @@ export const useAuthStatus = () => {
   const status = useMemo(() => {
     try {
       if (!authService || typeof authService.isAuthenticated !== 'function') {
-        return { isAuthenticated: false, isLicenseExpired: false, isAdmin: false, isSetupComplete: false };
+        return {
+          isAuthenticated: false,
+          isLicenseExpired: false,
+          isAdmin: false,
+          isSetupComplete: false,
+        };
       }
 
       const isAuthenticated = authService.isAuthenticated();
       if (!isAuthenticated) {
-        return { isAuthenticated: false, isLicenseExpired: false, isAdmin: false, isSetupComplete: false };
+        return {
+          isAuthenticated: false,
+          isLicenseExpired: false,
+          isAdmin: false,
+          isSetupComplete: false,
+        };
       }
 
       const currentSession = authService.getCurrentSession();
@@ -56,7 +66,12 @@ export const useAuthStatus = () => {
       return { isAuthenticated, isLicenseExpired: isLicenseExpired(), isAdmin, isSetupComplete };
     } catch (error) {
       console.error('Error in useAuthStatus:', error);
-      return { isAuthenticated: false, isLicenseExpired: false, isAdmin: false, isSetupComplete: false };
+      return {
+        isAuthenticated: false,
+        isLicenseExpired: false,
+        isAdmin: false,
+        isSetupComplete: false,
+      };
     }
   }, [authService]);
 

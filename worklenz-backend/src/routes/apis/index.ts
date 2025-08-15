@@ -59,6 +59,10 @@ import taskDependenciesApiRouter from "./task-dependencies-api-router";
 import taskRecurringApiRouter from "./task-recurring-api-router";
 
 import customColumnsApiRouter from "./custom-columns-api-router";
+import projectFinanceApiRouter from "./project-finance-api-router";
+import projectRatecardApiRouter from "./project-ratecard-api-router";
+import ratecardApiRouter from "./ratecard-api-router";
+import holidayApiRouter from "./holiday-api-router";
 import userActivityLogsApiRouter from "./user-activity-logs-api-router";
 import supportApiRouter from "./support-api-router";
 import accountApiRouter from "./account-api-router";
@@ -124,6 +128,14 @@ api.use("/task-recurring", taskRecurringApiRouter);
 api.use("/custom-columns", customColumnsApiRouter);
 api.use("/support", supportApiRouter);
 api.use("/account", accountApiRouter);
+
+api.use("/project-finance", projectFinanceApiRouter);
+
+api.use("/project-ratecard", projectRatecardApiRouter);
+
+api.use("/ratecard", ratecardApiRouter);
+
+api.use("/holidays", holidayApiRouter);
 
 api.use("/logs", userActivityLogsApiRouter);
 export default api;

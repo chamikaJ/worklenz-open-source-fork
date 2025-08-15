@@ -187,7 +187,14 @@ export {
   ShareAltOutlined,
   CloudDownloadOutlined,
   CopyOutlined,
-  BgColorsOutlined
+  BgColorsOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  CalculatorOutlined,
+  DollarOutlined,
+  DollarCircleOutlined,
+  DatabaseOutlined,
+  DragOutlined
 } from '@ant-design/icons';
 
 // Re-export all components with React
@@ -270,6 +277,7 @@ export type {
   PaginationProps,
   CollapseProps,
   TablePaginationConfig,
+  CheckboxChangeEvent,
 } from 'antd/es';
 
 // Dayjs
