@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Col, ConfigProvider, Flex, Menu, Tooltip } from '@/shared/antd-imports';
+import { CrownOutlined } from '@ant-design/icons';
 import { createPortal } from 'react-dom';
 
 import InviteTeamMembers from '../../components/common/invite-team-members/InviteTeamMembers';
@@ -33,6 +34,7 @@ const Navbar = () => {
   const location = useLocation();
   const { isDesktop, isMobile, isTablet } = useResponsive();
   const { t } = useTranslation('navbar');
+  const { t: tCommon } = useTranslation('common');
   const authService = useAuthService();
   const { setIdentity } = useMixpanelTracking();
   const [navRoutesList, setNavRoutesList] = useState<NavRoutesType[]>(navRoutes);
@@ -94,14 +96,18 @@ const Navbar = () => {
             key: route.path.split('/').pop() || index,
             disabled: shouldDisable,
             label: shouldDisable ? (
-              <Tooltip title="Available only on Business plan" placement="bottom">
+              <Tooltip title={tCommon('business-plan-upgrade')} placement="bottom">
                 <span style={{ 
                   fontWeight: 600, 
                   opacity: 0.5, 
                   cursor: 'not-allowed',
-                  color: 'inherit' 
+                  color: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}>
                   {t(route.name)}
+                  <CrownOutlined style={{ fontSize: '14px', color: '#faad14' }} />
                 </span>
               </Tooltip>
             ) : (

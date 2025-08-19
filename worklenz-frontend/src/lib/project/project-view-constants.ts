@@ -221,7 +221,7 @@ export const getFilteredTabItems = (
         return {
           ...item,
           disabled: true,
-          disabledReason: 'Available only on Business plan'
+          disabledReason: i18n.t('common:business-plan-upgrade')
         };
       }
       // If user has no finance permission, hide the tab

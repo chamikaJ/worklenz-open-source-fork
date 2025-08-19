@@ -46,5 +46,6 @@
   "license-expiring-upgrade": "立即续费以保留所有数据并继续使用",
   "license-badge-days": "剩余{{days}}天",
   "license-badge-today": "最后一天！",
-  "license-badge-hours": "剩余{{hours}}小时"
+  "license-badge-hours": "剩余{{hours}}小时",
+  "business-plan-upgrade": "升级到商业版以访问此功能"
 }

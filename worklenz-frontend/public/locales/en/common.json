@@ -56,5 +56,6 @@
   "license-expiring-upgrade": "Renew now to keep all your data and continue without interruption",
   "license-badge-days": "{{days}}d left",
   "license-badge-today": "Last day!",
-  "license-badge-hours": "{{hours}}h left"
+  "license-badge-hours": "{{hours}}h left",
+  "business-plan-upgrade": "Upgrade to Business plan to access this feature"
 }

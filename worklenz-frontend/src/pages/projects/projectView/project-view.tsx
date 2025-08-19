@@ -12,6 +12,7 @@ import {
   PushpinFilled,
   PushpinOutlined,
 } from '@/shared/antd-imports';
+import { CrownOutlined } from '@ant-design/icons';
 
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -303,6 +304,7 @@ const ProjectView = React.memo(() => {
             }}
           >
             <span style={{ fontWeight: 500, fontSize: '13px' }}>{item.label}</span>
+            {item.disabled && <CrownOutlined style={{ fontSize: '14px', color: '#faad14' }} />}
             {(item.key === 'tasks-list' || item.key === 'board') && !item.disabled && (
               <ConfigProvider wave={{ disabled: true }}>
                 <Button
