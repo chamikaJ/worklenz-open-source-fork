@@ -117,7 +117,6 @@
     }
 
     .offer-highlight::before {
-      content: "🔥 APPSUMO EXCLUSIVE 🔥";
       position: absolute;
       top: -8px;
       left: 50%;
@@ -359,54 +358,8 @@
         font-size: 13px;
       }
       
-      /* Table responsiveness */
-      .comparison-table {
-        border: 0;
-        width: 100%;
-        font-size: 12px;
-        box-shadow: none;
-        border-radius: 0;
-      }
-      .comparison-table thead {
-        border: none;
-        clip: rect(0 0 0 0);
-        height: 1px;
-        margin: -1px;
-        overflow: hidden;
-        padding: 0;
-        position: absolute;
-        width: 1px;
-      }
-      .comparison-table tr {
-        border-bottom: 2px solid #f2f2f2;
-        display: block;
-        margin-bottom: 1em;
-        padding-bottom: 1em;
-      }
-      .comparison-table tr:last-child {
-        border-bottom: 0;
-        margin-bottom: 0;
-        padding-bottom: 0;
-      }
-      .comparison-table td {
-        border-bottom: 1px solid #f2f2f2;
-        display: block;
-        font-size: 14px;
-        text-align: right;
-        padding: 8px 0;
-        background: transparent !important;
-      }
-      .comparison-table td::before {
-        content: attr(data-label);
-        float: left;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 13px;
-        color: #555;
-      }
-      .comparison-table td:last-child {
-        border-bottom: 0;
-      }
+      /* Hide entire comparison section on mobile */
+      .comparison-section { display: none; }
     }
 
     @media (max-width:480px) {
@@ -472,14 +425,7 @@
         font-size: 10px;
       }
       
-      .comparison-table td {
-        font-size: 12px;
-        padding: 6px 0;
-      }
-      
-      .comparison-table td::before {
-        font-size: 11px;
-      }
+
     }
 
     @media (prefers-color-scheme: dark) {
@@ -506,7 +452,7 @@
   <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background:#f6f8fa;" role="presentation">
     <tr>
       <td align="center">
-        <table border="0" cellpadding="0" cellspacing="0" width="600" style="max-width:100%;" role="presentation">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; width:100%; margin:0 auto;" role="presentation">
           <tr>
             <td align="center" style="padding:32px 16px 18px 16px;">
               <a href="https://worklenz.com" target="_blank" style="display:inline-block;">
@@ -549,7 +495,7 @@
                   </table>
                 </div>
 
-                <div class="card">
+                <div class="card comparison-section">
                   <h3>📊 What's Included in Each Plan</h3>
                   <p style="background: #f0f7ff; padding: 12px 16px; border-radius: 8px; margin: 0 0 16px 0; font-size: 14px; color: #1890ff; font-weight: 600;">
                     ✨ <strong>Good news!</strong> You already have all Pro Plan features with your AppSumo lifetime deal
