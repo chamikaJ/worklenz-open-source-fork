@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useDocumentTitle } from '@/hooks/useDoumentTItle';
+import { useAuthService } from '@/hooks/useAuth';
 import { useSocket } from '@/socket/socketContext';
 import { SocketEvents } from '@/shared/socket-events';
 import UpdateMemberDrawer from '@/components/settings/update-member-drawer';
@@ -38,11 +39,13 @@ import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/shared/constants';
 import { teamMembersApiService } from '@/api/team-members/teamMembers.api.service';
 import { colors } from '@/styles/colors';
 import { getRoleColor } from '@/types/roles/role.types';
+import { canManageUserRole } from '@/utils/role-permissions.utils';
 
 const TeamMembersSettings = () => {
   const { t } = useTranslation('settings/team-members');
   const dispatch = useAppDispatch();
   const { socket } = useSocket();
+  const auth = useAuthService();
   const refreshTeamMembers = useAppSelector(state => state.memberReducer.refreshTeamMembers); // Listen to refresh flag
 
   useDocumentTitle(t('title') || 'Team Members');
@@ -163,6 +166,15 @@ const TeamMembersSettings = () => {
     return getRoleColor(role || '');
   }, []);
 
+  const currentUser = auth.getCurrentSession();
+  const canManageUser = useCallback((targetRole: string | undefined) => {
+    return canManageUserRole(
+      currentUser?.role_name,
+      targetRole,
+      currentUser?.owner
+    );
+  }, [currentUser?.role_name, currentUser?.owner]);
+
   const columns: TableProps['columns'] = [
     {
       key: 'name',
@@ -254,8 +266,9 @@ const TeamMembersSettings = () => {
     {
       key: 'actionBtns',
       width: 120,
-      render: (record: ITeamMemberViewModel) =>
-        record.role_name !== 'owner' && (
+      render: (record: ITeamMemberViewModel) => {
+        const canManage = canManageUser(record.role_name);
+        return record.role_name !== 'owner' && canManage && (
           <Flex gap={8} style={{ padding: 0 }}>
             <Tooltip title={t('editTooltip')}>
               <Button
@@ -287,7 +300,8 @@ const TeamMembersSettings = () => {
               </Popconfirm>
             </Tooltip>
           </Flex>
-        ),
+        );
+      },
     },
   ];
 

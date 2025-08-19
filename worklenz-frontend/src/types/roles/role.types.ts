@@ -102,3 +102,4 @@ export function getRoleColor(roleName: string): string {
       return colors.darkGray; // Dark gray fallback
   }
 }
+

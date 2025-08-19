@@ -29,6 +29,7 @@ import { authApiService } from '@/api/auth/auth.api.service';
 import { setSession } from '@/utils/session-helper';
 import { setUser } from '@/features/user/userSlice';
 import { ROLE_NAMES } from '@/types/roles/role.types';
+import { canManageUserRole, getAvailableRoleOptions } from '@/utils/role-permissions.utils';
 
 type UpdateMemberDrawerProps = {
   selectedMemberId: string | null;
@@ -53,6 +54,22 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
   const isOwnAccount = useMemo(() => {
     return auth.getCurrentSession()?.email === teamMember?.email;
   }, [auth, teamMember?.email]);
+
+  const currentUser = auth.getCurrentSession();
+  const canManageTarget = useMemo(() => {
+    return canManageUserRole(
+      currentUser?.role_name,
+      teamMember?.role_name,
+      currentUser?.owner
+    );
+  }, [currentUser?.role_name, currentUser?.owner, teamMember?.role_name]);
+
+  const availableRoles = useMemo(() => {
+    return getAvailableRoleOptions(
+      currentUser?.role_name,
+      currentUser?.owner
+    );
+  }, [currentUser?.role_name, currentUser?.owner]);
 
   const isResendAvailable = useMemo(() => {
     return teamMember?.pending_invitation && selectedMemberId && !resentSuccess;
@@ -230,18 +247,24 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
 
         <Form.Item label={t('memberAccessLabel')} name="access" rules={[{ required: true }]}>
           <Select
-            disabled={isOwnAccount}
-            options={[
-              { value: 'member', label: t('memberText') },
-              { value: 'team-lead', label: 'Team Lead' },
-              { value: 'admin', label: t('adminText') },
-            ]}
+            disabled={isOwnAccount || !canManageTarget}
+            options={availableRoles.map(role => ({
+              value: role.value === 'Member' ? 'member' : 
+                     role.value === 'Team Lead' ? 'team-lead' : 
+                     role.value === 'Admin' ? 'admin' : role.value.toLowerCase(),
+              label: role.label,
+            }))}
           />
         </Form.Item>
 
         <Form.Item>
           <Flex vertical gap={8}>
-            <Button type="primary" style={{ width: '100%' }} htmlType="submit">
+            <Button 
+              type="primary" 
+              style={{ width: '100%' }} 
+              htmlType="submit"
+              disabled={!canManageTarget}
+            >
               {t('updateButton')}
             </Button>
             <Button
