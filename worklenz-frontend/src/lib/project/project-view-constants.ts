@@ -2,6 +2,7 @@ import React, { ReactNode, Suspense } from 'react';
 import { InlineSuspenseFallback } from '@/components/suspense-fallback/suspense-fallback';
 import i18n from '@/i18n';
 import { hasFinanceViewPermission } from '@/utils/finance-permissions';
+import { hasBusinessFeatureAccess } from '@/utils/subscription-utils';
 import { ILocalSession } from '@/types/auth/local-session.types';
 import { IProjectViewModel } from '@/types/project/projectViewModel.types';
 
@@ -37,6 +38,8 @@ type TabItems = {
   label: string;
   isPinned?: boolean;
   element: ReactNode;
+  disabled?: boolean;
+  disabledReason?: string;
 };
 
 // Function to get translated labels with fallback
@@ -208,14 +211,26 @@ export const getFilteredTabItems = (
   currentProject?: IProjectViewModel | null
 ): TabItems[] => {
   const hasFinancePermission = hasFinanceViewPermission(currentSession, currentProject);
+  const hasBusinessAccess = hasBusinessFeatureAccess(currentSession);
   
-  return tabItems.filter(item => {
-    // Always show all tabs except finance
-    if (item.key !== 'finance') {
-      return true;
+  return tabItems.map(item => {
+    // Handle finance tab specially
+    if (item.key === 'finance') {
+      // If user has finance permission but no business access, show tab as disabled
+      if (hasFinancePermission && !hasBusinessAccess) {
+        return {
+          ...item,
+          disabled: true,
+          disabledReason: 'Available only on Business plan'
+        };
+      }
+      // If user has no finance permission, hide the tab
+      if (!hasFinancePermission) {
+        return null;
+      }
     }
     
-    // Only show finance tab if user has permission
-    return hasFinancePermission;
-  });
+    // Return tab as is for all other cases
+    return item;
+  }).filter(item => item !== null) as TabItems[];
 };

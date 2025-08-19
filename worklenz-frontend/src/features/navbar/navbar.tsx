@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Col, ConfigProvider, Flex, Menu } from '@/shared/antd-imports';
+import { Col, ConfigProvider, Flex, Menu, Tooltip } from '@/shared/antd-imports';
 import { createPortal } from 'react-dom';
 
 import InviteTeamMembers from '../../components/common/invite-team-members/InviteTeamMembers';
@@ -23,6 +23,7 @@ import { ISUBSCRIPTION_TYPE } from '@/shared/constants';
 import logger from '@/utils/errorLogger';
 import TimerButton from './timers/TimerButton';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
+import { hasBusinessFeatureAccess } from '@/utils/subscription-utils';
 
 const Navbar = () => {
   const [current, setCurrent] = useState<string>('home');
@@ -71,8 +72,10 @@ const Navbar = () => {
   }, [currentSession?.trial_expire_date]);
 
   const navlinkItems = useMemo(
-    () =>
-      navRoutesList
+    () => {
+      const hasBusinessAccess = hasBusinessFeatureAccess(currentSession);
+      
+      return navRoutesList
         .filter(route => {
           if (
             !route.freePlanFeature &&
@@ -83,15 +86,33 @@ const Navbar = () => {
 
           return true;
         })
-        .map((route, index) => ({
-          key: route.path.split('/').pop() || index,
-          label: (
-            <Link to={route.path} style={{ fontWeight: 600 }}>
-              {t(route.name)}
-            </Link>
-          ),
-        })),
-    [navRoutesList, t, isOwnerOrAdmin, currentSession?.subscription_type]
+        .map((route, index) => {
+          const isBusinessRoute = route.businessPlanRequired;
+          const shouldDisable = isBusinessRoute && !hasBusinessAccess;
+          
+          return {
+            key: route.path.split('/').pop() || index,
+            disabled: shouldDisable,
+            label: shouldDisable ? (
+              <Tooltip title="Available only on Business plan" placement="bottom">
+                <span style={{ 
+                  fontWeight: 600, 
+                  opacity: 0.5, 
+                  cursor: 'not-allowed',
+                  color: 'inherit' 
+                }}>
+                  {t(route.name)}
+                </span>
+              </Tooltip>
+            ) : (
+              <Link to={route.path} style={{ fontWeight: 600 }}>
+                {t(route.name)}
+              </Link>
+            ),
+          };
+        });
+    },
+    [navRoutesList, t, isOwnerOrAdmin, currentSession]
   );
 
   useEffect(() => {

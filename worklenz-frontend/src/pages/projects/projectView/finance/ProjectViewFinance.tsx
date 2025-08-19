@@ -45,6 +45,7 @@ import { useSocket } from '@/socket/socketContext';
 import { SocketEvents } from '@/shared/socket-events';
 import RateCardTable from '@/components/projects/project-finance/ratecard-table/RateCardTable';
 import ProjectBudgetSettingsDrawer from '@/components/projects/project-budget-settings-drawer/ProjectBudgetSettingsDrawer';
+import { hasBusinessFeatureAccess } from '@/utils/subscription-utils';
 
 const ProjectViewFinance = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -73,6 +74,7 @@ const ProjectViewFinance = () => {
   const auth = useAuthService();
   const currentSession = auth.getCurrentSession();
   const hasEditPermission = hasFinanceEditPermission(currentSession, project);
+  const hasBusinessAccess = hasBusinessFeatureAccess(currentSession);
 
   // Get project-specific currency from finance API response, fallback to project reducer, then default
   const projectCurrency = (
@@ -413,26 +415,42 @@ const ProjectViewFinance = () => {
 
   return (
     <Flex vertical gap={16} style={{ overflowX: 'hidden' }}>
+      {!hasBusinessAccess && (
+        <Alert
+          message="Business Plan Required"
+          description="Project finance features are available only on Business and Enterprise plans. Upgrade your plan to access these features."
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+      
       {/* Finance Header */}
       <ConfigProvider wave={{ disabled: true }}>
         <Flex gap={16} align="center" justify="space-between">
           <Flex gap={16} align="center">
             <Flex>
-              <Button
-                className={`${activeTab === 'finance' && 'border-[#1890ff] text-[#1890ff]'} rounded-r-none`}
-                onClick={() => dispatch(setActiveTab('finance'))}
-              >
-                {t('financeText')}
-              </Button>
-              <Button
-                className={`${activeTab === 'ratecard' && 'border-[#1890ff] text-[#1890ff]'} rounded-l-none`}
-                onClick={() => dispatch(setActiveTab('ratecard'))}
-              >
-                {t('ratecardSingularText')}
-              </Button>
+              <Tooltip title={!hasBusinessAccess ? "Available only on Business plan" : ""}>
+                <Button
+                  className={`${activeTab === 'finance' && 'border-[#1890ff] text-[#1890ff]'} rounded-r-none`}
+                  onClick={() => hasBusinessAccess && dispatch(setActiveTab('finance'))}
+                  disabled={!hasBusinessAccess}
+                >
+                  {t('financeText')}
+                </Button>
+              </Tooltip>
+              <Tooltip title={!hasBusinessAccess ? "Available only on Business plan" : ""}>
+                <Button
+                  className={`${activeTab === 'ratecard' && 'border-[#1890ff] text-[#1890ff]'} rounded-l-none`}
+                  onClick={() => hasBusinessAccess && dispatch(setActiveTab('ratecard'))}
+                  disabled={!hasBusinessAccess}
+                >
+                  {t('ratecardSingularText')}
+                </Button>
+              </Tooltip>
             </Flex>
 
-            {activeTab === 'finance' && (
+            {activeTab === 'finance' && hasBusinessAccess && (
               <Flex align="center" gap={16} style={{ marginInlineStart: 12 }}>
                 <Flex align="center" gap={4}>
                   {t('groupByText')}:
@@ -462,15 +480,18 @@ const ProjectViewFinance = () => {
           </Flex>
 
           {activeTab === 'finance' ? (
-            <Button
-              type="primary"
-              icon={<DownOutlined />}
-              iconPosition="end"
-              loading={exporting}
-              onClick={handleExport}
-            >
-              {t('exportButton')}
-            </Button>
+            <Tooltip title={!hasBusinessAccess ? "Available only on Business plan" : ""}>
+              <Button
+                type="primary"
+                icon={<DownOutlined />}
+                iconPosition="end"
+                loading={exporting}
+                onClick={handleExport}
+                disabled={!hasBusinessAccess}
+              >
+                {t('exportButton')}
+              </Button>
+            </Tooltip>
           ) : (
             <Flex gap={8} align="center">
               <Flex gap={8} align="center">
@@ -478,34 +499,41 @@ const ProjectViewFinance = () => {
                 <Select
                   value={projectCurrency}
                   loading={currencyLoading}
-                  disabled={!hasEditPermission}
+                  disabled={!hasEditPermission || !hasBusinessAccess}
                   options={CURRENCY_OPTIONS}
                   onChange={handleCurrencyChange}
                 />
               </Flex>
-              <Button type="primary" onClick={() => dispatch(toggleImportRatecardsDrawer())}>
-                {t('importButton')}
-              </Button>
+              <Tooltip title={!hasBusinessAccess ? "Available only on Business plan" : ""}>
+                <Button 
+                  type="primary" 
+                  onClick={() => dispatch(toggleImportRatecardsDrawer())}
+                  disabled={!hasBusinessAccess}
+                >
+                  {t('importButton')}
+                </Button>
+              </Tooltip>
             </Flex>
           )}
         </Flex>
       </ConfigProvider>
 
       {/* Tab Content */}
-      {activeTab === 'finance' ? (
-        <div>
-          {!hasEditPermission && (
-            <Alert
-              message="Limited Access"
-              description="You can view finance data but cannot edit fixed costs. Only project managers, team admins, and team owners can make changes."
-              type="info"
-              showIcon
-              style={{ marginBottom: 16 }}
-            />
-          )}
+      <div style={{ opacity: hasBusinessAccess ? 1 : 0.6, pointerEvents: hasBusinessAccess ? 'auto' : 'none' }}>
+        {activeTab === 'finance' ? (
+          <div>
+            {!hasEditPermission && hasBusinessAccess && (
+              <Alert
+                message="Limited Access"
+                description="You can view finance data but cannot edit fixed costs. Only project managers, team admins, and team owners can make changes."
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+            )}
 
-          {/* Budget Statistics */}
-          <Card
+            {/* Budget Statistics */}
+            <Card
             title={
               <Flex align="center" justify="space-between">
                 <Flex align="center" gap={8}>
@@ -683,7 +711,7 @@ const ProjectViewFinance = () => {
         </div>
       ) : (
         <Flex vertical gap={8}>
-          {!hasEditPermission && (
+          {!hasEditPermission && hasBusinessAccess && (
             <Alert
               message="Limited Access"
               description="You can view rate card data but cannot edit rates or manage member assignments. Only project managers, team admins, and team owners can make changes."
@@ -699,6 +727,7 @@ const ProjectViewFinance = () => {
           <ImportRatecardsDrawer />
         </Flex>
       )}
+      </div>
 
       {/* Budget Edit Modal */}
       <Modal

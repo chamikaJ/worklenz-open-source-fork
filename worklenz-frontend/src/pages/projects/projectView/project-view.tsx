@@ -8,6 +8,7 @@ import {
   ConfigProvider,
   Flex,
   Tabs,
+  Tooltip,
   PushpinFilled,
   PushpinOutlined,
 } from '@/shared/antd-imports';
@@ -249,6 +250,15 @@ const ProjectView = React.memo(() => {
   // Optimized tab change handler
   const handleTabChange = useCallback(
     (key: string) => {
+      // Find the tab item to check if it's disabled
+      const filteredTabItems = getFilteredTabItems(currentSession, selectedProject);
+      const tabItem = filteredTabItems.find(item => item.key === key);
+      
+      // Don't allow navigation to disabled tabs
+      if (tabItem?.disabled) {
+        return;
+      }
+      
       setActiveTab(key);
       dispatch(setProjectView(key === 'board' ? 'kanban' : 'list'));
 
@@ -264,7 +274,7 @@ const ProjectView = React.memo(() => {
         { replace: true }
       );
     },
-    [dispatch, location.pathname, navigate, pinnedTab]
+    [dispatch, location.pathname, navigate, pinnedTab, currentSession, selectedProject]
   );
 
   // Memoized tab menu items with enhanced styling
@@ -277,53 +287,67 @@ const ProjectView = React.memo(() => {
     const filteredTabItems = getFilteredTabItems(currentSession, selectedProject);
     const menuItems = filteredTabItems.map(item => ({
       key: item.key,
+      disabled: item.disabled,
       label: (
-        <Flex align="center" gap={6} style={{ color: 'inherit' }}>
-          <span style={{ fontWeight: 500, fontSize: '13px' }}>{item.label}</span>
-          {(item.key === 'tasks-list' || item.key === 'board') && (
-            <ConfigProvider wave={{ disabled: true }}>
-              <Button
-                className="borderless-icon-btn"
-                size="small"
-                type="text"
-                style={{
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  boxShadow: 'none',
-                  padding: '2px',
-                  minWidth: 'auto',
-                  height: 'auto',
-                  lineHeight: 1,
-                }}
-                icon={
-                  item.key === pinnedTab ? (
-                    <PushpinFilled
-                      style={{
-                        fontSize: '12px',
-                        color: 'currentColor',
-                        transform: 'rotate(-45deg)',
-                        transition: 'all 0.3s ease',
-                      }}
-                    />
-                  ) : (
-                    <PushpinOutlined
-                      style={{
-                        fontSize: '12px',
-                        color: 'currentColor',
-                        transition: 'all 0.3s ease',
-                      }}
-                    />
-                  )
-                }
-                onClick={e => {
-                  e.stopPropagation();
-                  pinToDefaultTab(item.key);
-                }}
-                title={item.key === pinnedTab ? t('unpinTab') : t('pinTab')}
-              />
-            </ConfigProvider>
-          )}
-        </Flex>
+        <Tooltip 
+          title={item.disabled ? item.disabledReason : undefined}
+          placement="bottom"
+        >
+          <Flex 
+            align="center" 
+            gap={6} 
+            style={{ 
+              color: 'inherit',
+              opacity: item.disabled ? 0.5 : 1,
+              cursor: item.disabled ? 'not-allowed' : 'pointer'
+            }}
+          >
+            <span style={{ fontWeight: 500, fontSize: '13px' }}>{item.label}</span>
+            {(item.key === 'tasks-list' || item.key === 'board') && !item.disabled && (
+              <ConfigProvider wave={{ disabled: true }}>
+                <Button
+                  className="borderless-icon-btn"
+                  size="small"
+                  type="text"
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    boxShadow: 'none',
+                    padding: '2px',
+                    minWidth: 'auto',
+                    height: 'auto',
+                    lineHeight: 1,
+                  }}
+                  icon={
+                    item.key === pinnedTab ? (
+                      <PushpinFilled
+                        style={{
+                          fontSize: '12px',
+                          color: 'currentColor',
+                          transform: 'rotate(-45deg)',
+                          transition: 'all 0.3s ease',
+                        }}
+                      />
+                    ) : (
+                      <PushpinOutlined
+                        style={{
+                          fontSize: '12px',
+                          color: 'currentColor',
+                          transition: 'all 0.3s ease',
+                        }}
+                      />
+                    )
+                  }
+                  onClick={e => {
+                    e.stopPropagation();
+                    pinToDefaultTab(item.key);
+                  }}
+                  title={item.key === pinnedTab ? t('unpinTab') : t('pinTab')}
+                />
+              </ConfigProvider>
+            )}
+          </Flex>
+        </Tooltip>
       ),
       children: item.element,
     }));

@@ -3,6 +3,7 @@ export type NavRoutesType = {
   path: string;
   adminOnly: boolean;
   freePlanFeature?: boolean;
+  businessPlanRequired?: boolean;
 };
 
 export const navRoutes: NavRoutesType[] = [
@@ -35,5 +36,6 @@ export const navRoutes: NavRoutesType[] = [
     path: '/worklenz/client-portal/clients',
     adminOnly: true,
     freePlanFeature: false,
+    businessPlanRequired: true,
   },
 ];
