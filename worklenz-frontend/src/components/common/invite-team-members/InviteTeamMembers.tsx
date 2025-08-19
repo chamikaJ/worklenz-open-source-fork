@@ -12,11 +12,12 @@ import { IJobTitle } from '@/types/job.types';
 import { teamMembersApiService } from '@/api/team-members/teamMembers.api.service';
 import { ITeamMemberCreateRequest } from '@/types/teamMembers/team-member-create-request';
 import { LinkOutlined } from '@ant-design/icons';
+import { ROLE_NAMES } from '@/types/roles/role.types';
 
 interface FormValues {
   email: string[];
   jobTitle: string;
-  access: 'member' | 'admin';
+  access: 'member' | 'team-lead' | 'admin';
 }
 
 const InviteTeamMembers = () => {
@@ -62,6 +63,9 @@ const InviteTeamMembers = () => {
         job_title: selectedJobTitle,
         emails: emails,
         is_admin: values.access === 'admin',
+        role_name: values.access === 'team-lead' ? ROLE_NAMES.TEAM_LEAD : 
+                   values.access === 'admin' ? ROLE_NAMES.ADMIN : 
+                   ROLE_NAMES.MEMBER,
       };
       const res = await teamMembersApiService.createTeamMember(body);
       if (res.done) {
@@ -96,7 +100,7 @@ const InviteTeamMembers = () => {
       }
       open={isDrawerOpen}
       onCancel={handleClose}
-      destroyOnClose
+      destroyOnHidden={false}
       afterOpenChange={visible => visible && handleSearch('')}
       width={400}
       loading={loading}
@@ -182,6 +186,7 @@ const InviteTeamMembers = () => {
           <Select
             options={[
               { value: 'member', label: t('memberText') },
+              { value: 'team-lead', label: 'Team Lead' },
               { value: 'admin', label: t('adminText') },
             ]}
           />

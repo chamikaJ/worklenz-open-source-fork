@@ -515,6 +515,7 @@ BEGIN
     -- insert default roles
     INSERT INTO roles (name, team_id, default_role) VALUES ('Member', _team_id, TRUE);
     INSERT INTO roles (name, team_id, admin_role) VALUES ('Admin', _team_id, TRUE) RETURNING id INTO _admin_role_id;
+    INSERT INTO roles (name, team_id, admin_role) VALUES ('Team Lead', _team_id, TRUE);
     INSERT INTO roles (name, team_id, owner) VALUES ('Owner', _team_id, TRUE) RETURNING id INTO _owner_role_id;
 
     -- insert team member
@@ -559,6 +560,7 @@ BEGIN
     -- insert default roles
     INSERT INTO roles (name, team_id, default_role) VALUES ('Member', _team_id, TRUE);
     INSERT INTO roles (name, team_id, admin_role) VALUES ('Admin', _team_id, TRUE);
+    INSERT INTO roles (name, team_id, admin_role) VALUES ('Team Lead', _team_id, TRUE);
     INSERT INTO roles (name, team_id, owner) VALUES ('Owner', _team_id, TRUE) RETURNING id INTO _role_id;
 
     -- insert team member
@@ -1171,9 +1173,13 @@ DECLARE
 BEGIN
     _team_id = (_body ->> 'team_id')::UUID;
 
-    IF ((_body ->> 'is_admin')::BOOLEAN IS TRUE)
+    -- Check if role_name is provided, otherwise fall back to is_admin flag
+    IF is_null_or_empty((_body ->> 'role_name')) IS FALSE
     THEN
-        SELECT id FROM roles WHERE team_id = _team_id AND admin_role IS TRUE INTO _role_id;
+        SELECT id FROM roles WHERE name = (_body ->> 'role_name')::TEXT AND team_id = _team_id INTO _role_id;
+    ELSIF ((_body ->> 'is_admin')::BOOLEAN IS TRUE)
+    THEN
+        SELECT id FROM roles WHERE team_id = _team_id AND admin_role IS TRUE AND name = 'Admin' INTO _role_id;
     ELSE
         SELECT id FROM roles WHERE team_id = _team_id AND default_role IS TRUE INTO _role_id;
     END IF;
@@ -4944,6 +4950,7 @@ BEGIN
     -- insert default roles
     INSERT INTO roles (name, team_id, default_role) VALUES ('Member', _team_id, TRUE);
     INSERT INTO roles (name, team_id, admin_role) VALUES ('Admin', _team_id, TRUE);
+    INSERT INTO roles (name, team_id, admin_role) VALUES ('Team Lead', _team_id, TRUE);
     INSERT INTO roles (name, team_id, owner) VALUES ('Owner', _team_id, TRUE) RETURNING id INTO _role_id;
 
     INSERT INTO team_members (user_id, team_id, role_id)
@@ -5042,6 +5049,7 @@ BEGIN
     -- insert default roles
     INSERT INTO roles (name, team_id, default_role) VALUES ('Member', _team_id, TRUE);
     INSERT INTO roles (name, team_id, admin_role) VALUES ('Admin', _team_id, TRUE);
+    INSERT INTO roles (name, team_id, admin_role) VALUES ('Team Lead', _team_id, TRUE);
     INSERT INTO roles (name, team_id, owner) VALUES ('Owner', _team_id, TRUE) RETURNING id INTO _role_id;
 
     -- insert team member
@@ -5753,11 +5761,15 @@ DECLARE
 BEGIN
     _team_id = (_body ->> 'team_id')::UUID;
 
-    IF ((_body ->> 'is_admin')::BOOLEAN IS TRUE)
+    -- Check if role_name is provided, otherwise fall back to is_admin flag
+    IF is_null_or_empty((_body ->> 'role_name')) IS FALSE
     THEN
-        SELECT id FROM roles WHERE admin_role IS TRUE INTO _role_id;
+        SELECT id FROM roles WHERE name = (_body ->> 'role_name')::TEXT AND team_id = _team_id INTO _role_id;
+    ELSIF ((_body ->> 'is_admin')::BOOLEAN IS TRUE)
+    THEN
+        SELECT id FROM roles WHERE team_id = _team_id AND admin_role IS TRUE AND name = 'Admin' INTO _role_id;
     ELSE
-        SELECT id FROM roles WHERE default_role IS TRUE INTO _role_id;
+        SELECT id FROM roles WHERE team_id = _team_id AND default_role IS TRUE INTO _role_id;
     END IF;
 
     IF is_null_or_empty((_body ->> 'job_title')) IS FALSE

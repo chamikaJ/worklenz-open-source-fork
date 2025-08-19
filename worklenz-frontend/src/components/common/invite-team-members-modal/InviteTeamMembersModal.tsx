@@ -9,10 +9,12 @@ import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { ITeamMemberCreateRequest } from '@/types/teamMembers/team-member-create-request';
 import { DeleteOutlined, UserOutlined } from '@ant-design/icons';
+import { teamMembersApiService } from '@/api/team-members/teamMembers.api.service';
+import { ROLE_NAMES } from '@/types/roles/role.types';
 
 interface MemberEntry {
   email: string;
-  access: 'member' | 'admin' | 'guest';
+  access: 'member' | 'admin' | 'team-lead' | 'guest';
 }
 
 
@@ -56,6 +58,9 @@ const InviteTeamMembersModal = () => {
           emails: [member.email],
           is_admin: member.access === 'admin',
           is_guest: member.access === 'guest',
+          role_name: member.access === 'team-lead' ? ROLE_NAMES.TEAM_LEAD : 
+                    member.access === 'admin' ? ROLE_NAMES.ADMIN :
+                    member.access === 'guest' ? ROLE_NAMES.MEMBER : ROLE_NAMES.MEMBER,
         };
         return teamMembersApiService.createTeamMember(body);
       });
@@ -118,7 +123,7 @@ const InviteTeamMembersModal = () => {
     }
   };
 
-  const updateMemberAccess = (index: number, access: 'member' | 'admin' | 'guest') => {
+  const updateMemberAccess = (index: number, access: 'member' | 'admin' | 'team-lead' | 'guest') => {
     const updated = [...newMembers];
     updated[index].access = access;
     setNewMembers(updated);
@@ -133,6 +138,7 @@ const InviteTeamMembersModal = () => {
 
   const accessOptions = useMemo(() => [
     { value: 'member', label: t('memberText') },
+    { value: 'team-lead', label: 'Team Lead' },
     { value: 'admin', label: t('adminText') },
     { value: 'guest', label: t('guestText') },
   ], [t]);

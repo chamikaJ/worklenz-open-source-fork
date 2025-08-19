@@ -370,7 +370,7 @@ const ProjectViewHeader = memo(() => {
       </Tooltip>
     );
 
-    // Save as template (owner/admin only)
+    // Save as template (owner/admin/team lead only)
     if (isOwnerOrAdmin) {
       actions.push(
         <Tooltip key="template" title={t('saveAsTemplateTooltip')}>
@@ -403,7 +403,7 @@ const ProjectViewHeader = memo(() => {
       </Tooltip>
     );
 
-    // Invite button (owner/admin/project manager only)
+    // Invite button (owner/admin/team lead/project manager only)
     if (isOwnerOrAdmin || isProjectManager) {
       actions.push(
         <Tooltip key="invite-tooltip" title={t('inviteTooltip')}>

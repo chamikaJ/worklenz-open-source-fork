@@ -5,4 +5,5 @@ export interface ITeamMemberCreateRequest extends ITeamMember {
   emails?: string | string[];
   is_admin?: boolean;
   is_guest?: boolean;
+  role_name?: string; // Support for role selection (Admin, Team Lead, Member)
 }

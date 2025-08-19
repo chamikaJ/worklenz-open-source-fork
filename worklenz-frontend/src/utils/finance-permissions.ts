@@ -3,7 +3,7 @@ import { IProjectViewModel } from '@/types/project/projectViewModel.types';
 
 /**
  * Checks if the current user has permission to edit finance data
- * Only users with project admin, admin or owner roles should be able to:
+ * Only users with project admin, admin, team lead or owner roles should be able to:
  * - Change fixed cost values
  * - Add members to rate cards
  * - Change rate per hour values
@@ -14,7 +14,7 @@ export const hasFinanceEditPermission = (
 ): boolean => {
   if (!currentSession) return false;
 
-  // Team owner or admin always have permission
+  // Team owner, admin, or team lead always have permission
   if (currentSession.owner || currentSession.is_admin) {
     return true;
   }
@@ -29,7 +29,7 @@ export const hasFinanceEditPermission = (
 
 /**
  * Checks if the current user has permission to view finance data
- * Only project managers, admins, and owners should be able to view the finance tab
+ * Only project managers, admins, team leads, and owners should be able to view the finance tab
  */
 export const hasFinanceViewPermission = (
   currentSession: ILocalSession | null,
@@ -37,7 +37,7 @@ export const hasFinanceViewPermission = (
 ): boolean => {
   if (!currentSession) return false;
 
-  // Team owner or admin always have permission
+  // Team owner, admin, or team lead always have permission
   if (currentSession.owner || currentSession.is_admin) {
     return true;
   }

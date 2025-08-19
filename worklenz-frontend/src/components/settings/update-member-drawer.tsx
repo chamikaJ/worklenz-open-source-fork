@@ -28,6 +28,7 @@ import logger from '@/utils/errorLogger';
 import { authApiService } from '@/api/auth/auth.api.service';
 import { setSession } from '@/utils/session-helper';
 import { setUser } from '@/features/user/userSlice';
+import { ROLE_NAMES } from '@/types/roles/role.types';
 
 type UpdateMemberDrawerProps = {
   selectedMemberId: string | null;
@@ -79,9 +80,18 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
       const res = await teamMembersApiService.getById(selectedMemberId);
       if (res.done) {
         setTeamMember(res.body);
+        
+        // Determine access level based on role_name
+        let accessLevel = 'member';
+        if (res.body.role_name === 'Admin') {
+          accessLevel = 'admin';
+        } else if (res.body.role_name === 'Team Lead') {
+          accessLevel = 'team-lead';
+        }
+        
         form.setFieldsValue({
           jobTitle: jobTitles.find(job => job.id === res.body?.job_title)?.id,
-          access: res.body.is_admin ? 'admin' : 'member',
+          access: accessLevel,
         });
       }
     } catch (error) {
@@ -97,6 +107,9 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
         job_title: form.getFieldValue('jobTitle'),
         emails: [teamMember.email],
         is_admin: values.access === 'admin',
+        role_name: values.access === 'team-lead' ? ROLE_NAMES.TEAM_LEAD : 
+                   values.access === 'admin' ? ROLE_NAMES.ADMIN : 
+                   ROLE_NAMES.MEMBER,
       };
 
       const res = await teamMembersApiService.update(selectedMemberId, body);
@@ -106,7 +119,8 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
         dispatch(toggleUpdateMemberDrawer());
 
         // Update role_name in parent component
-        const newRoleName = values.access === 'admin' ? 'admin' : 'member';
+        const newRoleName = values.access === 'team-lead' ? 'Team Lead' : 
+                            values.access === 'admin' ? 'Admin' : 'Member';
         onRoleUpdate?.(selectedMemberId, newRoleName);
 
         const authorizeResponse = await authApiService.verify();
@@ -219,6 +233,7 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
             disabled={isOwnAccount}
             options={[
               { value: 'member', label: t('memberText') },
+              { value: 'team-lead', label: 'Team Lead' },
               { value: 'admin', label: t('adminText') },
             ]}
           />

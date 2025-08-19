@@ -37,6 +37,7 @@ import { ITeamMemberViewModel } from '@/types/teamMembers/teamMembersGetResponse
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/shared/constants';
 import { teamMembersApiService } from '@/api/team-members/teamMembers.api.service';
 import { colors } from '@/styles/colors';
+import { getRoleColor } from '@/types/roles/role.types';
 
 const TeamMembersSettings = () => {
   const { t } = useTranslation('settings/team-members');
@@ -159,16 +160,7 @@ const TeamMembersSettings = () => {
   }, [getTeamMembers]);
 
   const getColor = useCallback((role: string | undefined) => {
-    switch (role?.toLowerCase()) {
-      case 'owner':
-        return colors.skyBlue;
-      case 'member':
-        return colors.lightGray;
-      case 'admin':
-        return colors.yellow;
-      default:
-        return colors.darkGray;
-    }
+    return getRoleColor(role || '');
   }, []);
 
   const columns: TableProps['columns'] = [
@@ -197,7 +189,7 @@ const TeamMembersSettings = () => {
           {record.name}
           {record.is_online && <Badge color={colors.limeGreen} />}
           {!record.active && (
-            <Typography.Text style={{ color: colors.yellow }}>
+            <Typography.Text style={{ color: colors.vibrantOrange, fontWeight: 500 }}>
               {t('deactivatedText')}
             </Typography.Text>
           )}
