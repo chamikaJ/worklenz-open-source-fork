@@ -89,6 +89,7 @@ const UpgradePlans = () => {
   const fetchPricingPlans = async () => {
     try {
       const res = await adminCenterApiService.getPlans();
+      console.log('res.body', res.body);
       if (res.done) {
         setPlans(res.body);
       }

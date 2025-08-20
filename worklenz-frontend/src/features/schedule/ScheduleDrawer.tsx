@@ -7,12 +7,23 @@ import { avatarNamesMap } from '../../shared/constants';
 import WithStartAndEndDates from '../../components/schedule-old/tabs/withStartAndEndDates/WithStartAndEndDates';
 import WorkloadManagement from './WorkloadManagement';
 import { useTranslation } from 'react-i18next';
+import { useFetchScheduleMembersQuery } from '@/api/schedule/scheduleApi';
+import CustomAvatar from '@/components/CustomAvatar';
 
 const ScheduleDrawer = () => {
   const isScheduleDrawerOpen = useAppSelector(state => state.scheduleReducer.isScheduleDrawerOpen);
+  const selectedMemberId = useAppSelector(state => state.schedule?.selectedMemberId); // RTK slice
   const dispatch = useAppDispatch();
   const { t } = useTranslation('schedule');
-  const [selectedMemberId, setSelectedMemberId] = useState<string | undefined>();
+  
+  // Fetch team members data
+  const { data: teamDataResponse, isLoading: teamLoading } = useFetchScheduleMembersQuery();
+  const teamData = teamDataResponse?.body || [];
+  
+  // Find selected member or default to first member
+  const selectedMember = selectedMemberId 
+    ? teamData.find((member: any) => member.id === selectedMemberId)
+    : teamData[0]; // Default to first member if none selected
 
   const items: TabsProps['items'] = [
     {
@@ -25,7 +36,7 @@ const ScheduleDrawer = () => {
       label: t('workloadManagement') || 'Resource Management',
       children: (
         <WorkloadManagement 
-          memberId={selectedMemberId} 
+          memberId={selectedMember?.id} 
           onClose={() => dispatch(toggleScheduleDrawer())}
         />
       ),
@@ -66,10 +77,21 @@ const ScheduleDrawer = () => {
     <Drawer
       width={1200}
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Avatar style={{ backgroundColor: avatarNamesMap['R'] }}>R</Avatar>
-          <span>Raveesha Dilanka</span>
-        </div>
+        selectedMember ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <CustomAvatar 
+              avatarName={selectedMember.name} 
+              size={32} 
+            />
+            <span>{selectedMember.name}</span>
+            {teamLoading && <span style={{ fontSize: '12px', color: '#999' }}> (Loading...)</span>}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Avatar size={32}>?</Avatar>
+            <span>{teamLoading ? t('loading') || 'Loading...' : t('selectMember') || 'Select Member'}</span>
+          </div>
+        )
       }
       onClose={() => dispatch(toggleScheduleDrawer())}
       open={isScheduleDrawerOpen}

@@ -117,5 +117,9 @@
   "rebalanceError": "Failed to rebalance workload",
   "allocationUpdated": "Allocation updated successfully",
   "allocationError": "Failed to update allocation",
-  "zoomLevel": "Zoom Level"
+  "zoomLevel": "Zoom Level",
+  "loadingData": "Loading data...",
+  "loading": "Loading...",
+  "noDataAvailable": "No data available",
+  "selectMember": "Select Member"
 }

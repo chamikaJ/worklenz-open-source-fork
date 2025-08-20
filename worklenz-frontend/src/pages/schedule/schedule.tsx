@@ -10,7 +10,8 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDoumentTItle';
 import ScheduleDrawer from '@/features/schedule/ScheduleDrawer';
-import GranttChart from '@/components/schedule/grant-chart/grantt-chart';
+import GranttChart from '@/components/schedule/grant-chart/GranttChart';
+import ScheduleDataDebugger from '@/components/schedule/ScheduleDataDebugger';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { PickerType } from '@/types/schedule/schedule-v2.types';
 

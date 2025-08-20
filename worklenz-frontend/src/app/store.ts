@@ -63,6 +63,7 @@ import dateReducer from '@features/date/dateSlice';
 import notificationReducer from '@/features/navbar/notificationSlice';
 import buttonReducer from '@features/actionSetup/buttonSlice';
 import scheduleReducer from '../features/schedule/scheduleSlice';
+import scheduleRTKReducer from '../features/schedule/scheduleSliceRTK';
 
 // Reports
 import reportingReducer from '@features/reporting/reporting.slice';
@@ -100,6 +101,9 @@ import clientViewReducer from '../features/client-view';
 // Client Portal API
 import { clientPortalApi } from '@/api/client-portal/client-portal-api';
 
+// Schedule API
+import { scheduleApi } from '@/api/schedule/scheduleApi';
+
 import projectFinanceRateCardReducer from '@/features/finance/project-finance-slice';
 import projectFinancesReducer from '@/features/projects/finance/project-finance.slice';
 import financeReducer from '@/features/projects/finance/finance-slice';
@@ -114,7 +118,8 @@ export const store = configureStore({
       clientPortalApi.middleware,
       userActivityApiService.middleware,
       roadmapApi.middleware,
-      projectWorkloadApi.middleware
+      projectWorkloadApi.middleware,
+      scheduleApi.middleware
     ),
   reducer: {
     // Auth & User
@@ -131,6 +136,7 @@ export const store = configureStore({
     [clientPortalApi.reducerPath]: clientPortalApi.reducer,
     [roadmapApi.reducerPath]: roadmapApi.reducer,
     [projectWorkloadApi.reducerPath]: projectWorkloadApi.reducer,
+    [scheduleApi.reducerPath]: scheduleApi.reducer,
     userActivityReducer: userActivityReducer,
     [userActivityApiService.reducerPath]: userActivityApiService.reducer,
 
@@ -189,6 +195,7 @@ export const store = configureStore({
     notificationReducer: notificationReducer,
     button: buttonReducer,
     scheduleReducer: scheduleReducer,
+    schedule: scheduleRTKReducer,
 
     // Reports
     reportingReducer: reportingReducer,

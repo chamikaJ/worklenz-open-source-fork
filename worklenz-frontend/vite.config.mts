@@ -37,6 +37,18 @@ export default defineConfig(({ command, mode }) => {
       hmr: {
         overlay: false,
       },
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/secure': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+          secure: false,
+        },
+      },
     },
 
     // **Build**

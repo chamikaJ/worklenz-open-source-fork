@@ -1,7 +1,8 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
-import { fetchDateList, fetchTeamData } from '../../../features/schedule/scheduleSlice';
+import { useFetchScheduleMembersQuery, useFetchScheduleDatesQuery } from '@/api/schedule/scheduleApi';
 import { themeWiseColor } from '../../../utils/themeWiseColor';
 import GranttMembersTable from './grantt-members-table';
 import { CELL_WIDTH } from '../../../shared/constants';
@@ -11,30 +12,39 @@ import ProjectTimelineBar from './project-timeline-bar';
 import ProjectTimelineModal from '@/features/schedule/ProjectTimelineModal';
 
 const GranttChart = React.forwardRef(({ type, date }: { type: string; date: Date }, ref) => {
+  const { t } = useTranslation();
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
 
-  const { teamData } = useAppSelector(state => state.scheduleReducer);
-  const { dateList, loading, dayCount } = useAppSelector(state => state.scheduleReducer);
+  // RTK Query hooks with proper error handling
+  const { data: teamDataResponse, isLoading: teamLoading, refetch: refetchTeam, error: teamError } = useFetchScheduleMembersQuery();
+  const { data: dateListResponse, isLoading: dateLoading, refetch: refetchDates, error: dateError } = useFetchScheduleDatesQuery({
+    date: date.toISOString(),
+    type
+  });
+  
+  const teamData = teamDataResponse?.body || [];
+  const dateList = dateListResponse?.body;
+  const loading = teamLoading || dateLoading;
+  const dayCount = dateList?.date_data?.[0]?.days?.length || 0;
+  
+  // Log data for debugging
+  console.log('Team Data:', teamData);
+  console.log('Date List:', dateList);
+  console.log('Errors:', { teamError, dateError });
 
   // get theme details from theme reducer
   const themeMode = useAppSelector(state => state.themeReducer.mode);
 
   const dispatch = useAppDispatch();
 
-  const getAllData = async () => {
-    await dispatch(fetchTeamData());
-    await dispatch(fetchDateList({ date, type }));
-  };
-
-  // useMemo(() => {
-  //   dispatch(fetchTeamData());
-  // }, [date, type]);
-
-  useMemo(() => {
-    getAllData();
-  }, [date, type]);
+  // Auto-refresh data when date or type changes
+  useEffect(() => {
+    console.log('Refetching data for:', { date: date.toISOString(), type });
+    refetchTeam();
+    refetchDates();
+  }, [date, type, refetchTeam, refetchDates]);
 
   // function to scroll the timeline header and body together
 
@@ -186,9 +196,9 @@ const GranttChart = React.forwardRef(({ type, date }: { type: string; date: Date
             overflow: 'auto',
           }}
         >
-          {teamData.map((member: any) => (
+          {teamData && teamData.length > 0 ? teamData.map((member: any) => (
             <div
-              key={member.id}
+              key={member.id || member.team_member_id}
               style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${dayCount}, ${CELL_WIDTH}px)`,
@@ -218,7 +228,7 @@ const GranttChart = React.forwardRef(({ type, date }: { type: string; date: Date
                 ))
               )}
 
-              {expandedProject === member.id && (
+              {expandedProject === (member.id || member.team_member_id) && (
                 <div>
                   <Popover
                     content={
@@ -231,7 +241,7 @@ const GranttChart = React.forwardRef(({ type, date }: { type: string; date: Date
                     trigger={'click'}
                     open={isModalOpen}
                   ></Popover>
-                  {member.projects.map((project: any) => (
+                  {(member.projects || []).map((project: any) => (
                     <div
                       key={project.id}
                       onClick={() => {
@@ -286,7 +296,16 @@ const GranttChart = React.forwardRef(({ type, date }: { type: string; date: Date
                 </div>
               )}
             </div>
-          ))}
+          )) : (
+            <div style={{ 
+              gridColumn: `1 / -1`, 
+              textAlign: 'center', 
+              padding: '40px',
+              color: themeWiseColor('#666', '#999', themeMode)
+            }}>
+              {loading ? (t('loadingData') || 'Loading data...') : (t('noDataAvailable') || 'No team members found')}
+            </div>
+          )}
         </Flex>
       </div>
     </div>
