@@ -65,7 +65,8 @@ import {
   Timeline,
   Mentions,
   Radio,
-  Steps
+  Steps,
+  Slider
 } from 'antd/es';
 
 import TextArea from 'antd/es/input/TextArea';
@@ -196,7 +197,8 @@ export {
   DollarOutlined,
   DollarCircleOutlined,
   DatabaseOutlined,
-  DragOutlined
+  DragOutlined,
+  WarningOutlined
 } from '@ant-design/icons';
 
 // Re-export all components with React
@@ -256,7 +258,8 @@ export {
   Mentions,
   Radio,
   Steps,
-  TextArea
+  TextArea,
+  Slider
 };
 
 // TypeScript Types - Import commonly used ones

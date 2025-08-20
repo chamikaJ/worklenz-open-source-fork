@@ -12,7 +12,7 @@ const MainLayout = memo(() => {
   const location = useLocation();
   
   const isProjectView = location.pathname.includes('/projects/') && 
-                       !location.pathname.endsWith('/projects');
+                       !location.pathname.endsWith('/projects') || location.pathname.includes('/worklenz/schedule');
 
   const themeConfig = useMemo(
     () => ({

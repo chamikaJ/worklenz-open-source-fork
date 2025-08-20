@@ -209,6 +209,10 @@ const GranttChart = React.forwardRef(({ type, date }: { type: string; date: Date
                       loggedHours={0}
                       totalPerDayHours={0}
                       isWeekend={day.isWeekend}
+                      capacity={100}
+                      availableHours={8}
+                      memberName={member.name}
+                      date={`${date.month.substring(0, 3)} ${day.day}`}
                     />
                   </div>
                 ))
@@ -238,7 +242,7 @@ const GranttChart = React.forwardRef(({ type, date }: { type: string; date: Date
                       }}
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: `repeat(${dayCount}, ${CELL_WIDTH}px)`,
+                        gridTemplateColumns: `repeat(${filteredDayCount}, ${cellWidth}px)`,
                         position: 'relative',
                       }}
                     >
