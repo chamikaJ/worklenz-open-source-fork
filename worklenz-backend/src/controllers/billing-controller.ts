@@ -285,4 +285,18 @@ VALUES ($1, $2, $3);`;
     return res.status(200).send(new ServerResponse(true, null, "Your contact information has been sent successfully."));
   }
 
+  @HandleExceptions()
+  public static async getPricingPlans(req: IWorkLenzRequest, res: IWorkLenzResponse): Promise<IWorkLenzResponse> {
+    const q = `
+      SELECT id, name, key, billing_type, billing_period, default_currency, 
+             initial_price, recurring_price, trial_days, paddle_id, 
+             active, is_startup_plan
+      FROM licensing_pricing_plans 
+      WHERE active = true and is_startup_plan = false
+      ORDER BY sort_order ASC;
+    `;
+    const result = await db.query(q);
+    return res.status(200).send(new ServerResponse(true, result.rows));
+  }
+
 }

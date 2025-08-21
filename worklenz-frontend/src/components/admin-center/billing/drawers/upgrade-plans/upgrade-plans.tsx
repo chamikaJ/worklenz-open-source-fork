@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Button,
   Card,
@@ -11,6 +11,8 @@ import {
   Tooltip,
   Typography,
   message,
+  Space,
+  Alert,
 } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 
@@ -18,6 +20,7 @@ import { adminCenterApiService } from '@/api/admin-center/admin-center.api.servi
 import {
   IPricingPlans,
   IUpgradeSubscriptionPlanResponse,
+  IPricingOption,
 } from '@/types/admin-center/admin-center.types';
 import logger from '@/utils/errorLogger';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -26,10 +29,12 @@ import { CheckCircleFilled, InfoCircleOutlined } from '@/shared/antd-imports';
 import { useAuthService } from '@/hooks/useAuth';
 import { fetchBillingInfo, toggleUpgradeModal } from '@/features/admin-center/admin-center.slice';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
-import { billingApiService } from '@/api/admin-center/billing.api.service';
+import { billingApiService, IPricingPlan } from '@/api/admin-center/billing.api.service';
 import { authApiService } from '@/api/auth/auth.api.service';
 import { setUser } from '@/features/user/userSlice';
 import { setSession } from '@/utils/session-helper';
+// import PricingCalculator from '../../pricing-calculator';
+// import PricingModelSelector from '../../pricing-model-selector';
 import './upgrade-plans.css';
 
 // Extend Window interface to include Paddle
@@ -49,10 +54,53 @@ const UpgradePlans = () => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation('admin-center/current-bill');
   const [plans, setPlans] = useState<IPricingPlans>({});
+  const [backendPlans, setBackendPlans] = useState<IPricingPlan[]>([]);
   const [selectedPlan, setSelectedCard] = useState(IPaddlePlans.ANNUAL);
   const [selectedSeatCount, setSelectedSeatCount] = useState(5);
   const [seatCountOptions, setSeatCountOptions] = useState<number[]>([]);
   const [switchingToFreePlan, setSwitchingToFreePlan] = useState(false);
+
+  // Single billing frequency for all plans
+  const [billingFrequency, setBillingFrequency] = useState<'monthly' | 'annual'>('annual');
+
+  // Track which plan type is selected
+  const [selectedPlanType, setSelectedPlanType] = useState<
+    'free' | 'pro' | 'business' | 'enterprise'
+  >('pro');
+
+  // Track pricing model selection
+  const [selectedPricingModel, setSelectedPricingModel] = useState<'per_user' | 'regular'>('per_user');
+
+  // Pricing data state that can be updated from backend
+  const [pricingData, setPricingData] = useState({
+    free: {
+      monthly_price: '0',
+      annual_price: '0',
+      users_included: '3',
+      max_users: '3',
+    },
+    pro: {
+      monthly_price: '69',
+      annual_price: '49', // $588/year = $49/month
+      annual_total: '588',
+      users_included: '15',
+      max_users: '50',
+    },
+    business: {
+      monthly_price: '99',
+      annual_price: '69', // $828/year = $69/month
+      annual_total: '828',
+      users_included: '20',
+      max_users: '100',
+    },
+    enterprise: {
+      monthly_price: '349',
+      annual_price: '299', // $3,588/year = $299/month
+      annual_total: '3588',
+      users_included: 'Unlimited',
+      max_users: 'Unlimited',
+    },
+  });
 
   const [switchingToPaddlePlan, setSwitchingToPaddlePlan] = useState(false);
   const [form] = Form.useForm();
@@ -86,15 +134,93 @@ const UpgradePlans = () => {
     return options;
   };
 
+  // Function to map backend pricing data to our frontend structure
+  const mapBackendPlansToFrontend = (backendPlans: IPricingPlan[]) => {
+    const mapped: any = {
+      free: { monthly_price: '0', annual_price: '0', users_included: '3', max_users: '3' },
+      pro: { monthly_price: '0', annual_price: '0', users_included: '15', max_users: '50' },
+      business: { monthly_price: '0', annual_price: '0', users_included: '20', max_users: '100' },
+      enterprise: {
+        monthly_price: '0',
+        annual_price: '0',
+        users_included: 'Unlimited',
+        max_users: 'Unlimited',
+      },
+    };
+
+    backendPlans.forEach(plan => {
+      const planKey = plan.key; // Use the explicit key instead of name matching
+      const price = plan.recurring_price.toString(); // Price is already in dollars based on your data
+
+      if (planKey === 'pro') {
+        if (plan.billing_type === 'month') {
+          mapped.pro.monthly_price = price;
+          mapped.pro.monthly_plan_id = plan.id; // Use database UUID id instead of paddle_id
+        } else {
+          mapped.pro.annual_price = (plan.recurring_price / 12).toFixed(2); // Convert yearly to monthly display
+          mapped.pro.annual_total = price;
+          mapped.pro.annual_plan_id = plan.id; // Use database UUID id instead of paddle_id
+        }
+      } else if (planKey === 'business') {
+        if (plan.billing_type === 'month') {
+          mapped.business.monthly_price = price;
+          mapped.business.monthly_plan_id = plan.id; // Use database UUID id instead of paddle_id
+        } else {
+          mapped.business.annual_price = (plan.recurring_price / 12).toFixed(2);
+          mapped.business.annual_total = price;
+          mapped.business.annual_plan_id = plan.id; // Use database UUID id instead of paddle_id
+        }
+      } else if (planKey === 'enterprise') {
+        if (plan.billing_type === 'month') {
+          mapped.enterprise.monthly_price = price;
+          mapped.enterprise.monthly_plan_id = plan.id; // Use database UUID id instead of paddle_id
+        } else {
+          mapped.enterprise.annual_price = (plan.recurring_price / 12).toFixed(2);
+          mapped.enterprise.annual_total = price;
+          mapped.enterprise.annual_plan_id = plan.id; // Use database UUID id instead of paddle_id
+        }
+      } else if (planKey === 'free') {
+        // Free plan handling if needed - typically doesn't change from defaults
+        // mapped.free.monthly_price = '0'; // Already set in defaults
+        // mapped.free.annual_price = '0';   // Already set in defaults
+      }
+    });
+
+    return mapped;
+  };
+
   const fetchPricingPlans = async () => {
     try {
+      // For now, use the existing getPlans() method for basic plan info
       const res = await adminCenterApiService.getPlans();
-      console.log('res.body', res.body);
       if (res.done) {
         setPlans(res.body);
       }
+
+      // Backend integration enabled - fetch real pricing data:
+      const pricingRes = await billingApiService.getPricingPlans();
+      if (pricingRes.done && pricingRes.body) {
+        console.log('Backend pricing plans:', pricingRes.body);
+        setBackendPlans(pricingRes.body);
+        const mappedPricing = mapBackendPlansToFrontend(pricingRes.body);
+        console.log('Mapped pricing data:', mappedPricing);
+        setPricingData(mappedPricing);
+      }
     } catch (error) {
       logger.error('Error fetching pricing plans', error);
+      // Fallback to hardcoded data if backend fails
+      const mockPricingResponse: IPricingPlans = {
+        monthly_plan_id: 'fallback_monthly',
+        monthly_plan_name: 'Pro Monthly',
+        annual_plan_id: 'fallback_annual',
+        annual_plan_name: 'Pro Annual',
+        team_member_limit: '3',
+        projects_limit: '3',
+        free_tier_storage: '100',
+        annual_price: '49',
+        monthly_price: '69',
+      };
+      setPlans(mockPricingResponse);
     }
   };
 
@@ -212,18 +338,43 @@ const UpgradePlans = () => {
       setPaddleLoading(true);
       setPaddleError(null);
 
-      if (billingInfo?.trial_in_progress && billingInfo.status === SUBSCRIPTION_STATUS.TRIALING) {
-        const res = await billingApiService.upgradeToPaidPlan(planId, selectedSeatCount);
+      // Check if user should use upgrade API (free, trial, or no active paddle subscription)
+      const shouldUseUpgradeAPI =
+        !billingInfo?.subscription_id || // No paddle subscription
+        billingInfo?.status === SUBSCRIPTION_STATUS.TRIALING || // Trial user
+        billingInfo?.status === SUBSCRIPTION_STATUS.FREE || // Free plan user
+        billingInfo?.status === SUBSCRIPTION_STATUS.PASTDUE || // Past due subscription
+        billingInfo?.status === SUBSCRIPTION_STATUS.DELETED; // Deleted subscription
+
+      if (shouldUseUpgradeAPI) {
+        // Use upgrade API for users without active paddle subscription
+        // Use the selected pricing model
+        const currentTeamSize = billingInfo?.total_used || 1;
+        
+        console.log('Upgrade request:', { planId, pricingModel: selectedPricingModel, teamSize: currentTeamSize });
+        
+        const res = await billingApiService.upgradeToPaidPlan(
+          planId,
+          selectedPricingModel,
+          selectedPricingModel === 'per_user' ? currentTeamSize : undefined
+        );
+        
+        console.log('Upgrade API response:', res);
+        
         if (res.done) {
           initializePaddle(res.body);
         } else {
+          console.error('Upgrade API failed:', res);
           setSwitchingToPaddlePlan(false);
           setPaddleLoading(false);
-          setPaddleError('Failed to prepare checkout');
-          message.error('Failed to prepare checkout');
+          setPaddleError(`Failed to prepare checkout: ${res.message || 'Unknown error'}`);
+          message.error(`Failed to prepare checkout: ${res.message || 'Unknown error'}`);
         }
-      } else if (billingInfo?.status === SUBSCRIPTION_STATUS.ACTIVE) {
-        // For existing subscriptions, use changePlan endpoint
+      } else if (
+        billingInfo?.status === SUBSCRIPTION_STATUS.ACTIVE ||
+        billingInfo?.status === SUBSCRIPTION_STATUS.PAUSED
+      ) {
+        // For existing active/paused paddle subscriptions, use changePlan endpoint
         const res = await adminCenterApiService.changePlan(planId);
         if (res.done) {
           message.success('Subscription plan changed successfully!');
@@ -237,6 +388,12 @@ const UpgradePlans = () => {
           setPaddleError('Failed to change plan');
           message.error('Failed to change subscription plan');
         }
+      } else {
+        // Fallback case - should not normally happen
+        setSwitchingToPaddlePlan(false);
+        setPaddleLoading(false);
+        setPaddleError('Unable to process plan selection');
+        message.error('Unable to process plan selection. Please contact support.');
       }
     } catch (error) {
       setSwitchingToPaddlePlan(false);
@@ -258,18 +415,43 @@ const UpgradePlans = () => {
       setPaddleError(null);
       let planId: string | null = null;
 
-      if (selectedPlan === paddlePlans.ANNUAL && plans.annual_plan_id) {
-        planId = plans.annual_plan_id;
-      } else if (selectedPlan === paddlePlans.MONTHLY && plans.monthly_plan_id) {
-        planId = plans.monthly_plan_id;
+      // Use the global billing frequency and selected plan type
+      const isAnnual = billingFrequency === 'annual';
+
+      // Get the correct plan ID based on selected plan type and billing frequency
+      if (selectedPlanType === 'pro') {
+        planId = isAnnual ? pricingData.pro.annual_plan_id : pricingData.pro.monthly_plan_id;
+      } else if (selectedPlanType === 'business') {
+        planId = isAnnual
+          ? pricingData.business.annual_plan_id
+          : pricingData.business.monthly_plan_id;
+      } else if (selectedPlanType === 'enterprise') {
+        planId = isAnnual
+          ? pricingData.enterprise.annual_plan_id
+          : pricingData.enterprise.monthly_plan_id;
+      }
+
+      console.log('Plan selection debug:', {
+        selectedPlanType,
+        billingFrequency,
+        isAnnual,
+        planId,
+        pricingData: JSON.stringify(pricingData, null, 2)
+      });
+
+      // Set the selected plan for the legacy system
+      if (isAnnual) {
+        setSelectedCard(paddlePlans.ANNUAL);
+      } else {
+        setSelectedCard(paddlePlans.MONTHLY);
       }
 
       if (planId) {
         upgradeToPaddlePlan(planId);
       } else {
         setSwitchingToPaddlePlan(false);
-        setPaddleError('Invalid plan selected');
-        message.error('Invalid plan selected');
+        setPaddleError('Plan not available or not configured');
+        message.error('Selected plan is not available');
       }
     } catch (error) {
       setSwitchingToPaddlePlan(false);
@@ -279,7 +461,7 @@ const UpgradePlans = () => {
     }
   };
 
-  const isSelected = (cardIndex: IPaddlePlans) =>
+  const isSelected = (cardIndex: IPaddlePlans | string) =>
     selectedPlan === cardIndex ? { border: '2px solid #1890ff' } : {};
 
   const cardStyles = {
@@ -306,17 +488,34 @@ const UpgradePlans = () => {
       justifyItems: 'start',
       alignItems: 'start',
     },
-    checkIcon: { color: '#52c41a' },
+    checkIcon: { color: '#1890ff' },
   };
 
   const calculateAnnualTotal = (price: string | undefined) => {
     if (!price) return;
-    return (12 * parseFloat(price) * selectedSeatCount).toFixed(2);
+    const basePrice = parseFloat(price);
+    if (selectedPricingModel === 'per_user') {
+      const teamSize = billingInfo?.total_used || 1;
+      return (basePrice * teamSize).toFixed(2);
+    }
+    return basePrice.toFixed(2);
   };
 
   const calculateMonthlyTotal = (price: string | undefined) => {
     if (!price) return;
-    return (parseFloat(price) * selectedSeatCount).toFixed(2);
+    const basePrice = parseFloat(price);
+    if (selectedPricingModel === 'per_user') {
+      const teamSize = billingInfo?.total_used || 1;
+      return (basePrice * teamSize).toFixed(2);
+    }
+    return basePrice.toFixed(2);
+  };
+
+  const getPriceLabel = (planType: 'annual' | 'monthly') => {
+    if (selectedPricingModel === 'per_user') {
+      return planType === 'annual' ? 'per user/month' : 'per user/month';
+    }
+    return planType === 'annual' ? 'per month' : 'per month';
   };
 
   useEffect(() => {
@@ -328,9 +527,9 @@ const UpgradePlans = () => {
   }, [billingInfo]);
 
   const renderFeature = (text: string) => (
-    <div>
-      <CheckCircleFilled style={cardStyles.checkIcon} />
-      &nbsp;<span>{text}</span>
+    <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+      <CheckCircleFilled style={{ ...cardStyles.checkIcon, marginTop: '2px', flexShrink: 0 }} />
+      <span style={{ lineHeight: '1.4' }}>{text}</span>
     </div>
   );
 
@@ -354,190 +553,375 @@ const UpgradePlans = () => {
         </Typography.Title>
       </Flex>
 
-      <Flex justify="center" align="center">
-        <Form form={form}>
-          <Form.Item name="seatCount" label={t('noOfSeats', 'Number of Seats')}>
-            <Select
-              style={{ width: 100 }}
-              value={selectedSeatCount}
-              options={seatCountOptions.map(option => ({
-                value: option.value,
-                label: option.value.toString(),
-                disabled: option.disabled,
-              }))}
-              onChange={setSelectedSeatCount}
-            />
-          </Form.Item>
-        </Form>
-      </Flex>
+      {/* Global Billing Frequency Toggle */}
+      <Row justify="center" style={{ marginTop: 24, marginBottom: 16 }}>
+        <Button.Group size="large">
+          <Button
+            type={billingFrequency === 'monthly' ? 'primary' : 'default'}
+            onClick={() => {
+              setBillingFrequency('monthly');
+              setSelectedCard(paddlePlans.MONTHLY);
+            }}
+          >
+            {t('monthly', 'Monthly')}
+          </Button>
+          <Button
+            type={billingFrequency === 'annual' ? 'primary' : 'default'}
+            onClick={() => {
+              setBillingFrequency('annual');
+              setSelectedCard(paddlePlans.ANNUAL);
+            }}
+          >
+            {t('yearly', 'Yearly')}
+          </Button>
+        </Button.Group>
+      </Row>
 
-      <Flex>
-        <Row className="w-full upgrade-plans-row-responsive">
-          {/* Free Plan */}
-          <Col span={8} style={{ padding: '0 4px' }}>
-            <Card
-              style={{ ...isSelected(paddlePlans.FREE), height: '100%' }}
-              hoverable
-              title={<span style={cardStyles.title}>{t('freePlan', 'Free Plan')}</span>}
-              onClick={() => setSelectedCard(paddlePlans.FREE)}
-            >
-              <div style={cardStyles.priceContainer}>
-                <Flex justify="space-between" align="center">
-                  <Typography.Title level={1}>$ 0.00</Typography.Title>
-                  <Typography.Text>{t('freeForever', 'Free Forever')}</Typography.Text>
-                </Flex>
-                <Flex justify="center" align="center">
-                  <Typography.Text strong style={{ fontSize: '16px' }}>
-                    {t('bestForPersonalUse', 'Best for Personal Use')}
-                  </Typography.Text>
-                </Flex>
-              </div>
-
-              <div style={cardStyles.featureList}>
-                {renderFeature(`${plans.free_tier_storage} ${t('storage', 'Storage')}`)}
-                {renderFeature(`${plans.projects_limit} ${t('projects', 'Projects')}`)}
-                {renderFeature(`${plans.team_member_limit} ${t('teamMembers', 'Team Members')}`)}
-              </div>
-            </Card>
-          </Col>
-
-          {/* Annual Plan */}
-          <Col span={8} style={{ padding: '0 4px' }}>
-            <Card
-              style={{ ...isSelected(paddlePlans.ANNUAL), height: '100%' }}
-              hoverable
-              title={
-                <span style={cardStyles.title}>
-                  {t('annualPlan', 'Annual Plan')}{' '}
-                  <Tag color="volcano" style={{ lineHeight: '21px' }}>
-                    {t('tag', 'Popular')}
-                  </Tag>
-                </span>
+      {/* Pricing Model Selection */}
+      <Row justify="center" style={{ marginBottom: 16 }}>
+        <Space direction="vertical" size="small" style={{ textAlign: 'center' }}>
+          <Space size="large">
+            <Typography.Text strong>Pricing Model:</Typography.Text>
+            <Button.Group>
+              <Button 
+                type={selectedPricingModel === 'per_user' ? 'primary' : 'default'}
+                size="small"
+                onClick={() => setSelectedPricingModel('per_user')}
+              >
+                Per User
+              </Button>
+              <Button 
+                type={selectedPricingModel === 'regular' ? 'primary' : 'default'}
+                size="small"
+                onClick={() => setSelectedPricingModel('regular')}
+              >
+                Regular
+              </Button>
+            </Button.Group>
+          </Space>
+          
+          {billingInfo?.total_used && (
+            <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+              {selectedPricingModel === 'per_user' 
+                ? `${billingInfo.total_used} member${billingInfo.total_used > 1 ? 's' : ''} × plan price`
+                : 'Fixed team pricing regardless of member count'
               }
-              onClick={() => setSelectedCard(paddlePlans.ANNUAL)}
-            >
-              <div style={cardStyles.priceContainer}>
-                <Flex justify="space-between" align="center">
-                  <Typography.Title level={1}>$ {plans.annual_price}</Typography.Title>
-                  <Typography.Text>seat / month</Typography.Text>
-                </Flex>
-                <Flex justify="center" align="center">
-                  <Typography.Text strong style={{ fontSize: '16px' }}>
-                    Total ${calculateAnnualTotal(plans.annual_price)}/ year
-                    <Tooltip
-                      title={
-                        '$' + plans.annual_price + ' x 12 months x ' + selectedSeatCount + ' seats'
-                      }
-                    >
-                      <InfoCircleOutlined
-                        style={{ color: 'grey', fontSize: '16px', marginLeft: '4px' }}
-                      />
-                    </Tooltip>
+            </Typography.Text>
+          )}
+        </Space>
+      </Row>
+
+      <Row className="w-full" gutter={[16, 16]} style={{ marginTop: 16 }}>
+        {/* Free Plan */}
+        <Col xs={24} lg={6}>
+          <Card
+            style={{
+              height: '100%',
+              border: selectedPlanType === 'free' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+              padding: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            bodyStyle={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+            }}
+            onClick={() => {
+              setSelectedPlanType('free');
+              setSelectedCard(paddlePlans.FREE);
+            }}
+            hoverable
+          >
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <Typography.Title level={4} style={{ marginBottom: 8 }}>
+                {t('freePlan', 'Free')}
+              </Typography.Title>
+              <Typography.Text type="secondary">
+                {t('freeDescription', 'Perfect for personal use')}
+              </Typography.Text>
+            </div>
+
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <Typography.Title level={1} style={{ fontSize: '48px', margin: 0 }}>
+                $0
+              </Typography.Title>
+              <Typography.Text>{t('freeForever', 'forever')}</Typography.Text>
+            </div>
+
+            <div style={{ flex: 1, marginBottom: 24 }}>
+              {renderFeature(`${plans.projects_limit || '3'} ${t('projects', 'Projects')}`)}
+              {renderFeature(`${plans.team_member_limit || '3'} ${t('users', 'Users')}`)}
+              {renderFeature(t('taskListKanban', 'Task List & Kanban Board'))}
+              {renderFeature(t('personalViews', 'Personal Task & Calendar Views'))}
+              {renderFeature(t('fileUploads', 'File Uploads & Comments'))}
+              {renderFeature(t('labelsFilters', 'Labels & Filters'))}
+            </div>
+
+            <div style={{ marginTop: 'auto' }}>
+              <Button
+                type="primary"
+                block
+                size="large"
+                onClick={switchToFreePlan}
+                loading={switchingToFreePlan}
+              >
+                {t('getCurrentPlan', 'Get Current Plan')}
+              </Button>
+            </div>
+          </Card>
+        </Col>
+
+        {/* Pro Plan */}
+        <Col xs={24} lg={6}>
+          <Card
+            style={{
+              height: '100%',
+              border: selectedPlanType === 'pro' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+              padding: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            bodyStyle={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+            }}
+            onClick={() => setSelectedPlanType('pro')}
+            hoverable
+          >
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <Typography.Title level={4} style={{ marginBottom: 8 }}>
+                {t('proPlan', 'Pro')}
+              </Typography.Title>
+              <Typography.Text type="secondary">
+                {t('proDescription', 'Best for growing teams')}
+              </Typography.Text>
+            </div>
+
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
+                $
+                {billingFrequency === 'annual'
+                  ? calculateAnnualTotal(pricingData.pro.annual_price)
+                  : calculateMonthlyTotal(pricingData.pro.monthly_price)}
+              </Typography.Title>
+              <Typography.Text>
+                {getPriceLabel(billingFrequency)} {billingFrequency === 'annual' ? '(billed annually)' : ''}
+              </Typography.Text>
+              {billingFrequency === 'annual' && (
+                <div style={{ marginTop: 4 }}>
+                  <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                    ${selectedPricingModel === 'per_user' 
+                      ? (parseFloat(pricingData.pro.annual_total || '0') * (billingInfo?.total_used || 1)).toFixed(2)
+                      : pricingData.pro.annual_total}/year
                   </Typography.Text>
-                </Flex>
-                <Flex justify="center" align="center">
-                  <Typography.Text>{t('billedAnnually', 'Billed Annually')}</Typography.Text>
-                </Flex>
-              </div>
-
-              <div style={cardStyles.featureList} className="mt-4">
-                {renderFeature(t('startupText01', 'Unlimited Projects'))}
-                {renderFeature(t('startupText02', 'Unlimited Team Members'))}
-                {renderFeature(t('startupText03', 'Unlimited Storage'))}
-                {renderFeature(t('startupText04', 'Priority Support'))}
-                {renderFeature(t('startupText05', 'Advanced Analytics'))}
-              </div>
-            </Card>
-          </Col>
-
-          {/* Monthly Plan */}
-          <Col span={8} style={{ padding: '0 4px' }}>
-            <Card
-              style={{ ...isSelected(paddlePlans.MONTHLY), height: '100%' }}
-              hoverable
-              title={<span style={cardStyles.title}>{t('monthlyPlan', 'Monthly Plan')}</span>}
-              onClick={() => setSelectedCard(paddlePlans.MONTHLY)}
-            >
-              <div style={cardStyles.priceContainer}>
-                <Flex justify="space-between" align="center">
-                  <Typography.Title level={1}>$ {plans.monthly_price}</Typography.Title>
-                  <Typography.Text>seat / month</Typography.Text>
-                </Flex>
-                <Flex justify="center" align="center">
-                  <Typography.Text strong style={{ fontSize: '16px' }}>
-                    Total ${calculateMonthlyTotal(plans.monthly_price)}/ month
-                    <Tooltip
-                      title={'$' + plans.monthly_price + ' x ' + selectedSeatCount + ' seats'}
-                    >
-                      <InfoCircleOutlined
-                        style={{ color: 'grey', fontSize: '16px', marginLeft: '4px' }}
-                      />
-                    </Tooltip>
+                </div>
+              )}
+              {selectedPricingModel === 'per_user' && (
+                <div style={{ marginTop: 4 }}>
+                  <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                    Extra users: $5.99/user/month
                   </Typography.Text>
-                </Flex>
-                <Flex justify="center" align="center">
-                  <Typography.Text>{t('billedMonthly', 'Billed Monthly')}</Typography.Text>
-                </Flex>
-              </div>
+                </div>
+              )}
+            </div>
 
-              <div style={cardStyles.featureList}>
-                {renderFeature(t('startupText01', 'Unlimited Projects'))}
-                {renderFeature(t('startupText02', 'Unlimited Team Members'))}
-                {renderFeature(t('startupText03', 'Unlimited Storage'))}
-                {renderFeature(t('startupText04', 'Priority Support'))}
-                {renderFeature(t('startupText05', 'Advanced Analytics'))}
-              </div>
-            </Card>
-          </Col>
-        </Row>
-      </Flex>
+            <div style={{ flex: 1, marginBottom: 24 }}>
+              {renderFeature(t('unlimitedProjects', 'Unlimited Projects'))}
+              {renderFeature(`${pricingData.pro.users_included} Users Included`)}
+              {renderFeature(`Up to ${pricingData.pro.max_users} Users Max`)}
+              {renderFeature(t('timeTracking', 'Time Tracking & Analytics'))}
+              {renderFeature(t('projectTemplates', 'Project Templates & Phases'))}
+              {renderFeature(t('ganttReadOnly', 'Gantt Charts (Read-only)'))}
+              {renderFeature(t('customFields', 'Custom Fields & Subtasks'))}
+              {renderFeature(t('projectInsights', 'Project Insights & Reports'))}
+            </div>
+
+            <div style={{ marginTop: 'auto' }}>
+              <Button
+                type="primary"
+                block
+                size="large"
+                onClick={continueWithPaddlePlan}
+                loading={switchingToPaddlePlan || paddleLoading}
+                disabled={selectedPlanType !== 'pro'}
+              >
+                {t('choosePlan', 'Choose Plan')}
+              </Button>
+            </div>
+          </Card>
+        </Col>
+
+        {/* Business Plan */}
+        <Col xs={24} lg={6}>
+          <Card
+            style={{
+              height: '100%',
+              border: selectedPlanType === 'business' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+              padding: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            bodyStyle={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+            }}
+            onClick={() => setSelectedPlanType('business')}
+            hoverable
+          >
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <Typography.Title level={4} style={{ marginBottom: 8 }}>
+                {t('businessPlan', 'Business')}
+              </Typography.Title>
+              <Typography.Text type="secondary">
+                {t('businessDescription', 'For advanced workflows')}
+              </Typography.Text>
+            </div>
+
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
+                $
+                {billingFrequency === 'annual'
+                  ? calculateAnnualTotal(pricingData.business.annual_price)
+                  : calculateMonthlyTotal(pricingData.business.monthly_price)}
+              </Typography.Title>
+              <Typography.Text>
+                {getPriceLabel(billingFrequency)} {billingFrequency === 'annual' ? '(billed annually)' : ''}
+              </Typography.Text>
+              {billingFrequency === 'annual' && (
+                <div style={{ marginTop: 4 }}>
+                  <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                    ${selectedPricingModel === 'per_user' 
+                      ? (parseFloat(pricingData.business.annual_total || '0') * (billingInfo?.total_used || 1)).toFixed(2)
+                      : pricingData.business.annual_total}/year
+                  </Typography.Text>
+                </div>
+              )}
+              {selectedPricingModel === 'per_user' && (
+                <div style={{ marginTop: 4 }}>
+                  <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                    Extra users: $5.99/user/month
+                  </Typography.Text>
+                </div>
+              )}
+            </div>
+
+            <div style={{ flex: 1, marginBottom: 24 }}>
+              <Typography.Text
+                strong
+                style={{ display: 'block', marginBottom: 12, textAlign: 'center' }}
+              >
+                {t('everythingInPro', 'Everything in Pro, plus:')}
+              </Typography.Text>
+              {renderFeature(`${pricingData.business.users_included} Users Included`)}
+              {renderFeature(`Up to ${pricingData.business.max_users} Users Max`)}
+              {renderFeature(t('fullGanttCharts', 'Full Gantt Charts'))}
+              {renderFeature(t('projectHealth', 'Project Health Monitoring'))}
+              {renderFeature(t('clientPortal', 'Client Portal'))}
+              {renderFeature(t('financeTracking', 'Finance & Billable Tracking'))}
+              {renderFeature(t('scheduler', 'Advanced Scheduler'))}
+            </div>
+
+            <div style={{ marginTop: 'auto' }}>
+              <Button
+                type="primary"
+                block
+                size="large"
+                onClick={continueWithPaddlePlan}
+                loading={switchingToPaddlePlan || paddleLoading}
+                disabled={selectedPlanType !== 'business'}
+              >
+                {t('choosePlan', 'Choose Plan')}
+              </Button>
+            </div>
+          </Card>
+        </Col>
+
+        {/* Enterprise Plan */}
+        <Col xs={24} lg={6}>
+          <Card
+            style={{
+              height: '100%',
+              border: selectedPlanType === 'enterprise' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+              padding: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            bodyStyle={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+            }}
+            onClick={() => setSelectedPlanType('enterprise')}
+            hoverable
+          >
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <Typography.Title level={4} style={{ marginBottom: 8 }}>
+                {t('enterprisePlan', 'Enterprise')}
+              </Typography.Title>
+              <Typography.Text type="secondary">
+                {t('enterpriseDescription', 'For large organizations')}
+              </Typography.Text>
+            </div>
+
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
+                $
+                {billingFrequency === 'annual'
+                  ? calculateAnnualTotal(pricingData.enterprise.annual_price)
+                  : calculateMonthlyTotal(pricingData.enterprise.monthly_price)}
+              </Typography.Title>
+              <Typography.Text>
+                {getPriceLabel(billingFrequency)} {billingFrequency === 'annual' ? '(billed annually)' : ''}
+              </Typography.Text>
+              {billingFrequency === 'annual' && (
+                <div style={{ marginTop: 4 }}>
+                  <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                    ${selectedPricingModel === 'per_user' 
+                      ? (parseFloat(pricingData.enterprise.annual_total || '0') * (billingInfo?.total_used || 1)).toFixed(2)
+                      : pricingData.enterprise.annual_total}/year
+                  </Typography.Text>
+                </div>
+              )}
+            </div>
+
+            <div style={{ flex: 1, marginBottom: 24 }}>
+              <Typography.Text
+                strong
+                style={{ display: 'block', marginBottom: 12, textAlign: 'center' }}
+              >
+                {t('everythingInBusiness', 'Everything in Business, plus:')}
+              </Typography.Text>
+              {renderFeature(`${pricingData.enterprise.users_included} Users`)}
+              {renderFeature(t('noExtraUserCost', 'No Extra User Cost'))}
+              {renderFeature(t('advancedSecurity', 'Advanced Security'))}
+              {renderFeature(t('customIntegrations', 'Custom Integrations'))}
+              {renderFeature(t('prioritySupport', 'Priority Support'))}
+            </div>
+
+            <div style={{ marginTop: 'auto' }}>
+              <Button
+                type="primary"
+                block
+                size="large"
+                onClick={continueWithPaddlePlan}
+                loading={switchingToPaddlePlan || paddleLoading}
+                disabled={selectedPlanType !== 'enterprise'}
+              >
+                {t('choosePlan', 'Choose Plan')}
+              </Button>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
       {paddleError && (
-        <Row justify="center" className="mt-2">
-          <Typography.Text type="danger">{paddleError}</Typography.Text>
+        <Row justify="center" style={{ marginTop: 16 }}>
+          <Alert message={paddleError} type="error" showIcon />
         </Row>
       )}
-      <Row justify="end" className="mt-4">
-        {selectedPlan === paddlePlans.FREE && (
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={switchingToFreePlan}
-            onClick={switchToFreePlan}
-          >
-            Try for free
-          </Button>
-        )}
-        {selectedPlan === paddlePlans.ANNUAL && (
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={switchingToPaddlePlan || paddleLoading}
-            onClick={continueWithPaddlePlan}
-            disabled={billingInfo?.plan_id === plans.annual_plan_id}
-          >
-            {billingInfo?.status === SUBSCRIPTION_STATUS.ACTIVE
-              ? t('changeToPlan', 'Change to {{plan}}', { plan: t('annualPlan', 'Annual Plan') })
-              : t('continueWith', 'Continue with {{plan}}', {
-                  plan: t('annualPlan', 'Annual Plan'),
-                })}
-          </Button>
-        )}
-        {selectedPlan === paddlePlans.MONTHLY && (
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={switchingToPaddlePlan || paddleLoading}
-            onClick={continueWithPaddlePlan}
-            disabled={billingInfo?.plan_id === plans.monthly_plan_id}
-          >
-            {billingInfo?.status === SUBSCRIPTION_STATUS.ACTIVE
-              ? t('changeToPlan', 'Change to {{plan}}', { plan: t('monthlyPlan', 'Monthly Plan') })
-              : t('continueWith', 'Continue with {{plan}}', {
-                  plan: t('monthlyPlan', 'Monthly Plan'),
-                })}
-          </Button>
-        )}
-      </Row>
     </div>
   );
 };

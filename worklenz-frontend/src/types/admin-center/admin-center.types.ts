@@ -92,6 +92,11 @@ export interface IBillingAccountInfo {
   total_used?: number;
   is_lkr_billing?: boolean;
   subscription_type?: ISUBSCRIPTION_TYPE;
+  pricing_model?: 'per_user' | 'flat_rate';
+  flat_rate_price?: number;
+  flat_rate_max_users?: number;
+  actual_users?: number;
+  subscription_id?: string;
 }
 
 export interface IPricingPlans {
@@ -137,6 +142,33 @@ export interface IUpgradeSubscriptionPlanResponse {
   params: IPaddleCheckoutParams;
   sandbox: boolean;
   vendor_id: string;
+  pricing_model?: 'per_user' | 'flat_rate';
+  plan_variant?: any;
+}
+
+export interface IPricingOption {
+  plan_id: string;
+  plan_name: string;
+  variant_type: 'per_user' | 'flat_rate';
+  flat_price?: number;
+  per_user_price?: number;
+  user_range_min: number;
+  user_range_max: number;
+  total_cost: number;
+  is_recommended: boolean;
+}
+
+export interface IPricingComparison {
+  per_user: {
+    total: number;
+    per_seat: number;
+    recommended: boolean;
+  };
+  flat_rate: {
+    total: number;
+    max_users: number;
+    recommended: boolean;
+  };
 }
 
 export interface IBillingConfiguration {

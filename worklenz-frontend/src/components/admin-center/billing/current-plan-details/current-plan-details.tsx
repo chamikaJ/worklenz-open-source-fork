@@ -19,6 +19,8 @@ import {
   Select,
   Row,
   Col,
+  Alert,
+  message,
 } from '@/shared/antd-imports';
 import RedeemCodeDrawer from '../drawers/redeem-code-drawer/redeem-code-drawer';
 import {
@@ -128,6 +130,30 @@ const CurrentPlanDetails = () => {
       setAddingSeats(false);
     }
   }, [selectedSeatCount, billingInfo?.total_seats, dispatch, trackMixpanelEvent]);
+
+  const handleSwitchPricingModel = useCallback(async () => {
+    if (!billingInfo?.subscription_id || !billingInfo?.pricing_model) return;
+
+    const newModel = billingInfo.pricing_model === 'flat_rate' ? 'per_user' : 'flat_rate';
+    const currentUsers = billingInfo.actual_users || billingInfo.total_used || 1;
+
+    try {
+      const res = await billingApiService.switchPricingModel(
+        newModel,
+        billingInfo.subscription_id,
+        currentUsers
+      );
+      if (res.done) {
+        message.success(t('pricingModelSwitched', 'Pricing model updated successfully'));
+        dispatch(fetchBillingInfo());
+      } else {
+        message.error(res.message || t('errorSwitchingPricingModel', 'Failed to switch pricing model'));
+      }
+    } catch (error) {
+      logger.error('Error switching pricing model', error);
+      message.error(t('errorSwitchingPricingModel', 'Failed to switch pricing model'));
+    }
+  }, [billingInfo, dispatch, t]);
 
   const calculateRemainingSeats = useMemo(() => {
     if (billingInfo?.total_seats && billingInfo?.total_used) {
@@ -336,21 +362,74 @@ const CurrentPlanDetails = () => {
     [freePlanSettings, t]
   );
 
+  const renderPricingModelInfo = useCallback(() => {
+    if (!billingInfo?.pricing_model) return null;
+    
+    const isFlat = billingInfo.pricing_model === 'flat_rate';
+    
+    return (
+      <div className="pricing-model-info" style={{ marginTop: '12px', marginBottom: '12px' }}>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Statistic
+              title={t('pricingModel', 'Pricing Model')}
+              value={isFlat ? t('flatRate', 'Flat Rate') : t('perUser', 'Per User')}
+              valueStyle={{ fontSize: '14px', fontWeight: 500 }}
+            />
+          </Col>
+          <Col span={12}>
+            <Statistic
+              title={t('monthlyCost', 'Monthly Cost')}
+              value={isFlat 
+                ? billingInfo.flat_rate_price 
+                : (billingInfo.unit_price || 0) * (billingInfo.total_seats || 0)
+              }
+              prefix="$"
+              valueStyle={{ fontSize: '14px', fontWeight: 500 }}
+            />
+          </Col>
+        </Row>
+        
+        {isFlat && billingInfo.flat_rate_max_users && (
+          <Alert
+            message={`Flat rate pricing for up to ${billingInfo.flat_rate_max_users} users`}
+            type="info"
+            showIcon
+            style={{ marginTop: 8 }}
+            banner
+          />
+        )}
+      </div>
+    );
+  }, [billingInfo, t]);
+
   const renderPaddleSubscriptionInfo = useCallback(() => {
     return (
       <Flex vertical>
         <Typography.Text strong>{billingInfo?.plan_name}</Typography.Text>
-        <Flex>
-          <Typography.Text>{billingInfo?.default_currency}</Typography.Text>&nbsp;
+        
+        {billingInfo?.pricing_model === 'flat_rate' ? (
           <Typography.Text>
-            {billingInfo?.billing_type === 'year'
-              ? billingInfo.unit_price_per_month
-              : billingInfo?.unit_price}
-            &nbsp;{t('perMonthPerUser')}
+            {billingInfo?.default_currency} {billingInfo?.flat_rate_price} per month
+            <Typography.Text type="secondary" style={{ marginLeft: 8 }}>
+              (up to {billingInfo?.flat_rate_max_users} users)
+            </Typography.Text>
           </Typography.Text>
-        </Flex>
+        ) : (
+          <Flex>
+            <Typography.Text>{billingInfo?.default_currency}</Typography.Text>&nbsp;
+            <Typography.Text>
+              {billingInfo?.billing_type === 'year'
+                ? billingInfo.unit_price_per_month
+                : billingInfo?.unit_price}
+              &nbsp;{t('perMonthPerUser')}
+            </Typography.Text>
+          </Flex>
+        )}
 
-        {shouldShowAddSeats && billingInfo?.total_seats && (
+        {renderPricingModelInfo()}
+
+        {shouldShowAddSeats && billingInfo?.total_seats && billingInfo?.pricing_model === 'per_user' && (
           <div style={{ marginTop: '16px' }}>
             <Row gutter={16} align="middle">
               <Col span={6}>
@@ -380,9 +459,19 @@ const CurrentPlanDetails = () => {
             </Row>
           </div>
         )}
+
+        {billingInfo?.pricing_model && billingInfo?.subscription_id && (
+          <Button 
+            type="link" 
+            onClick={handleSwitchPricingModel}
+            style={{ padding: 0, marginTop: 12, textAlign: 'left' }}
+          >
+            {t('switchTo', 'Switch to')} {billingInfo.pricing_model === 'flat_rate' ? t('perUser', 'Per User') : t('flatRate', 'Flat Rate')} {t('pricing', 'pricing')}
+          </Button>
+        )}
       </Flex>
     );
-  }, [billingInfo, shouldShowAddSeats, handleAddMoreSeats, calculateRemainingSeats, t]);
+  }, [billingInfo, shouldShowAddSeats, handleAddMoreSeats, calculateRemainingSeats, renderPricingModelInfo, t]);
 
   const renderCreditSubscriptionInfo = useCallback(() => {
     return (
@@ -469,7 +558,7 @@ const CurrentPlanDetails = () => {
         <Modal
           open={isUpgradeModalOpen}
           onCancel={() => dispatch(toggleUpgradeModal())}
-          width={1000}
+          width={1400}
           centered
           okButtonProps={{ hidden: true }}
           cancelButtonProps={{ hidden: true }}
