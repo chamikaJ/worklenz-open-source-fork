@@ -520,14 +520,12 @@ export default class AdminCenterController extends WorklenzControllerBase {
                                              LIMIT 1)::INT;`;
     const countResult = await db.query(countQ, [req.user?.owner_id]);
 
-    return res
-      .status(200)
-      .send(
-        new ServerResponse(true, {
-          plan_charges: result.rows,
-          modifiers: countResult.rows,
-        })
-      );
+    return res.status(200).send(
+      new ServerResponse(true, {
+        plan_charges: result.rows,
+        modifiers: countResult.rows,
+      })
+    );
   }
 
   @HandleExceptions()
@@ -649,24 +647,45 @@ export default class AdminCenterController extends WorklenzControllerBase {
                   ls.free_tier_storage
               FROM
                   licensing_settings ls
-              JOIN
+              LEFT JOIN
                   licensing_pricing_plans lp_monthly ON ls.default_monthly_plan = lp_monthly.id
-              JOIN
+              LEFT JOIN
                   licensing_pricing_plans lp_annual ON ls.default_annual_plan = lp_annual.id;`;
     const result = await db.query(q, []);
     const [data] = result.rows;
 
     const obj = await getTeamMemberCount(req.user?.owner_id ?? "");
 
-    data.team_member_limit =
-      data.team_member_limit === 0 ? "Unlimited" : data.team_member_limit;
-    data.projects_limit =
-      data.projects_limit === 0 ? "Unlimited" : data.projects_limit;
-    data.free_tier_storage = `${data.free_tier_storage}MB`;
-    data.current_user_count = obj.user_count;
-    data.annual_price = (data.annual_price / 12).toFixed(2);
+    // If no data found, return default values
+    if (!data) {
+      const defaultData = {
+        monthly_plan_id: null,
+        monthly_plan_name: "Pro Monthly",
+        annual_plan_id: null,
+        annual_plan_name: "Pro Annual",
+        monthly_price: "69",
+        annual_price: "49",
+        team_member_limit: "3",
+        projects_limit: "3",
+        free_tier_storage: "100MB",
+        current_user_count: obj.user_count
+      };
+      
+      return res.status(200).send(new ServerResponse(true, defaultData));
+    }
 
-    return res.status(200).send(new ServerResponse(true, data));
+    // Safely handle data transformation with null checks
+    const responseData = {
+      ...data,
+      team_member_limit: data.team_member_limit === 0 ? "Unlimited" : (data.team_member_limit || "3"),
+      projects_limit: data.projects_limit === 0 ? "Unlimited" : (data.projects_limit || "3"),
+      free_tier_storage: data.free_tier_storage ? `${data.free_tier_storage}MB` : "100MB",
+      current_user_count: obj.user_count,
+      annual_price: data.annual_price ? (data.annual_price / 12).toFixed(2) : "49",
+      monthly_price: data.monthly_price || "69"
+    };
+
+    return res.status(200).send(new ServerResponse(true, responseData));
   }
 
   @HandleExceptions()
@@ -1151,18 +1170,20 @@ export default class AdminCenterController extends WorklenzControllerBase {
                FROM organization_holiday_settings ohs
                JOIN organizations o ON ohs.organization_id = o.id
                WHERE o.user_id = $1;`;
-    
+
     const result = await db.query(q, [req.user?.owner_id]);
-    
+
     // If no settings exist, return default settings
     if (result.rows.length === 0) {
-      return res.status(200).send(new ServerResponse(true, {
-        country_code: null,
-        state_code: null,
-        auto_sync_holidays: true
-      }));
+      return res.status(200).send(
+        new ServerResponse(true, {
+          country_code: null,
+          state_code: null,
+          auto_sync_holidays: true,
+        })
+      );
     }
-    
+
     return res.status(200).send(new ServerResponse(true, result.rows[0]));
   }
 
@@ -1176,11 +1197,13 @@ export default class AdminCenterController extends WorklenzControllerBase {
     // First, get the organization ID
     const orgQ = `SELECT id FROM organizations WHERE user_id = $1;`;
     const orgResult = await db.query(orgQ, [req.user?.owner_id]);
-    
+
     if (orgResult.rows.length === 0) {
-      return res.status(404).send(new ServerResponse(false, "Organization not found"));
+      return res
+        .status(404)
+        .send(new ServerResponse(false, "Organization not found"));
     }
-    
+
     const organizationId = orgResult.rows[0].id;
 
     // Check if settings already exist
@@ -1197,50 +1220,67 @@ export default class AdminCenterController extends WorklenzControllerBase {
                            updated_at = CURRENT_TIMESTAMP
                        WHERE organization_id = $1
                        RETURNING *;`;
-      result = await db.query(updateQ, [organizationId, country_code, state_code, auto_sync_holidays]);
+      result = await db.query(updateQ, [
+        organizationId,
+        country_code,
+        state_code,
+        auto_sync_holidays,
+      ]);
     } else {
       // Insert new settings
       const insertQ = `INSERT INTO organization_holiday_settings 
                        (organization_id, country_code, state_code, auto_sync_holidays)
                        VALUES ($1, $2, $3, $4)
                        RETURNING *;`;
-      result = await db.query(insertQ, [organizationId, country_code, state_code, auto_sync_holidays]);
+      result = await db.query(insertQ, [
+        organizationId,
+        country_code,
+        state_code,
+        auto_sync_holidays,
+      ]);
     }
 
     // If auto_sync_holidays is enabled and country is Sri Lanka, populate holidays
-    if (auto_sync_holidays && country_code === 'LK') {
+    if (auto_sync_holidays && country_code === "LK") {
       try {
         // Import the holiday data provider
-        const { HolidayDataProvider } = require("../services/holiday-data-provider");
-        
+        const {
+          HolidayDataProvider,
+        } = require("../services/holiday-data-provider");
+
         // Get current year and next year to ensure we have recent data
         const currentYear = new Date().getFullYear();
         const years = [currentYear, currentYear + 1];
-        
+
         for (const year of years) {
-          const sriLankanHolidays = await HolidayDataProvider.getSriLankanHolidays(year);
-          
+          const sriLankanHolidays =
+            await HolidayDataProvider.getSriLankanHolidays(year);
+
           for (const holiday of sriLankanHolidays) {
             const query = `
               INSERT INTO country_holidays (country_code, name, description, date, is_recurring)
               VALUES ($1, $2, $3, $4, $5)
               ON CONFLICT (country_code, name, date) DO NOTHING
             `;
-            
+
             await db.query(query, [
-              'LK',
+              "LK",
               holiday.name,
               holiday.description,
               holiday.date,
-              holiday.is_recurring
+              holiday.is_recurring,
             ]);
           }
         }
-        
-        console.log(`✅ Automatically populated Sri Lankan holidays for ${years.join(', ')}`);
+
+        console.log(
+          `✅ Automatically populated Sri Lankan holidays for ${years.join(
+            ", "
+          )}`
+        );
       } catch (error) {
         // Log error but don't fail the settings update
-        console.error('Error populating Sri Lankan holidays:', error);
+        console.error("Error populating Sri Lankan holidays:", error);
       }
     }
 
@@ -1255,34 +1295,34 @@ export default class AdminCenterController extends WorklenzControllerBase {
     // Get all countries
     const countriesQ = `SELECT code, name FROM countries ORDER BY name;`;
     const countriesResult = await db.query(countriesQ);
-    
+
     // For now, we'll return a basic structure
     // In a real implementation, you would have a states table
-    const countriesWithStates = countriesResult.rows.map(country => ({
+    const countriesWithStates = countriesResult.rows.map((country) => ({
       code: country.code,
       name: country.name,
-      states: [] as Array<{ code: string; name: string }> // Would be populated from a states table
+      states: [] as Array<{ code: string; name: string }>, // Would be populated from a states table
     }));
 
     // Add some example states for US and Canada
-    const usIndex = countriesWithStates.findIndex(c => c.code === 'US');
+    const usIndex = countriesWithStates.findIndex((c) => c.code === "US");
     if (usIndex !== -1) {
       countriesWithStates[usIndex].states = [
-        { code: 'CA', name: 'California' },
-        { code: 'NY', name: 'New York' },
-        { code: 'TX', name: 'Texas' },
-        { code: 'FL', name: 'Florida' },
-        { code: 'WA', name: 'Washington' }
+        { code: "CA", name: "California" },
+        { code: "NY", name: "New York" },
+        { code: "TX", name: "Texas" },
+        { code: "FL", name: "Florida" },
+        { code: "WA", name: "Washington" },
       ];
     }
 
-    const caIndex = countriesWithStates.findIndex(c => c.code === 'CA');
+    const caIndex = countriesWithStates.findIndex((c) => c.code === "CA");
     if (caIndex !== -1) {
       countriesWithStates[caIndex].states = [
-        { code: 'ON', name: 'Ontario' },
-        { code: 'QC', name: 'Quebec' },
-        { code: 'BC', name: 'British Columbia' },
-        { code: 'AB', name: 'Alberta' }
+        { code: "ON", name: "Ontario" },
+        { code: "QC", name: "Quebec" },
+        { code: "BC", name: "British Columbia" },
+        { code: "AB", name: "Alberta" },
       ];
     }
 

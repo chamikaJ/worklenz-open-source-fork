@@ -12,7 +12,9 @@ import {
   Typography,
   message,
   Space,
+  CheckCircleFilled,
   Alert,
+  InputNumber,
 } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 
@@ -25,7 +27,6 @@ import {
 import logger from '@/utils/errorLogger';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { IPaddlePlans, SUBSCRIPTION_STATUS } from '@/shared/constants';
-import { CheckCircleFilled, InfoCircleOutlined } from '@/shared/antd-imports';
 import { useAuthService } from '@/hooks/useAuth';
 import { fetchBillingInfo, toggleUpgradeModal } from '@/features/admin-center/admin-center.slice';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
@@ -33,8 +34,7 @@ import { billingApiService, IPricingPlan } from '@/api/admin-center/billing.api.
 import { authApiService } from '@/api/auth/auth.api.service';
 import { setUser } from '@/features/user/userSlice';
 import { setSession } from '@/utils/session-helper';
-// import PricingCalculator from '../../pricing-calculator';
-// import PricingModelSelector from '../../pricing-model-selector';
+
 import './upgrade-plans.css';
 
 // Extend Window interface to include Paddle
@@ -52,12 +52,13 @@ declare const Paddle: any;
 
 const UpgradePlans = () => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation('admin-center/current-bill');
+  const { t } = useTranslation(['admin-center/current-bill', 'pricing-modal']);
   const [plans, setPlans] = useState<IPricingPlans>({});
   const [backendPlans, setBackendPlans] = useState<IPricingPlan[]>([]);
   const [selectedPlan, setSelectedCard] = useState(IPaddlePlans.ANNUAL);
   const [selectedSeatCount, setSelectedSeatCount] = useState(5);
   const [seatCountOptions, setSeatCountOptions] = useState<number[]>([]);
+  const [teamSize, setTeamSize] = useState<number>(1);
   const [switchingToFreePlan, setSwitchingToFreePlan] = useState(false);
 
   // Single billing frequency for all plans
@@ -69,7 +70,9 @@ const UpgradePlans = () => {
   >('pro');
 
   // Track pricing model selection
-  const [selectedPricingModel, setSelectedPricingModel] = useState<'per_user' | 'regular'>('per_user');
+  const [selectedPricingModel, setSelectedPricingModel] = useState<'per_user' | 'base_plan'>(
+    'per_user'
+  );
 
   // Pricing data state that can be updated from backend
   const [pricingData, setPricingData] = useState({
@@ -189,6 +192,20 @@ const UpgradePlans = () => {
     return mapped;
   };
 
+  // Check if user is AppSumo user based on plan name or other indicators
+  const isAppSumoUser = () => {
+    const planName = billingInfo?.plan_name?.toLowerCase() || '';
+    const subscriptionType = currentSession?.subscription_type?.toLowerCase() || '';
+
+    // Check for AppSumo indicators in plan name or subscription type
+    return (
+      planName.includes('appsumo') ||
+      subscriptionType.includes('appsumo') ||
+      planName.includes('lifetime') ||
+      subscriptionType.includes('lifetime')
+    );
+  };
+
   const fetchPricingPlans = async () => {
     try {
       // For now, use the existing getPlans() method for basic plan info
@@ -201,8 +218,27 @@ const UpgradePlans = () => {
       const pricingRes = await billingApiService.getPricingPlans();
       if (pricingRes.done && pricingRes.body) {
         console.log('Backend pricing plans:', pricingRes.body);
-        setBackendPlans(pricingRes.body);
-        const mappedPricing = mapBackendPlansToFrontend(pricingRes.body);
+
+        // Filter plans for AppSumo users - only show Business and Enterprise plans
+        let filteredPlans = pricingRes.body;
+        if (isAppSumoUser()) {
+          console.log('AppSumo user detected - filtering plans to Business and Enterprise only');
+          filteredPlans = pricingRes.body.filter((plan: IPricingPlan) => {
+            const planName = plan.name?.toLowerCase() || '';
+            const planKey = plan.key?.toLowerCase() || '';
+
+            // Only show Business and Enterprise plans for AppSumo users
+            return (
+              planName.includes('business') ||
+              planName.includes('enterprise') ||
+              planKey.includes('business') ||
+              planKey.includes('enterprise')
+            );
+          });
+        }
+
+        setBackendPlans(filteredPlans);
+        const mappedPricing = mapBackendPlansToFrontend(filteredPlans);
         console.log('Mapped pricing data:', mappedPricing);
         setPricingData(mappedPricing);
       }
@@ -348,19 +384,23 @@ const UpgradePlans = () => {
 
       if (shouldUseUpgradeAPI) {
         // Use upgrade API for users without active paddle subscription
-        // Use the selected pricing model
-        const currentTeamSize = billingInfo?.total_used || 1;
-        
-        console.log('Upgrade request:', { planId, pricingModel: selectedPricingModel, teamSize: currentTeamSize });
-        
+        // Use the selected pricing model and team size
+        console.log('Upgrade request:', {
+          planId,
+          pricingModel: selectedPricingModel,
+          teamSize: teamSize,
+          isAppSumo: isAppSumoUser(),
+          discountApplied: isAppSumoUser() ? '50%' : 'none',
+        });
+
         const res = await billingApiService.upgradeToPaidPlan(
           planId,
           selectedPricingModel,
-          selectedPricingModel === 'per_user' ? currentTeamSize : undefined
+          selectedPricingModel === 'per_user' ? teamSize : undefined
         );
-        
+
         console.log('Upgrade API response:', res);
-        
+
         if (res.done) {
           initializePaddle(res.body);
         } else {
@@ -418,13 +458,21 @@ const UpgradePlans = () => {
       // Use the global billing frequency and selected plan type
       const isAnnual = billingFrequency === 'annual';
 
-      // Get the correct plan ID based on selected plan type and billing frequency
+      // Get the correct plan ID based on selected plan type, pricing model, and billing frequency
       if (selectedPlanType === 'pro') {
-        planId = isAnnual ? pricingData.pro.annual_plan_id : pricingData.pro.monthly_plan_id;
+        // Use small team plans if per_user model is selected and available
+        if (selectedPricingModel === 'per_user' && pricingData.pro_small) {
+          planId = isAnnual ? pricingData.pro_small.annual_plan_id : pricingData.pro_small.monthly_plan_id;
+        } else {
+          planId = isAnnual ? pricingData.pro.annual_plan_id : pricingData.pro.monthly_plan_id;
+        }
       } else if (selectedPlanType === 'business') {
-        planId = isAnnual
-          ? pricingData.business.annual_plan_id
-          : pricingData.business.monthly_plan_id;
+        // Use small team plans if per_user model is selected and available
+        if (selectedPricingModel === 'per_user' && pricingData.business_small) {
+          planId = isAnnual ? pricingData.business_small.annual_plan_id : pricingData.business_small.monthly_plan_id;
+        } else {
+          planId = isAnnual ? pricingData.business.annual_plan_id : pricingData.business.monthly_plan_id;
+        }
       } else if (selectedPlanType === 'enterprise') {
         planId = isAnnual
           ? pricingData.enterprise.annual_plan_id
@@ -436,7 +484,7 @@ const UpgradePlans = () => {
         billingFrequency,
         isAnnual,
         planId,
-        pricingData: JSON.stringify(pricingData, null, 2)
+        pricingData: JSON.stringify(pricingData, null, 2),
       });
 
       // Set the selected plan for the legacy system
@@ -494,28 +542,42 @@ const UpgradePlans = () => {
   const calculateAnnualTotal = (price: string | undefined) => {
     if (!price) return;
     const basePrice = parseFloat(price);
+    let finalPrice = basePrice;
+    
     if (selectedPricingModel === 'per_user') {
-      const teamSize = billingInfo?.total_used || 1;
-      return (basePrice * teamSize).toFixed(2);
+      finalPrice = basePrice * teamSize;
     }
-    return basePrice.toFixed(2);
+    
+    // Apply 50% discount for AppSumo users within eligibility period
+    if (isAppSumoUser()) {
+      finalPrice = finalPrice * 0.5;
+    }
+    
+    return finalPrice.toFixed(2);
   };
 
   const calculateMonthlyTotal = (price: string | undefined) => {
     if (!price) return;
     const basePrice = parseFloat(price);
+    let finalPrice = basePrice;
+    
     if (selectedPricingModel === 'per_user') {
-      const teamSize = billingInfo?.total_used || 1;
-      return (basePrice * teamSize).toFixed(2);
+      finalPrice = basePrice * teamSize;
     }
-    return basePrice.toFixed(2);
+    
+    // Apply 50% discount for AppSumo users within eligibility period
+    if (isAppSumoUser()) {
+      finalPrice = finalPrice * 0.5;
+    }
+    
+    return finalPrice.toFixed(2);
   };
 
   const getPriceLabel = (planType: 'annual' | 'monthly') => {
     if (selectedPricingModel === 'per_user') {
-      return planType === 'annual' ? 'per user/month' : 'per user/month';
+      return t('pricing-modal:pricing.perUser') + t('pricing-modal:pricing.perMonth');
     }
-    return planType === 'annual' ? 'per month' : 'per month';
+    return t('pricing-modal:pricing.perMonth');
   };
 
   useEffect(() => {
@@ -553,8 +615,21 @@ const UpgradePlans = () => {
         </Typography.Title>
       </Flex>
 
+      {/* AppSumo User Notification */}
+      {isAppSumoUser() && (
+        <Row justify="center" style={{ marginTop: 24, marginBottom: 16 }}>
+          <Alert
+            message="AppSumo Lifetime Deal Member"
+            description="As an AppSumo lifetime deal member, you have access to upgrade to Business or Enterprise plans with special pricing."
+            type="info"
+            showIcon
+            style={{ maxWidth: 600 }}
+          />
+        </Row>
+      )}
+
       {/* Global Billing Frequency Toggle */}
-      <Row justify="center" style={{ marginTop: 24, marginBottom: 16 }}>
+      <Row justify="center" style={{ marginTop: isAppSumoUser() ? 8 : 24, marginBottom: 16 }}>
         <Button.Group size="large">
           <Button
             type={billingFrequency === 'monthly' ? 'primary' : 'default'}
@@ -563,7 +638,7 @@ const UpgradePlans = () => {
               setSelectedCard(paddlePlans.MONTHLY);
             }}
           >
-            {t('monthly', 'Monthly')}
+            {t('pricing-modal:billingCycle.monthly')}
           </Button>
           <Button
             type={billingFrequency === 'annual' ? 'primary' : 'default'}
@@ -572,189 +647,211 @@ const UpgradePlans = () => {
               setSelectedCard(paddlePlans.ANNUAL);
             }}
           >
-            {t('yearly', 'Yearly')}
+            {t('pricing-modal:billingCycle.yearly')}
           </Button>
         </Button.Group>
       </Row>
 
-      {/* Pricing Model Selection */}
-      <Row justify="center" style={{ marginBottom: 16 }}>
-        <Space direction="vertical" size="small" style={{ textAlign: 'center' }}>
-          <Space size="large">
-            <Typography.Text strong>Pricing Model:</Typography.Text>
-            <Button.Group>
-              <Button 
-                type={selectedPricingModel === 'per_user' ? 'primary' : 'default'}
-                size="small"
-                onClick={() => setSelectedPricingModel('per_user')}
-              >
-                Per User
-              </Button>
-              <Button 
-                type={selectedPricingModel === 'regular' ? 'primary' : 'default'}
-                size="small"
-                onClick={() => setSelectedPricingModel('regular')}
-              >
-                Regular
-              </Button>
-            </Button.Group>
+      {/* Pricing Model Selection - Only show if both models are available */}
+      {!isAppSumoUser() && (pricingData.pro_small || pricingData.business_small) && (
+        <Row justify="center" style={{ marginBottom: 16 }}>
+          <Space direction="vertical" size="small" style={{ textAlign: 'center' }}>
+            <Space size="large">
+              <Typography.Text strong>{t('pricing-modal:pricingModel.label')}:</Typography.Text>
+              <Button.Group>
+                <Button
+                  type={selectedPricingModel === 'per_user' ? 'primary' : 'default'}
+                  size="small"
+                  onClick={() => setSelectedPricingModel('per_user')}
+                  disabled={!pricingData.pro_small && !pricingData.business_small}
+                >
+                  {t('pricing-modal:pricingModel.perUser')} (1-5 users)
+                </Button>
+                <Button
+                  type={selectedPricingModel === 'base_plan' ? 'primary' : 'default'}
+                  size="small"
+                  onClick={() => setSelectedPricingModel('base_plan')}
+                >
+                  {t('pricing-modal:pricingModel.basePlan')} (6+ users)
+                </Button>
+              </Button.Group>
+            </Space>
+
+            {billingInfo?.total_used && (
+              <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                {selectedPricingModel === 'per_user'
+                  ? `Best for teams with ${billingInfo.total_used} users - pay per user`
+                  : `Best for teams with 6+ users - flat monthly rate`}
+              </Typography.Text>
+            )}
           </Space>
-          
-          {billingInfo?.total_used && (
-            <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-              {selectedPricingModel === 'per_user' 
-                ? `${billingInfo.total_used} member${billingInfo.total_used > 1 ? 's' : ''} × plan price`
-                : 'Fixed team pricing regardless of member count'
-              }
-            </Typography.Text>
-          )}
-        </Space>
-      </Row>
+        </Row>
+      )}
 
       <Row className="w-full" gutter={[16, 16]} style={{ marginTop: 16 }}>
-        {/* Free Plan */}
-        <Col xs={24} lg={6}>
-          <Card
-            style={{
-              height: '100%',
-              border: selectedPlanType === 'free' ? '2px solid #1890ff' : '1px solid #d9d9d9',
-              padding: '8px',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-            bodyStyle={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-            }}
-            onClick={() => {
-              setSelectedPlanType('free');
-              setSelectedCard(paddlePlans.FREE);
-            }}
-            hoverable
-          >
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <Typography.Title level={4} style={{ marginBottom: 8 }}>
-                {t('freePlan', 'Free')}
-              </Typography.Title>
-              <Typography.Text type="secondary">
-                {t('freeDescription', 'Perfect for personal use')}
-              </Typography.Text>
-            </div>
+        {/* Free Plan - Hide for AppSumo users */}
+        {!isAppSumoUser() && (
+          <Col xs={24} lg={6}>
+            <Card
+              style={{
+                height: '100%',
+                border: selectedPlanType === 'free' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                padding: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+              bodyStyle={{
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+              }}
+              onClick={() => {
+                setSelectedPlanType('free');
+                setSelectedCard(paddlePlans.FREE);
+              }}
+              hoverable
+            >
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <Typography.Title level={4} style={{ marginBottom: 8 }}>
+                  {t('pricing-modal:plans.free.name')}
+                </Typography.Title>
+                <Typography.Text type="secondary">
+                  {t('pricing-modal:plans.free.description')}
+                </Typography.Text>
+              </div>
 
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <Typography.Title level={1} style={{ fontSize: '48px', margin: 0 }}>
-                $0
-              </Typography.Title>
-              <Typography.Text>{t('freeForever', 'forever')}</Typography.Text>
-            </div>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <Typography.Title level={1} style={{ fontSize: '48px', margin: 0 }}>
+                  $0
+                </Typography.Title>
+                <Typography.Text>{t('pricing-modal:plans.free.forever')}</Typography.Text>
+              </div>
 
-            <div style={{ flex: 1, marginBottom: 24 }}>
-              {renderFeature(`${plans.projects_limit || '3'} ${t('projects', 'Projects')}`)}
-              {renderFeature(`${plans.team_member_limit || '3'} ${t('users', 'Users')}`)}
-              {renderFeature(t('taskListKanban', 'Task List & Kanban Board'))}
-              {renderFeature(t('personalViews', 'Personal Task & Calendar Views'))}
-              {renderFeature(t('fileUploads', 'File Uploads & Comments'))}
-              {renderFeature(t('labelsFilters', 'Labels & Filters'))}
-            </div>
+              <div style={{ flex: 1, marginBottom: 24 }}>
+                {renderFeature(`${plans.projects_limit || '3'} ${t('projects', 'Projects')}`)}
+                {renderFeature(`${plans.team_member_limit || '3'} ${t('users', 'Users')}`)}
+                {renderFeature(t('taskListKanban', 'Task List & Kanban Board'))}
+                {renderFeature(t('personalViews', 'Personal Task & Calendar Views'))}
+                {renderFeature(t('fileUploads', 'File Uploads & Comments'))}
+                {renderFeature(t('labelsFilters', 'Labels & Filters'))}
+              </div>
 
-            <div style={{ marginTop: 'auto' }}>
-              <Button
-                type="primary"
-                block
-                size="large"
-                onClick={switchToFreePlan}
-                loading={switchingToFreePlan}
-              >
-                {t('getCurrentPlan', 'Get Current Plan')}
-              </Button>
-            </div>
-          </Card>
-        </Col>
+              <div style={{ marginTop: 'auto' }}>
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  onClick={switchToFreePlan}
+                  loading={switchingToFreePlan}
+                >
+                  {t('pricing-modal:buttons.getStartedFree')}
+                </Button>
+              </div>
+            </Card>
+          </Col>
+        )}
 
-        {/* Pro Plan */}
-        <Col xs={24} lg={6}>
-          <Card
-            style={{
-              height: '100%',
-              border: selectedPlanType === 'pro' ? '2px solid #1890ff' : '1px solid #d9d9d9',
-              padding: '8px',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-            bodyStyle={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-            }}
-            onClick={() => setSelectedPlanType('pro')}
-            hoverable
-          >
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <Typography.Title level={4} style={{ marginBottom: 8 }}>
-                {t('proPlan', 'Pro')}
-              </Typography.Title>
-              <Typography.Text type="secondary">
-                {t('proDescription', 'Best for growing teams')}
-              </Typography.Text>
-            </div>
+        {/* Pro Plan - Hide for AppSumo users */}
+        {!isAppSumoUser() && (
+          <Col xs={24} lg={6}>
+            <Card
+              style={{
+                height: '100%',
+                border: selectedPlanType === 'pro' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                padding: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+              bodyStyle={{
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+              }}
+              onClick={() => setSelectedPlanType('pro')}
+              hoverable
+            >
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <Typography.Title level={4} style={{ marginBottom: 8 }}>
+                  {t('pricing-modal:plans.proLarge.name')}
+                </Typography.Title>
+                <Typography.Text type="secondary">
+                  {t('pricing-modal:plans.proLarge.description')}
+                </Typography.Text>
+              </div>
 
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
-                $
-                {billingFrequency === 'annual'
-                  ? calculateAnnualTotal(pricingData.pro.annual_price)
-                  : calculateMonthlyTotal(pricingData.pro.monthly_price)}
-              </Typography.Title>
-              <Typography.Text>
-                {getPriceLabel(billingFrequency)} {billingFrequency === 'annual' ? '(billed annually)' : ''}
-              </Typography.Text>
-              {billingFrequency === 'annual' && (
-                <div style={{ marginTop: 4 }}>
-                  <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                    ${selectedPricingModel === 'per_user' 
-                      ? (parseFloat(pricingData.pro.annual_total || '0') * (billingInfo?.total_used || 1)).toFixed(2)
-                      : pricingData.pro.annual_total}/year
-                  </Typography.Text>
-                </div>
-              )}
-              {selectedPricingModel === 'per_user' && (
-                <div style={{ marginTop: 4 }}>
-                  <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                    Extra users: $5.99/user/month
-                  </Typography.Text>
-                </div>
-              )}
-            </div>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
+                  $
+                  {billingFrequency === 'annual'
+                    ? calculateAnnualTotal(pricingData.pro.annual_price)
+                    : calculateMonthlyTotal(pricingData.pro.monthly_price)}
+                </Typography.Title>
+                <Typography.Text>
+                  {getPriceLabel(billingFrequency)}{' '}
+                  {billingFrequency === 'annual' ? '(billed annually)' : ''}
+                  {isAppSumoUser() && (
+                    <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px' }}>
+                      50% AppSumo Discount Applied
+                    </span>
+                  )}
+                </Typography.Text>
+                {billingFrequency === 'annual' && (
+                  <div style={{ marginTop: 4 }}>
+                    <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                      $
+                      {selectedPricingModel === 'per_user'
+                        ? (
+                            parseFloat(pricingData.pro.annual_total || '0') *
+                            teamSize * (isAppSumoUser() ? 0.5 : 1)
+                          ).toFixed(2)
+                        : (parseFloat(pricingData.pro.annual_total || '0') * (isAppSumoUser() ? 0.5 : 1)).toFixed(2)}
+                      /year
+                      {isAppSumoUser() && (
+                        <span style={{ color: '#52c41a', fontWeight: 'bold', marginLeft: 4 }}>
+                          (50% AppSumo Discount)
+                        </span>
+                      )}
+                    </Typography.Text>
+                  </div>
+                )}
+                {selectedPricingModel === 'per_user' && (
+                  <div style={{ marginTop: 4 }}>
+                    <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                      Extra users: $5.99/user/month
+                    </Typography.Text>
+                  </div>
+                )}
+              </div>
 
-            <div style={{ flex: 1, marginBottom: 24 }}>
-              {renderFeature(t('unlimitedProjects', 'Unlimited Projects'))}
-              {renderFeature(`${pricingData.pro.users_included} Users Included`)}
-              {renderFeature(`Up to ${pricingData.pro.max_users} Users Max`)}
-              {renderFeature(t('timeTracking', 'Time Tracking & Analytics'))}
-              {renderFeature(t('projectTemplates', 'Project Templates & Phases'))}
-              {renderFeature(t('ganttReadOnly', 'Gantt Charts (Read-only)'))}
-              {renderFeature(t('customFields', 'Custom Fields & Subtasks'))}
-              {renderFeature(t('projectInsights', 'Project Insights & Reports'))}
-            </div>
+              <div style={{ flex: 1, marginBottom: 24 }}>
+                {renderFeature(t('unlimitedProjects', 'Unlimited Projects'))}
+                {renderFeature(`${pricingData.pro.users_included} Users Included`)}
+                {renderFeature(`Up to ${pricingData.pro.max_users} Users Max`)}
+                {renderFeature(t('timeTracking', 'Time Tracking & Analytics'))}
+                {renderFeature(t('projectTemplates', 'Project Templates & Phases'))}
+                {renderFeature(t('ganttReadOnly', 'Gantt Charts (Read-only)'))}
+                {renderFeature(t('customFields', 'Custom Fields & Subtasks'))}
+                {renderFeature(t('projectInsights', 'Project Insights & Reports'))}
+              </div>
 
-            <div style={{ marginTop: 'auto' }}>
-              <Button
-                type="primary"
-                block
-                size="large"
-                onClick={continueWithPaddlePlan}
-                loading={switchingToPaddlePlan || paddleLoading}
-                disabled={selectedPlanType !== 'pro'}
-              >
-                {t('choosePlan', 'Choose Plan')}
-              </Button>
-            </div>
-          </Card>
-        </Col>
+              <div style={{ marginTop: 'auto' }}>
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  onClick={continueWithPaddlePlan}
+                  loading={switchingToPaddlePlan || paddleLoading}
+                  disabled={selectedPlanType !== 'pro'}
+                >
+                  {t('pricing-modal:buttons.choosePlan')}
+                </Button>
+              </div>
+            </Card>
+          </Col>
+        )}
 
         {/* Business Plan */}
-        <Col xs={24} lg={6}>
+        <Col xs={24} lg={isAppSumoUser() ? 12 : 6}>
           <Card
             style={{
               height: '100%',
@@ -773,10 +870,10 @@ const UpgradePlans = () => {
           >
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <Typography.Title level={4} style={{ marginBottom: 8 }}>
-                {t('businessPlan', 'Business')}
+                {t('pricing-modal:plans.businessLarge.name')}
               </Typography.Title>
               <Typography.Text type="secondary">
-                {t('businessDescription', 'For advanced workflows')}
+                {t('pricing-modal:plans.businessLarge.description')}
               </Typography.Text>
             </div>
 
@@ -784,18 +881,48 @@ const UpgradePlans = () => {
               <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
                 $
                 {billingFrequency === 'annual'
-                  ? calculateAnnualTotal(pricingData.business.annual_price)
-                  : calculateMonthlyTotal(pricingData.business.monthly_price)}
+                  ? calculateAnnualTotal(
+                      selectedPricingModel === 'per_user' && pricingData.business_small 
+                        ? pricingData.business_small.annual_price 
+                        : pricingData.business.annual_price,
+                      selectedPricingModel === 'per_user' && pricingData.business_small 
+                        ? pricingData.business_small 
+                        : pricingData.business
+                    )
+                  : calculateMonthlyTotal(
+                      selectedPricingModel === 'per_user' && pricingData.business_small 
+                        ? pricingData.business_small.monthly_price 
+                        : pricingData.business.monthly_price,
+                      selectedPricingModel === 'per_user' && pricingData.business_small 
+                        ? pricingData.business_small 
+                        : pricingData.business
+                    )}
               </Typography.Title>
               <Typography.Text>
-                {getPriceLabel(billingFrequency)} {billingFrequency === 'annual' ? '(billed annually)' : ''}
+                {getPriceLabel(billingFrequency)}{' '}
+                {billingFrequency === 'annual' ? '(billed annually)' : ''}
+                {isAppSumoUser() && (
+                  <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px' }}>
+                    50% AppSumo Discount Applied
+                  </span>
+                )}
               </Typography.Text>
               {billingFrequency === 'annual' && (
                 <div style={{ marginTop: 4 }}>
                   <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                    ${selectedPricingModel === 'per_user' 
-                      ? (parseFloat(pricingData.business.annual_total || '0') * (billingInfo?.total_used || 1)).toFixed(2)
-                      : pricingData.business.annual_total}/year
+                    $
+                    {selectedPricingModel === 'per_user'
+                      ? (
+                          parseFloat(pricingData.business.annual_total || '0') *
+                          teamSize * (isAppSumoUser() ? 0.5 : 1)
+                        ).toFixed(2)
+                      : (parseFloat(pricingData.business.annual_total || '0') * (isAppSumoUser() ? 0.5 : 1)).toFixed(2)}
+                    /year
+                    {isAppSumoUser() && (
+                      <span style={{ color: '#52c41a', fontWeight: 'bold', marginLeft: 4 }}>
+                        (50% AppSumo Discount)
+                      </span>
+                    )}
                   </Typography.Text>
                 </div>
               )}
@@ -833,14 +960,14 @@ const UpgradePlans = () => {
                 loading={switchingToPaddlePlan || paddleLoading}
                 disabled={selectedPlanType !== 'business'}
               >
-                {t('choosePlan', 'Choose Plan')}
+                {t('pricing-modal:buttons.choosePlan')}
               </Button>
             </div>
           </Card>
         </Col>
 
         {/* Enterprise Plan */}
-        <Col xs={24} lg={6}>
+        <Col xs={24} lg={isAppSumoUser() ? 12 : 6}>
           <Card
             style={{
               height: '100%',
@@ -859,10 +986,10 @@ const UpgradePlans = () => {
           >
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <Typography.Title level={4} style={{ marginBottom: 8 }}>
-                {t('enterprisePlan', 'Enterprise')}
+                {t('pricing-modal:plans.enterprise.name')}
               </Typography.Title>
               <Typography.Text type="secondary">
-                {t('enterpriseDescription', 'For large organizations')}
+                {t('pricing-modal:plans.enterprise.description')}
               </Typography.Text>
             </div>
 
@@ -874,14 +1001,30 @@ const UpgradePlans = () => {
                   : calculateMonthlyTotal(pricingData.enterprise.monthly_price)}
               </Typography.Title>
               <Typography.Text>
-                {getPriceLabel(billingFrequency)} {billingFrequency === 'annual' ? '(billed annually)' : ''}
+                {getPriceLabel(billingFrequency)}{' '}
+                {billingFrequency === 'annual' ? '(billed annually)' : ''}
+                {isAppSumoUser() && (
+                  <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px' }}>
+                    50% AppSumo Discount Applied
+                  </span>
+                )}
               </Typography.Text>
               {billingFrequency === 'annual' && (
                 <div style={{ marginTop: 4 }}>
                   <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                    ${selectedPricingModel === 'per_user' 
-                      ? (parseFloat(pricingData.enterprise.annual_total || '0') * (billingInfo?.total_used || 1)).toFixed(2)
-                      : pricingData.enterprise.annual_total}/year
+                    $
+                    {selectedPricingModel === 'per_user'
+                      ? (
+                          parseFloat(pricingData.enterprise.annual_total || '0') *
+                          teamSize * (isAppSumoUser() ? 0.5 : 1)
+                        ).toFixed(2)
+                      : (parseFloat(pricingData.enterprise.annual_total || '0') * (isAppSumoUser() ? 0.5 : 1)).toFixed(2)}
+                    /year
+                    {isAppSumoUser() && (
+                      <span style={{ color: '#52c41a', fontWeight: 'bold', marginLeft: 4 }}>
+                        (50% AppSumo Discount)
+                      </span>
+                    )}
                   </Typography.Text>
                 </div>
               )}
@@ -910,7 +1053,7 @@ const UpgradePlans = () => {
                 loading={switchingToPaddlePlan || paddleLoading}
                 disabled={selectedPlanType !== 'enterprise'}
               >
-                {t('choosePlan', 'Choose Plan')}
+                {t('pricing-modal:buttons.choosePlan')}
               </Button>
             </div>
           </Card>

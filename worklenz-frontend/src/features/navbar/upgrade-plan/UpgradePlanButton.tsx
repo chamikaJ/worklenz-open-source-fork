@@ -1,25 +1,64 @@
-import { Button, Tooltip, Badge } from '@/shared/antd-imports';
-import React, { useEffect, useState } from 'react';
+import { Button, Tooltip, Badge, Modal } from '@/shared/antd-imports';
+import React, { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { colors } from '../../../styles/colors';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAuthService } from '@/hooks/useAuth';
 import { ISUBSCRIPTION_TYPE } from '@/shared/constants';
-import { CrownOutlined, ClockCircleOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { CrownOutlined, ClockCircleOutlined, ThunderboltOutlined, RocketOutlined } from '@ant-design/icons';
+import type { UserPersonalization, PricingCalculation } from '@/components/pricing-modal/PricingModal';
+import { fetchBillingInfo } from '@/features/admin-center/admin-center.slice';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
 
-const UpgradePlanButton = () => {
+// Lazy load the PricingModal to avoid circular dependencies and improve performance
+const PricingModal = lazy(() => import('@/components/pricing-modal/PricingModal'));
+
+interface UpgradePlanButtonProps {
+  showModal?: boolean;
+  redirectToBilling?: boolean;
+}
+
+const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({ 
+  showModal = false, 
+  redirectToBilling = true 
+}) => {
   // localization
   const { t } = useTranslation('navbar');
   const { t: tCommon } = useTranslation('common');
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const authService = useAuthService();
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [isAppSumoUser, setIsAppSumoUser] = useState(false);
 
   const themeMode = useAppSelector(state => state.themeReducer.mode);
+  const { billingInfo } = useAppSelector(state => state.adminCenterReducer);
   const currentSession = authService.getCurrentSession();
+  
+  // Detect AppSumo user
+  const checkAppSumoUser = useCallback(() => {
+    const planName = billingInfo?.plan_name?.toLowerCase() || '';
+    const subscriptionType = currentSession?.subscription_type?.toLowerCase() || '';
+    
+    return planName.includes('appsumo') || 
+           subscriptionType.includes('appsumo') ||
+           planName.includes('lifetime') ||
+           subscriptionType.includes('lifetime');
+  }, [billingInfo, currentSession]);
 
   useEffect(() => {
+    // Fetch billing info if not loaded
+    if (!billingInfo) {
+      dispatch(fetchBillingInfo());
+    }
+  }, [dispatch, billingInfo]);
+
+  useEffect(() => {
+    // Check if AppSumo user
+    setIsAppSumoUser(checkAppSumoUser());
+    
     // Calculate days remaining for expirable subscription types
     const expirableTypes = [
       ISUBSCRIPTION_TYPE.TRIAL,
@@ -44,7 +83,7 @@ const UpgradePlanButton = () => {
         setDaysRemaining(null);
       }
     }
-  }, [currentSession]);
+  }, [currentSession, checkAppSumoUser]);
 
   const getBadgeColor = () => {
     if (daysRemaining === null) return undefined;
@@ -60,6 +99,7 @@ const UpgradePlanButton = () => {
   };
 
   const getButtonIcon = () => {
+    if (isAppSumoUser) return <RocketOutlined />;
     if (daysRemaining === 0) return <ThunderboltOutlined />;
     if (daysRemaining !== null && daysRemaining <= 3) return <ClockCircleOutlined />;
     return <CrownOutlined />;
@@ -80,6 +120,14 @@ const UpgradePlanButton = () => {
       border: 'none',
       boxShadow: isDark ? '0 2px 4px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.05)',
     };
+
+    if (isAppSumoUser) {
+      return {
+        ...baseStyles,
+        background: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
+        color: '#fff',
+      };
+    }
 
     if (daysRemaining === 0) {
       return {
@@ -112,7 +160,13 @@ const UpgradePlanButton = () => {
       size="small"
       type="primary"
       icon={getButtonIcon()}
-      onClick={() => navigate('/worklenz/admin-center/billing')}
+      onClick={() => {
+        if (showModal) {
+          setShowPricingModal(true);
+        } else if (redirectToBilling) {
+          navigate('/worklenz/admin-center/billing');
+        }
+      }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-2px)';
         e.currentTarget.style.boxShadow = themeMode === 'dark' 
@@ -131,6 +185,18 @@ const UpgradePlanButton = () => {
   );
 
   const getTooltipContent = () => {
+    if (isAppSumoUser) {
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <RocketOutlined style={{ fontSize: '16px', marginBottom: '4px' }} />
+          <div>AppSumo Lifetime Deal Member</div>
+          <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>
+            Upgrade to Business or Enterprise plans
+          </div>
+        </div>
+      );
+    }
+    
     if (daysRemaining === 0) {
       return (
         <div style={{ textAlign: 'center' }}>
@@ -200,14 +266,55 @@ const UpgradePlanButton = () => {
     );
   }
 
+  // Create user personalization object for pricing modal
+  const userPersonalization: UserPersonalization | undefined = useMemo(() => {
+    if (!billingInfo) return undefined;
+    
+    const userType = isAppSumoUser ? 'appsumo' : 
+                     currentSession?.subscription_type === ISUBSCRIPTION_TYPE.TRIAL ? 'trial' :
+                     currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE ? 'free' : 'paid';
+    
+    return {
+      userType,
+      currentPlan: billingInfo.plan_name,
+      trialDaysRemaining: daysRemaining || undefined,
+    };
+  }, [billingInfo, isAppSumoUser, currentSession, daysRemaining]);
+
+  const handlePlanSelect = useCallback((calculation: PricingCalculation) => {
+    console.log('Plan selected:', calculation);
+    setShowPricingModal(false);
+    navigate('/worklenz/admin-center/billing');
+  }, [navigate]);
+
   return (
-    <Tooltip 
-      title={getTooltipContent()}
-      placement="bottom"
-    >
-      {button}
-    </Tooltip>
+    <>
+      <Tooltip 
+        title={getTooltipContent()}
+        placement="bottom"
+      >
+        {button}
+      </Tooltip>
+      
+      {/* Pricing Modal with lazy loading */}
+      {showPricingModal && (
+        <Suspense fallback={<Modal visible={true} footer={null} closable={false}><div style={{ textAlign: 'center', padding: '20px' }}>Loading pricing options...</div></Modal>}>
+          <PricingModal
+            visible={showPricingModal}
+            onClose={() => setShowPricingModal(false)}
+            onPlanSelect={handlePlanSelect}
+            userPersonalization={userPersonalization}
+            organizationId={currentSession?.team_id}
+            defaultPricingModel={isAppSumoUser ? 'BASE_PLAN' : 'PER_USER'}
+            defaultBillingCycle="YEARLY"
+          />
+        </Suspense>
+      )}
+    </>
   );
 };
 
 export default UpgradePlanButton;
+
+// Export types for external usage
+export type { UpgradePlanButtonProps };

@@ -288,15 +288,99 @@ VALUES ($1, $2, $3);`;
   @HandleExceptions()
   public static async getPricingPlans(req: IWorkLenzRequest, res: IWorkLenzResponse): Promise<IWorkLenzResponse> {
     const q = `
-      SELECT id, name, key, billing_type, billing_period, default_currency, 
-             initial_price, recurring_price, trial_days, paddle_id, 
-             active, is_startup_plan
+      SELECT 
+        id, 
+        name, 
+        key, 
+        billing_type, 
+        billing_period, 
+        default_currency, 
+        CAST(initial_price AS DECIMAL(10,2)) as initial_price, 
+        CAST(recurring_price AS DECIMAL(10,2)) as recurring_price, 
+        trial_days, 
+        paddle_id, 
+        active, 
+        is_startup_plan,
+        -- Determine pricing model based on plan name
+        CASE 
+          WHEN LOWER(name) LIKE '%small team%' OR LOWER(name) LIKE '%legacy%' THEN 'per_user'
+          ELSE 'base_plan'
+        END as pricing_model,
+        -- Determine plan category
+        CASE 
+          WHEN LOWER(name) LIKE '%enterprise%' THEN 'enterprise'
+          WHEN LOWER(name) LIKE '%business%' THEN 'business'
+          WHEN LOWER(name) LIKE '%pro%' THEN 'pro'
+          WHEN LOWER(name) LIKE '%starter%' THEN 'starter'
+          ELSE 'free'
+        END as category,
+        -- Set user limits based on plan type
+        CASE 
+          WHEN LOWER(name) LIKE '%small team%' THEN 5
+          WHEN LOWER(name) LIKE '%enterprise%' THEN NULL -- unlimited
+          WHEN LOWER(name) LIKE '%business%' AND NOT LOWER(name) LIKE '%small%' THEN 100
+          WHEN LOWER(name) LIKE '%pro%' AND NOT LOWER(name) LIKE '%small%' THEN 50
+          ELSE 3
+        END as max_users,
+        -- Set included users
+        CASE 
+          WHEN LOWER(name) LIKE '%small team%' OR LOWER(name) LIKE '%legacy%' THEN 1
+          WHEN LOWER(name) LIKE '%enterprise%' THEN NULL -- unlimited
+          WHEN LOWER(name) LIKE '%business%' AND NOT LOWER(name) LIKE '%small%' THEN 20
+          WHEN LOWER(name) LIKE '%pro%' AND NOT LOWER(name) LIKE '%small%' THEN 15
+          ELSE 3
+        END as included_users,
+        -- Additional user price (for expandable plans)
+        CASE 
+          WHEN LOWER(name) LIKE '%business%' THEN 14.99
+          WHEN LOWER(name) LIKE '%pro%' THEN 9.99
+          ELSE 0
+        END as additional_user_price
       FROM licensing_pricing_plans 
       WHERE active = true and is_startup_plan = false
-      ORDER BY sort_order ASC;
+      ORDER BY 
+        CASE 
+          WHEN LOWER(name) LIKE '%enterprise%' THEN 4
+          WHEN LOWER(name) LIKE '%business%' THEN 3
+          WHEN LOWER(name) LIKE '%pro%' THEN 2
+          WHEN LOWER(name) LIKE '%starter%' THEN 1
+          ELSE 0
+        END,
+        billing_type DESC;
     `;
     const result = await db.query(q);
-    return res.status(200).send(new ServerResponse(true, result.rows));
+    
+    // Group plans by category and billing type for easier frontend consumption
+    const plansMap = new Map();
+    
+    result.rows.forEach(plan => {
+      const category = plan.category;
+      if (!plansMap.has(category)) {
+        plansMap.set(category, {
+          category,
+          monthly: null,
+          annual: null,
+          pricing_model: plan.pricing_model,
+          max_users: plan.max_users,
+          included_users: plan.included_users,
+          additional_user_price: plan.additional_user_price
+        });
+      }
+      
+      const categoryPlans = plansMap.get(category);
+      if (plan.billing_type === 'month') {
+        categoryPlans.monthly = plan;
+      } else if (plan.billing_type === 'year') {
+        categoryPlans.annual = plan;
+      }
+    });
+    
+    const groupedPlans = Array.from(plansMap.values());
+    
+    return res.status(200).send(new ServerResponse(true, {
+      plans: result.rows,
+      grouped: groupedPlans
+    }));
   }
 
 }
