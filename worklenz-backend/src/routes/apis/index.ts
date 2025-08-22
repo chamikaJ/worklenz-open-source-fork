@@ -66,6 +66,11 @@ import holidayApiRouter from "./holiday-api-router";
 import userActivityLogsApiRouter from "./user-activity-logs-api-router";
 import supportApiRouter from "./support-api-router";
 import accountApiRouter from "./account-api-router";
+import planRecommendationApiRouter from "./plan-recommendation-api-router";
+import migrationApiRouter from "./migration-api-router";
+import subscriptionsApiRouter from "./subscriptions-api-router";
+import plansApiRouter from "./plans-api-router";
+import usersApiRouter from "./users-api-router";
 
 const api = express.Router();
 
@@ -138,4 +143,13 @@ api.use("/ratecard", ratecardApiRouter);
 api.use("/holidays", holidayApiRouter);
 
 api.use("/logs", userActivityLogsApiRouter);
+
+api.use("/plan-recommendations", planRecommendationApiRouter);
+
+// Migration and subscription management APIs
+api.use("/migration", migrationApiRouter);
+api.use("/subscriptions", subscriptionsApiRouter);
+api.use("/plans", plansApiRouter);
+api.use("/users", usersApiRouter);
+
 export default api;
