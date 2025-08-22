@@ -19,7 +19,7 @@ import {
   ExclamationCircleOutlined,
   LoadingOutlined,
   CreditCardOutlined,
-  ShieldCheckOutlined,
+  SafetyCertificateOutlined,
   RocketOutlined,
 } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
@@ -340,7 +340,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             description="Your payment will be processed securely through Paddle. You can cancel or change your plan anytime."
             type="info"
             showIcon
-            icon={<ShieldCheckOutlined />}
+            icon={<SafetyCertificateOutlined />}
           />
 
           <Space style={{ width: '100%', justifyContent: 'center' }}>

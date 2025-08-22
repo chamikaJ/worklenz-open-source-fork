@@ -143,7 +143,7 @@ class ClientPortalAPI {
             isOrganizationInvite: true
           },
           message: 'Organization invite token is valid',
-          title: null
+          title: undefined
         };
       }
     } catch (error) {

@@ -26,7 +26,7 @@ import type { RootState } from '@/store';
 import { useTranslation } from 'react-i18next';
 import ClientPortalSidebar from './ClientPortalSidebar';
 import { useResponsive } from '@/hooks/useResponsive';
-import { useGetSettingsQuery } from '@/store/api';
+// import { useGetSettingsQuery } from '@/store/api';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;

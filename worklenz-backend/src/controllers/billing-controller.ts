@@ -287,99 +287,107 @@ VALUES ($1, $2, $3);`;
 
   @HandleExceptions()
   public static async getPricingPlans(req: IWorkLenzRequest, res: IWorkLenzResponse): Promise<IWorkLenzResponse> {
+    // Query plan tiers with their associated pricing plans
     const q = `
       SELECT 
-        id, 
-        name, 
-        key, 
-        billing_type, 
-        billing_period, 
-        default_currency, 
-        CAST(initial_price AS DECIMAL(10,2)) as initial_price, 
-        CAST(recurring_price AS DECIMAL(10,2)) as recurring_price, 
-        trial_days, 
-        paddle_id, 
-        active, 
-        is_startup_plan,
-        -- Determine pricing model based on plan name
-        CASE 
-          WHEN LOWER(name) LIKE '%small team%' OR LOWER(name) LIKE '%legacy%' THEN 'per_user'
-          ELSE 'base_plan'
-        END as pricing_model,
-        -- Determine plan category
-        CASE 
-          WHEN LOWER(name) LIKE '%enterprise%' THEN 'enterprise'
-          WHEN LOWER(name) LIKE '%business%' THEN 'business'
-          WHEN LOWER(name) LIKE '%pro%' THEN 'pro'
-          WHEN LOWER(name) LIKE '%starter%' THEN 'starter'
-          ELSE 'free'
-        END as category,
-        -- Set user limits based on plan type
-        CASE 
-          WHEN LOWER(name) LIKE '%small team%' THEN 5
-          WHEN LOWER(name) LIKE '%enterprise%' THEN NULL -- unlimited
-          WHEN LOWER(name) LIKE '%business%' AND NOT LOWER(name) LIKE '%small%' THEN 100
-          WHEN LOWER(name) LIKE '%pro%' AND NOT LOWER(name) LIKE '%small%' THEN 50
-          ELSE 3
-        END as max_users,
-        -- Set included users
-        CASE 
-          WHEN LOWER(name) LIKE '%small team%' OR LOWER(name) LIKE '%legacy%' THEN 1
-          WHEN LOWER(name) LIKE '%enterprise%' THEN NULL -- unlimited
-          WHEN LOWER(name) LIKE '%business%' AND NOT LOWER(name) LIKE '%small%' THEN 20
-          WHEN LOWER(name) LIKE '%pro%' AND NOT LOWER(name) LIKE '%small%' THEN 15
-          ELSE 3
-        END as included_users,
-        -- Additional user price (for expandable plans)
-        CASE 
-          WHEN LOWER(name) LIKE '%business%' THEN 14.99
-          WHEN LOWER(name) LIKE '%pro%' THEN 9.99
-          ELSE 0
-        END as additional_user_price
-      FROM licensing_pricing_plans 
-      WHERE active = true and is_startup_plan = false
-      ORDER BY 
-        CASE 
-          WHEN LOWER(name) LIKE '%enterprise%' THEN 4
-          WHEN LOWER(name) LIKE '%business%' THEN 3
-          WHEN LOWER(name) LIKE '%pro%' THEN 2
-          WHEN LOWER(name) LIKE '%starter%' THEN 1
-          ELSE 0
-        END,
-        billing_type DESC;
+        lpt.id,
+        lpt.tier_name,
+        lpt.display_name,
+        lpt.tier_level,
+        lpt.pricing_model,
+        lpt.monthly_base_price,
+        lpt.annual_base_price,
+        lpt.monthly_per_user_price,
+        lpt.annual_per_user_price,
+        lpt.min_users,
+        lpt.max_users,
+        lpt.included_users,
+        lpt.max_projects,
+        lpt.max_storage_gb,
+        lpt.has_api_access,
+        lpt.has_advanced_analytics,
+        lpt.has_custom_fields,
+        lpt.has_gantt_charts,
+        lpt.has_time_tracking,
+        lpt.has_resource_management,
+        lpt.has_portfolio_view,
+        lpt.has_custom_branding,
+        lpt.has_sso,
+        lpt.has_audit_logs,
+        lpt.has_priority_support,
+        lpt.has_dedicated_account_manager,
+        lpt.is_popular,
+        lpt.sort_order,
+        -- Get paddle plan IDs from related pricing plans
+        monthly_plan.id as monthly_plan_id,
+        monthly_plan.paddle_id as monthly_paddle_id,
+        monthly_plan.active as monthly_active,
+        annual_plan.id as annual_plan_id,
+        annual_plan.paddle_id as annual_paddle_id,
+        annual_plan.active as annual_active
+      FROM licensing_plan_tiers lpt
+      LEFT JOIN licensing_pricing_plans monthly_plan ON lpt.id = monthly_plan.tier_id 
+        AND monthly_plan.billing_type = 'month' 
+        AND monthly_plan.active = true
+      LEFT JOIN licensing_pricing_plans annual_plan ON lpt.id = annual_plan.tier_id 
+        AND annual_plan.billing_type = 'year' 
+        AND annual_plan.active = true
+      WHERE lpt.is_active = true
+      ORDER BY lpt.sort_order, lpt.tier_level;
     `;
+    
     const result = await db.query(q);
     
-    // Group plans by category and billing type for easier frontend consumption
-    const plansMap = new Map();
-    
-    result.rows.forEach(plan => {
-      const category = plan.category;
-      if (!plansMap.has(category)) {
-        plansMap.set(category, {
-          category,
-          monthly: null,
-          annual: null,
-          pricing_model: plan.pricing_model,
-          max_users: plan.max_users,
-          included_users: plan.included_users,
-          additional_user_price: plan.additional_user_price
-        });
-      }
+    // Transform the data into a format that the frontend expects
+    const tiers = result.rows.map(row => ({
+      id: row.id,
+      tier_name: row.tier_name,
+      display_name: row.display_name,
+      tier_level: row.tier_level,
+      pricing_model: row.pricing_model,
       
-      const categoryPlans = plansMap.get(category);
-      if (plan.billing_type === 'month') {
-        categoryPlans.monthly = plan;
-      } else if (plan.billing_type === 'year') {
-        categoryPlans.annual = plan;
-      }
-    });
-    
-    const groupedPlans = Array.from(plansMap.values());
+      // Direct tier data
+      monthly_base_price: row.monthly_base_price,
+      annual_base_price: row.annual_base_price,
+      monthly_per_user_price: row.monthly_per_user_price,
+      annual_per_user_price: row.annual_per_user_price,
+      min_users: row.min_users,
+      max_users: row.max_users,
+      included_users: row.included_users,
+      
+      // Plan IDs for paddle integration
+      plans: {
+        monthly_plan_id: row.monthly_plan_id,
+        monthly_paddle_id: row.monthly_paddle_id,
+        annual_plan_id: row.annual_plan_id,
+        annual_paddle_id: row.annual_paddle_id
+      },
+      
+      // Features
+      features: {
+        max_projects: row.max_projects,
+        max_storage_gb: row.max_storage_gb,
+        has_api_access: row.has_api_access,
+        has_advanced_analytics: row.has_advanced_analytics,
+        has_custom_fields: row.has_custom_fields,
+        has_gantt_charts: row.has_gantt_charts,
+        has_time_tracking: row.has_time_tracking,
+        has_resource_management: row.has_resource_management,
+        has_portfolio_view: row.has_portfolio_view,
+        has_custom_branding: row.has_custom_branding,
+        has_sso: row.has_sso,
+        has_audit_logs: row.has_audit_logs,
+        has_priority_support: row.has_priority_support,
+        has_dedicated_account_manager: row.has_dedicated_account_manager
+      },
+      
+      // UI properties
+      is_popular: row.is_popular,
+      sort_order: row.sort_order
+    }));
     
     return res.status(200).send(new ServerResponse(true, {
-      plans: result.rows,
-      grouped: groupedPlans
+      tiers: tiers
     }));
   }
 
