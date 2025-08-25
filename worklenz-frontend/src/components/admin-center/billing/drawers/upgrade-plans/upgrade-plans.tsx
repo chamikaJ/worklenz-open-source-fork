@@ -87,14 +87,19 @@ const UpgradePlans = () => {
       annual_total: '588',
       users_included: '15',
       max_users: '50',
+      additional_user_price: '5.99',
+      monthly_plan_id: 'pro_monthly',
+      annual_plan_id: 'pro_annual',
     },
     pro_small: {
-      monthly_price: '0',
-      annual_price: '0',
+      monthly_price: '9.99',
+      annual_price: '6.99',
       users_included: '1',
       max_users: '5',
       pricing_model: 'per_user',
       additional_user_price: '9.99',
+      monthly_plan_id: 'pro_small_monthly',
+      annual_plan_id: 'pro_small_annual',
     },
     business: {
       monthly_price: '99',
@@ -102,14 +107,19 @@ const UpgradePlans = () => {
       annual_total: '828',
       users_included: '20',
       max_users: '100',
+      additional_user_price: '5.99',
+      monthly_plan_id: 'business_monthly',
+      annual_plan_id: 'business_annual',
     },
     business_small: {
-      monthly_price: '0',
-      annual_price: '0',
+      monthly_price: '14.99',
+      annual_price: '11.99',
       users_included: '1',
       max_users: '5',
       pricing_model: 'per_user',
       additional_user_price: '14.99',
+      monthly_plan_id: 'business_small_monthly',
+      annual_plan_id: 'business_small_annual',
     },
     enterprise: {
       monthly_price: '349',
@@ -117,6 +127,9 @@ const UpgradePlans = () => {
       annual_total: '3588',
       users_included: 'Unlimited',
       max_users: 'Unlimited',
+      additional_user_price: '0',
+      monthly_plan_id: 'enterprise_monthly',
+      annual_plan_id: 'enterprise_annual',
     },
   });
 
@@ -180,7 +193,7 @@ const UpgradePlans = () => {
         // Pro large team (flat rate + overage for 6+ users)
         mapped.pro.monthly_price = tier.monthly_base_price?.toString() || '69';
         mapped.pro.annual_price = tier.annual_base_price ? (tier.annual_base_price / 12).toFixed(2) : '49';
-        mapped.pro.annual_total = tier.annual_base_price?.toString() || '690';
+        mapped.pro.annual_total = tier.annual_base_price?.toString() || '588';
         mapped.pro.users_included = tier.included_users?.toString() || '15';
         mapped.pro.max_users = tier.max_users?.toString() || '50';
         mapped.pro.additional_user_price = tier.monthly_per_user_price?.toString() || '5.99';
@@ -201,7 +214,7 @@ const UpgradePlans = () => {
         // Business large team (flat rate + overage for 6+ users)
         mapped.business.monthly_price = tier.monthly_base_price?.toString() || '99';
         mapped.business.annual_price = tier.annual_base_price ? (tier.annual_base_price / 12).toFixed(2) : '69';
-        mapped.business.annual_total = tier.annual_base_price?.toString() || '990';
+        mapped.business.annual_total = tier.annual_base_price?.toString() || '828';
         mapped.business.users_included = tier.included_users?.toString() || '20';
         mapped.business.max_users = tier.max_users?.toString() || '100';
         mapped.business.additional_user_price = tier.monthly_per_user_price?.toString() || '5.99';
@@ -247,6 +260,11 @@ const UpgradePlans = () => {
       planName.includes('lifetime') ||
       subscriptionType.includes('lifetime')
     );
+  };
+
+  // Check if user is a free user based on subscription type
+  const isFreeUser = () => {
+    return currentSession?.subscription_type === 'FREE';
   };
 
   const fetchPricingPlans = async () => {
@@ -415,8 +433,8 @@ const UpgradePlans = () => {
       // Check if user should use upgrade API (free, trial, or no active paddle subscription)
       const shouldUseUpgradeAPI =
         !billingInfo?.subscription_id || // No paddle subscription
+        isFreeUser() || // Free user based on subscription type
         billingInfo?.status === SUBSCRIPTION_STATUS.TRIALING || // Trial user
-        billingInfo?.status === SUBSCRIPTION_STATUS.FREE || // Free plan user
         billingInfo?.status === SUBSCRIPTION_STATUS.PASTDUE || // Past due subscription
         billingInfo?.status === SUBSCRIPTION_STATUS.DELETED; // Deleted subscription
 
@@ -605,16 +623,11 @@ const UpgradePlans = () => {
         // Fallback to base plan if small team pricing not available
         const planData = planType === 'pro' ? pricingData.pro : pricingData.business;
         const baseAnnualTotal = parseFloat(planData.annual_total || '0');
-        const baseAnnualPrice = parseFloat(planData.annual_price || '0');
         const includedUsers = parseInt(planData.users_included) || 0;
         const extraUsers = Math.max(0, teamSize - includedUsers);
-        const extraUserCost = extraUsers * parseFloat(planData.additional_user_price || '5.99');
+        const extraUserCost = extraUsers * parseFloat(planData.additional_user_price || '5.99') * 12; // Annual cost for extra users
         
-        if (baseAnnualTotal > 0) {
-          finalPrice = baseAnnualTotal + (extraUserCost * 12); // Annual total + extra users per year
-        } else {
-          finalPrice = (baseAnnualPrice * 12) + (extraUserCost * 12); // Monthly to annual + extra users
-        }
+        finalPrice = baseAnnualTotal + extraUserCost;
       }
     } else {
       // For teams 6+, use base plan pricing (flat rate + overage)
@@ -638,16 +651,11 @@ const UpgradePlans = () => {
       } else {
         // Pro/Business: base price + extra user charges
         const baseAnnualTotal = parseFloat(planData.annual_total || '0');
-        const baseAnnualPrice = parseFloat(planData.annual_price || '0');
         const includedUsers = parseInt(planData.users_included) || 0;
         const extraUsers = Math.max(0, teamSize - includedUsers);
-        const extraUserCost = extraUsers * parseFloat(planData.additional_user_price || '5.99');
+        const extraUserCost = extraUsers * parseFloat(planData.additional_user_price || '5.99') * 12; // Annual cost for extra users
         
-        if (baseAnnualTotal > 0) {
-          finalPrice = baseAnnualTotal + (extraUserCost * 12); // Annual total + extra users per year
-        } else {
-          finalPrice = (baseAnnualPrice * 12) + (extraUserCost * 12); // Monthly to annual + extra users
-        }
+        finalPrice = baseAnnualTotal + extraUserCost;
       }
     }
     
@@ -695,11 +703,7 @@ const UpgradePlans = () => {
         const extraUsers = Math.max(0, teamSize - includedUsers);
         const extraUserCost = extraUsers * parseFloat(planData.additional_user_price || '5.99');
         
-        if (!basePrice && planData.annual_price) {
-          finalPrice = parseFloat(planData.annual_price) + extraUserCost; // Use annual equivalent + extra users
-        } else {
-          finalPrice = basePrice + extraUserCost;
-        }
+        finalPrice = basePrice + extraUserCost;
       }
     } else {
       // For teams 6+, use base plan pricing (flat rate + overage)
@@ -725,11 +729,7 @@ const UpgradePlans = () => {
         const extraUsers = Math.max(0, teamSize - includedUsers);
         const extraUserCost = extraUsers * parseFloat(planData.additional_user_price || '5.99');
         
-        if (!basePrice && planData.annual_price) {
-          finalPrice = parseFloat(planData.annual_price) + extraUserCost; // Use annual equivalent + extra users
-        } else {
-          finalPrice = basePrice + extraUserCost;
-        }
+        finalPrice = basePrice + extraUserCost;
       }
     }
     
@@ -955,87 +955,70 @@ const UpgradePlans = () => {
             >
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <Typography.Title level={4} style={{ marginBottom: 8 }}>
-                  {t('pricing-modal:plans.proLarge.name')}
+                  {t('pricing-modal:plans.pro.name')}
                 </Typography.Title>
                 <Typography.Text type="secondary">
-                  {t('pricing-modal:plans.proLarge.description')}
+                  {t('pricing-modal:plans.pro.description')}
                 </Typography.Text>
               </div>
 
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
-                  $
-                  {billingFrequency === 'annual'
-                    ? calculateAnnualTotal('pro')
-                    : calculateMonthlyTotal('pro')}
-                </Typography.Title>
-                <Typography.Text>
-                  {getPriceLabel('pro')}{' '}
-                  {billingFrequency === 'annual' ? '(billed annually)' : ''}
-                  {isAppSumoUser() && (
-                    <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px' }}>
-                      50% AppSumo Discount Applied
-                    </span>
-                  )}
-                </Typography.Text>
-                {billingFrequency === 'annual' && (
-                  <div style={{ marginTop: 4 }}>
-                    <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                      ${(() => {
-                        const useSmallTeamPricing = teamSize <= 5;
-                        const planData = useSmallTeamPricing && pricingData.pro_small ? pricingData.pro_small : pricingData.pro;
-                        
-                        if (useSmallTeamPricing && planData.pricing_model === 'per_user') {
-                          const annualTotal = parseFloat(planData.annual_price || '0') * teamSize;
-                          return (annualTotal * (isAppSumoUser() ? 0.5 : 1)).toFixed(2);
-                        } else {
-                          const baseAnnual = parseFloat(planData.annual_total || (parseFloat(planData.annual_price || '0') * 12).toString());
-                          const includedUsers = parseInt(planData.users_included) || 0;
-                          const extraUsers = Math.max(0, teamSize - includedUsers);
-                          const extraUserCost = extraUsers * parseFloat(planData.additional_user_price || '5.99') * 12;
-                          const total = baseAnnual + extraUserCost;
-                          return (total * (isAppSumoUser() ? 0.5 : 1)).toFixed(2);
-                        }
-                      })()}
-                      /year
-                      {isAppSumoUser() && (
-                        <span style={{ color: '#52c41a', fontWeight: 'bold', marginLeft: 4 }}>
-                          (50% AppSumo Discount)
-                        </span>
-                      )}
-                    </Typography.Text>
-                  </div>
-                )}
                 {(() => {
                   const useSmallTeamPricing = teamSize <= 5;
                   const planData = useSmallTeamPricing && pricingData.pro_small ? pricingData.pro_small : pricingData.pro;
-                  const userPrice = billingFrequency === 'annual' 
-                    ? planData?.annual_price || '6.99'
-                    : planData?.monthly_price || '9.99';
-                  const priceLabel = billingFrequency === 'annual' ? '/user/year' : '/user/month';
                   
                   if (useSmallTeamPricing && planData.pricing_model === 'per_user') {
+                    // Show per-user price for small teams
+                    const perUserPrice = billingFrequency === 'annual' 
+                      ? planData.annual_price 
+                      : planData.monthly_price;
+                    const total = billingFrequency === 'annual'
+                      ? calculateAnnualTotal('pro')
+                      : calculateMonthlyTotal('pro');
+                    
                     return (
-                      <div style={{ marginTop: 4 }}>
-                        <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                          ${userPrice}${priceLabel} (Small team pricing)
+                      <>
+                        <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
+                          ${perUserPrice}
+                        </Typography.Title>
+                        <Typography.Text>
+                          per user/{billingFrequency === 'annual' ? 'year' : 'month'}
+                          {billingFrequency === 'annual' && ' (billed annually)'}
                         </Typography.Text>
-                      </div>
-                    );
-                  } else {
-                    const includedUsers = parseInt(planData.users_included) || 0;
-                    const extraUsers = Math.max(0, teamSize - includedUsers);
-                    if (extraUsers > 0) {
-                      return (
-                        <div style={{ marginTop: 4 }}>
-                          <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                            Base plan ({includedUsers} users) + {extraUsers} extra users × ${additionalUserPrice}/month
+                        <div style={{ marginTop: 8 }}>
+                          <Typography.Text style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                            Total: ${total} for {teamSize} user{teamSize > 1 ? 's' : ''}
                           </Typography.Text>
                         </div>
-                      );
-                    }
+                        {isAppSumoUser() && (
+                          <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px', marginTop: 4 }}>
+                            50% AppSumo Discount Applied
+                          </span>
+                        )}
+                      </>
+                    );
+                  } else {
+                    // Show total price for larger teams
+                    return (
+                      <>
+                        <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
+                          $
+                          {billingFrequency === 'annual'
+                            ? calculateAnnualTotal('pro')
+                            : calculateMonthlyTotal('pro')}
+                        </Typography.Title>
+                        <Typography.Text>
+                          {getPriceLabel('pro')}{' '}
+                          {billingFrequency === 'annual' ? '(billed annually)' : ''}
+                          {isAppSumoUser() && (
+                            <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px' }}>
+                              50% AppSumo Discount Applied
+                            </span>
+                          )}
+                        </Typography.Text>
+                      </>
+                    );
                   }
-                  return null;
                 })()}
               </div>
 
@@ -1098,87 +1081,70 @@ const UpgradePlans = () => {
           >
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <Typography.Title level={4} style={{ marginBottom: 8 }}>
-                {t('pricing-modal:plans.businessLarge.name')}
+                {t('pricing-modal:plans.business.name')}
               </Typography.Title>
               <Typography.Text type="secondary">
-                {t('pricing-modal:plans.businessLarge.description')}
+                {t('pricing-modal:plans.business.description')}
               </Typography.Text>
             </div>
 
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
-                $
-                {billingFrequency === 'annual'
-                  ? calculateAnnualTotal('business')
-                  : calculateMonthlyTotal('business')}
-              </Typography.Title>
-              <Typography.Text>
-                {getPriceLabel('business')}{' '}
-                {billingFrequency === 'annual' ? '(billed annually)' : ''}
-                {isAppSumoUser() && (
-                  <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px' }}>
-                    50% AppSumo Discount Applied
-                  </span>
-                )}
-              </Typography.Text>
-              {billingFrequency === 'annual' && (
-                <div style={{ marginTop: 4 }}>
-                  <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                    ${(() => {
-                      const useSmallTeamPricing = teamSize <= 5;
-                      const planData = useSmallTeamPricing && pricingData.business_small ? pricingData.business_small : pricingData.business;
-                      
-                      if (useSmallTeamPricing && planData.pricing_model === 'per_user') {
-                        const annualTotal = parseFloat(planData.annual_price || '0') * teamSize;
-                        return (annualTotal * (isAppSumoUser() ? 0.5 : 1)).toFixed(2);
-                      } else {
-                        const baseAnnual = parseFloat(planData.annual_total || (parseFloat(planData.annual_price || '0') * 12).toString());
-                        const includedUsers = parseInt(planData.users_included) || 0;
-                        const extraUsers = Math.max(0, teamSize - includedUsers);
-                        const extraUserCost = extraUsers * parseFloat(planData.additional_user_price || '5.99') * 12;
-                        const total = baseAnnual + extraUserCost;
-                        return (total * (isAppSumoUser() ? 0.5 : 1)).toFixed(2);
-                      }
-                    })()}
-                    /year
-                    {isAppSumoUser() && (
-                      <span style={{ color: '#52c41a', fontWeight: 'bold', marginLeft: 4 }}>
-                        (50% AppSumo Discount)
-                      </span>
-                    )}
-                  </Typography.Text>
-                </div>
-              )}
               {(() => {
                 const useSmallTeamPricing = teamSize <= 5;
                 const planData = useSmallTeamPricing && pricingData.business_small ? pricingData.business_small : pricingData.business;
-                const userPrice = billingFrequency === 'annual' 
-                  ? planData?.annual_price || '11.99'
-                  : planData?.monthly_price || '14.99';
-                const priceLabel = billingFrequency === 'annual' ? '/user/year' : '/user/month';
                 
                 if (useSmallTeamPricing && planData.pricing_model === 'per_user') {
+                  // Show per-user price for small teams
+                  const perUserPrice = billingFrequency === 'annual' 
+                    ? planData.annual_price 
+                    : planData.monthly_price;
+                  const total = billingFrequency === 'annual'
+                    ? calculateAnnualTotal('business')
+                    : calculateMonthlyTotal('business');
+                  
                   return (
-                    <div style={{ marginTop: 4 }}>
-                      <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                        ${userPrice}${priceLabel} (Small team pricing)
+                    <>
+                      <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
+                        ${perUserPrice}
+                      </Typography.Title>
+                      <Typography.Text>
+                        per user/{billingFrequency === 'annual' ? 'year' : 'month'}
+                        {billingFrequency === 'annual' && ' (billed annually)'}
                       </Typography.Text>
-                    </div>
-                  );
-                } else {
-                  const includedUsers = parseInt(planData.users_included) || 0;
-                  const extraUsers = Math.max(0, teamSize - includedUsers);
-                  if (extraUsers > 0) {
-                    return (
-                      <div style={{ marginTop: 4 }}>
-                        <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                          Base plan ({includedUsers} users) + {extraUsers} extra users × ${additionalUserPrice}/month
+                      <div style={{ marginTop: 8 }}>
+                        <Typography.Text style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                          Total: ${total} for {teamSize} user{teamSize > 1 ? 's' : ''}
                         </Typography.Text>
                       </div>
-                    );
-                  }
+                      {isAppSumoUser() && (
+                        <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px', marginTop: 4 }}>
+                          50% AppSumo Discount Applied
+                        </span>
+                      )}
+                    </>
+                  );
+                } else {
+                  // Show total price for larger teams
+                  return (
+                    <>
+                      <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
+                        $
+                        {billingFrequency === 'annual'
+                          ? calculateAnnualTotal('business')
+                          : calculateMonthlyTotal('business')}
+                      </Typography.Title>
+                      <Typography.Text>
+                        {getPriceLabel('business')}{' '}
+                        {billingFrequency === 'annual' ? '(billed annually)' : ''}
+                        {isAppSumoUser() && (
+                          <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px' }}>
+                            50% AppSumo Discount Applied
+                          </span>
+                        )}
+                      </Typography.Text>
+                    </>
+                  );
                 }
-                return null;
               })()}
             </div>
 

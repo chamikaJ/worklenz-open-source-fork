@@ -37,6 +37,30 @@
       ],
       "forever": "Forever"
     },
+    "pro": {
+      "name": "Pro",
+      "description": "For professional teams",
+      "features": [
+        "Unlimited projects",
+        "Advanced task management",
+        "Gantt charts",
+        "Time tracking",
+        "Custom fields",
+        "Email support"
+      ]
+    },
+    "business": {
+      "name": "Business",
+      "description": "For growing organizations",
+      "features": [
+        "Everything in Pro",
+        "Advanced reporting",
+        "Custom workflows",
+        "API access",
+        "Priority support",
+        "Advanced integrations"
+      ]
+    },
     "proSmall": {
       "name": "Pro Small",
       "description": "Ideal for small teams",
@@ -163,7 +187,10 @@
     "unlimited": "Unlimited"
   },
   "tips": {
-    "switchAnytime": "💡 Tip: You can switch between pricing models anytime from your billing settings"
+    "switchAnytime": "💡 Tip: You can switch between pricing models anytime from your billing settings",
+    "smallTeamPricing": "💰 Small teams get better per-user rates",
+    "annualDiscount": "💸 Save up to 30% with annual billing",
+    "freeUpgrade": "🚀 Free users can upgrade anytime"
   },
   "errors": {
     "loadingData": "Error loading pricing data",
@@ -211,6 +238,54 @@
       "confirm": "Confirm",
       "payment": "Payment",
       "complete": "Complete"
+    }
+  },
+  "ui": {
+    "loading": "Loading pricing options...",
+    "selectTeamSize": "Select your team size",
+    "chooseBilling": "Choose billing frequency",
+    "planSelected": "Plan Selected",
+    "totalCost": "Total Cost",
+    "perUserCost": "Per User Cost",
+    "included": "Included",
+    "popular": "Most Popular",
+    "recommended": "Recommended",
+    "currentPlan": "Current Plan",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade", 
+    "change": "Change Plan",
+    "specialOffer": "Special Offer",
+    "limitedTime": "Limited Time",
+    "saveAmount": "Save ${{amount}}",
+    "freeForever": "Free Forever",
+    "noCommitment": "No commitment, cancel anytime",
+    "instantActivation": "Instant activation",
+    "supportIncluded": "Support included"
+  },
+  "features": {
+    "common": {
+      "taskManagement": "Task Management",
+      "projectTracking": "Project Tracking", 
+      "teamCollaboration": "Team Collaboration",
+      "fileSharing": "File Sharing",
+      "basicReporting": "Basic Reporting",
+      "mobileApp": "Mobile App Access"
+    },
+    "advanced": {
+      "ganttCharts": "Gantt Charts",
+      "timeTracking": "Time Tracking",
+      "advancedReporting": "Advanced Reporting",
+      "customFields": "Custom Fields",
+      "apiAccess": "API Access",
+      "prioritySupport": "Priority Support"
+    },
+    "enterprise": {
+      "sso": "Single Sign-On (SSO)",
+      "advancedSecurity": "Advanced Security",
+      "customIntegrations": "Custom Integrations",
+      "dedicatedSupport": "Dedicated Support",
+      "onPremise": "On-Premise Deployment",
+      "slaSupport": "SLA Support"
     }
   }
 }
