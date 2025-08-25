@@ -19,6 +19,49 @@ export interface IPricingPlan {
   is_startup_plan?: boolean;
 }
 
+export interface IPricingTierPlans {
+  monthly_plan_id: string | null;
+  monthly_paddle_id: number | null;
+  annual_plan_id: string | null;
+  annual_paddle_id: number | null;
+}
+
+export interface IPricingTierFeatures {
+  max_projects: number | null;
+  max_storage_gb: number | null;
+  has_api_access: boolean;
+  has_advanced_analytics: boolean;
+  has_custom_fields: boolean;
+  has_gantt_charts: boolean;
+  has_time_tracking: boolean;
+  has_resource_management: boolean;
+  has_portfolio_view: boolean;
+  has_custom_branding: boolean;
+  has_sso: boolean;
+  has_audit_logs: boolean;
+  has_priority_support: boolean;
+  has_dedicated_account_manager: boolean;
+}
+
+export interface IPricingTier {
+  id: string;
+  tier_name: string;
+  display_name: string;
+  tier_level: number;
+  pricing_model: string;
+  monthly_base_price: string;
+  annual_base_price: string;
+  monthly_per_user_price: string;
+  annual_per_user_price: string;
+  min_users: number | null;
+  max_users: number | null;
+  included_users: number | null;
+  plans: IPricingTierPlans;
+  features: IPricingTierFeatures;
+  is_popular: boolean;
+  sort_order: number;
+}
+
 const rootUrl = `${API_BASE_URL}/billing`;
 export const billingApiService = {
   async upgradeToPaidPlan(
@@ -80,8 +123,8 @@ export const billingApiService = {
     return response.data;
   },
 
-  async getPricingPlans(): Promise<IServerResponse<IPricingPlan[]>> {
-    const response = await apiClient.get<IServerResponse<IPricingPlan[]>>(
+  async getPricingPlans(): Promise<IServerResponse<{ tiers: IPricingTier[] }>> {
+    const response = await apiClient.get<IServerResponse<{ tiers: IPricingTier[] }>>(
       `${rootUrl}/pricing-plans`
     );
     return response.data;

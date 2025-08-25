@@ -73,63 +73,73 @@ const UpgradePlans = () => {
        (planType === 'business' && pricingData.business_small)) ? 'per_user' : 'base_plan';
   };
 
-  // Pricing data state that can be updated from backend
+  // Pricing data populated from backend (no hardcoded defaults)
   const [pricingData, setPricingData] = useState({
     free: {
       monthly_price: '0',
       annual_price: '0',
-      users_included: '3',
-      max_users: '3',
+      users_included: '',
+      max_users: '',
+      pricing_model: 'free',
+      tier_id: '',
     },
     pro: {
-      monthly_price: '69',
-      annual_price: '49', // $588/year = $49/month
-      annual_total: '588',
-      users_included: '15',
-      max_users: '50',
-      additional_user_price: '5.99',
-      monthly_plan_id: 'pro_monthly',
-      annual_plan_id: 'pro_annual',
+      monthly_price: '',
+      annual_price: '',
+      annual_total: '',
+      users_included: '',
+      max_users: '',
+      additional_user_price: '',
+      monthly_plan_id: '',
+      annual_plan_id: '',
+      pricing_model: 'base_plan',
+      tier_id: '',
     },
     pro_small: {
-      monthly_price: '9.99',
-      annual_price: '6.99',
-      users_included: '1',
-      max_users: '5',
+      monthly_price: '',
+      annual_price: '',
+      users_included: '',
+      max_users: '',
       pricing_model: 'per_user',
-      additional_user_price: '9.99',
-      monthly_plan_id: 'pro_small_monthly',
-      annual_plan_id: 'pro_small_annual',
+      additional_user_price: '',
+      monthly_plan_id: '',
+      annual_plan_id: '',
+      tier_id: '',
     },
     business: {
-      monthly_price: '99',
-      annual_price: '69', // $828/year = $69/month
-      annual_total: '828',
-      users_included: '20',
-      max_users: '100',
-      additional_user_price: '5.99',
-      monthly_plan_id: 'business_monthly',
-      annual_plan_id: 'business_annual',
+      monthly_price: '',
+      annual_price: '',
+      annual_total: '',
+      users_included: '',
+      max_users: '',
+      additional_user_price: '',
+      monthly_plan_id: '',
+      annual_plan_id: '',
+      pricing_model: 'base_plan',
+      tier_id: '',
     },
     business_small: {
-      monthly_price: '14.99',
-      annual_price: '11.99',
-      users_included: '1',
-      max_users: '5',
+      monthly_price: '',
+      annual_price: '',
+      users_included: '',
+      max_users: '',
       pricing_model: 'per_user',
-      additional_user_price: '14.99',
-      monthly_plan_id: 'business_small_monthly',
-      annual_plan_id: 'business_small_annual',
+      additional_user_price: '',
+      monthly_plan_id: '',
+      annual_plan_id: '',
+      tier_id: '',
     },
     enterprise: {
-      monthly_price: '349',
-      annual_price: '299', // $3,588/year = $299/month
-      annual_total: '3588',
+      monthly_price: '',
+      annual_price: '',
+      annual_total: '',
       users_included: 'Unlimited',
       max_users: 'Unlimited',
       additional_user_price: '0',
-      monthly_plan_id: 'enterprise_monthly',
-      annual_plan_id: 'enterprise_annual',
+      monthly_plan_id: '',
+      annual_plan_id: '',
+      pricing_model: 'base_plan',
+      tier_id: '',
     },
   });
 
@@ -162,16 +172,22 @@ const UpgradePlans = () => {
   // Function to map new tier-based pricing data to our frontend structure
   const mapTierBasedPricingToFrontend = (tiers: any[]) => {
     const mapped: any = {
-      free: { monthly_price: '0', annual_price: '0', users_included: '3', max_users: '3' },
-      pro: { monthly_price: '0', annual_price: '0', users_included: '15', max_users: '50' },
-      pro_small: { monthly_price: '0', annual_price: '0', users_included: '1', max_users: '5' },
-      business: { monthly_price: '0', annual_price: '0', users_included: '20', max_users: '100' },
-      business_small: { monthly_price: '0', annual_price: '0', users_included: '1', max_users: '5' },
+      free: { monthly_price: '0', annual_price: '0', users_included: '', max_users: '', pricing_model: 'free', tier_id: '' },
+      pro: { monthly_price: '', annual_price: '', annual_total: '', users_included: '', max_users: '', additional_user_price: '', monthly_plan_id: '', annual_plan_id: '', pricing_model: 'base_plan', tier_id: '' },
+      pro_small: { monthly_price: '', annual_price: '', users_included: '', max_users: '', additional_user_price: '', monthly_plan_id: '', annual_plan_id: '', pricing_model: 'per_user', tier_id: '' },
+      business: { monthly_price: '', annual_price: '', annual_total: '', users_included: '', max_users: '', additional_user_price: '', monthly_plan_id: '', annual_plan_id: '', pricing_model: 'base_plan', tier_id: '' },
+      business_small: { monthly_price: '', annual_price: '', users_included: '', max_users: '', additional_user_price: '', monthly_plan_id: '', annual_plan_id: '', pricing_model: 'per_user', tier_id: '' },
       enterprise: {
-        monthly_price: '0',
-        annual_price: '0',
+        monthly_price: '',
+        annual_price: '',
+        annual_total: '',
         users_included: 'Unlimited',
         max_users: 'Unlimited',
+        additional_user_price: '0',
+        monthly_plan_id: '',
+        annual_plan_id: '',
+        pricing_model: 'base_plan',
+        tier_id: '',
       },
     };
 
@@ -181,65 +197,71 @@ const UpgradePlans = () => {
       // Map based on tier name from the database
       if (tier.tier_name === 'PRO_SMALL') {
         // Pro small team (per-user pricing for 1-5 users)
-        mapped.pro_small.monthly_price = tier.monthly_per_user_price?.toString() || '9.99';
-        mapped.pro_small.annual_price = tier.annual_per_user_price?.toString() || '6.99';
-        mapped.pro_small.users_included = tier.min_users?.toString() || '1';
-        mapped.pro_small.max_users = tier.max_users?.toString() || '5';
-        mapped.pro_small.additional_user_price = tier.monthly_per_user_price?.toString() || '9.99';
+        mapped.pro_small.monthly_price = tier.monthly_per_user_price?.toString() || '';
+        mapped.pro_small.annual_price = tier.annual_per_user_price?.toString() || '';
+        mapped.pro_small.users_included = tier.min_users?.toString() || '';
+        mapped.pro_small.max_users = tier.max_users?.toString() || '';
+        mapped.pro_small.additional_user_price = tier.monthly_per_user_price?.toString() || '';
         mapped.pro_small.pricing_model = 'per_user';
-        mapped.pro_small.monthly_plan_id = tier.plans?.monthly_plan_id;
-        mapped.pro_small.annual_plan_id = tier.plans?.annual_plan_id;
+        mapped.pro_small.monthly_plan_id = tier.plans?.monthly_plan_id || tier.monthly_paddle_plan_id || tier.paddle_plan_id || '';
+        mapped.pro_small.annual_plan_id = tier.plans?.annual_plan_id || tier.annual_paddle_plan_id || tier.paddle_plan_id || '';
+        mapped.pro_small.tier_id = tier.id;
       } else if (tier.tier_name === 'PRO_LARGE') {
         // Pro large team (flat rate + overage for 6+ users)
-        mapped.pro.monthly_price = tier.monthly_base_price?.toString() || '69';
-        mapped.pro.annual_price = tier.annual_base_price ? (tier.annual_base_price / 12).toFixed(2) : '49';
-        mapped.pro.annual_total = tier.annual_base_price?.toString() || '588';
-        mapped.pro.users_included = tier.included_users?.toString() || '15';
-        mapped.pro.max_users = tier.max_users?.toString() || '50';
-        mapped.pro.additional_user_price = tier.monthly_per_user_price?.toString() || '5.99';
+        mapped.pro.monthly_price = tier.monthly_base_price?.toString() || '';
+        mapped.pro.annual_price = tier.annual_base_price ? (Number(tier.annual_base_price) / 12).toFixed(2) : '';
+        mapped.pro.annual_total = tier.annual_base_price?.toString() || '';
+        mapped.pro.users_included = tier.included_users?.toString() || '';
+        mapped.pro.max_users = tier.max_users?.toString() || '';
+        mapped.pro.additional_user_price = tier.monthly_per_user_price?.toString() || '';
         mapped.pro.pricing_model = 'base_plan';
-        mapped.pro.monthly_plan_id = tier.plans?.monthly_plan_id;
-        mapped.pro.annual_plan_id = tier.plans?.annual_plan_id;
+        mapped.pro.monthly_plan_id = tier.plans?.monthly_plan_id || tier.monthly_paddle_plan_id || tier.paddle_plan_id || '';
+        mapped.pro.annual_plan_id = tier.plans?.annual_plan_id || tier.annual_paddle_plan_id || tier.paddle_plan_id || '';
+        mapped.pro.tier_id = tier.id;
       } else if (tier.tier_name === 'BUSINESS_SMALL') {
         // Business small team (per-user pricing for 1-5 users)
-        mapped.business_small.monthly_price = tier.monthly_per_user_price?.toString() || '14.99';
-        mapped.business_small.annual_price = tier.annual_per_user_price?.toString() || '11.99';
-        mapped.business_small.users_included = tier.min_users?.toString() || '1';
-        mapped.business_small.max_users = tier.max_users?.toString() || '5';
-        mapped.business_small.additional_user_price = tier.monthly_per_user_price?.toString() || '14.99';
+        mapped.business_small.monthly_price = tier.monthly_per_user_price?.toString() || '';
+        mapped.business_small.annual_price = tier.annual_per_user_price?.toString() || '';
+        mapped.business_small.users_included = tier.min_users?.toString() || '';
+        mapped.business_small.max_users = tier.max_users?.toString() || '';
+        mapped.business_small.additional_user_price = tier.monthly_per_user_price?.toString() || '';
         mapped.business_small.pricing_model = 'per_user';
-        mapped.business_small.monthly_plan_id = tier.plans?.monthly_plan_id;
-        mapped.business_small.annual_plan_id = tier.plans?.annual_plan_id;
+        mapped.business_small.monthly_plan_id = tier.plans?.monthly_plan_id || tier.monthly_paddle_plan_id || tier.paddle_plan_id || '';
+        mapped.business_small.annual_plan_id = tier.plans?.annual_plan_id || tier.annual_paddle_plan_id || tier.paddle_plan_id || '';
+        mapped.business_small.tier_id = tier.id;
       } else if (tier.tier_name === 'BUSINESS_LARGE') {
         // Business large team (flat rate + overage for 6+ users)
-        mapped.business.monthly_price = tier.monthly_base_price?.toString() || '99';
-        mapped.business.annual_price = tier.annual_base_price ? (tier.annual_base_price / 12).toFixed(2) : '69';
-        mapped.business.annual_total = tier.annual_base_price?.toString() || '828';
-        mapped.business.users_included = tier.included_users?.toString() || '20';
-        mapped.business.max_users = tier.max_users?.toString() || '100';
-        mapped.business.additional_user_price = tier.monthly_per_user_price?.toString() || '5.99';
+        mapped.business.monthly_price = tier.monthly_base_price?.toString() || '';
+        mapped.business.annual_price = tier.annual_base_price ? (Number(tier.annual_base_price) / 12).toFixed(2) : '';
+        mapped.business.annual_total = tier.annual_base_price?.toString() || '';
+        mapped.business.users_included = tier.included_users?.toString() || '';
+        mapped.business.max_users = tier.max_users?.toString() || '';
+        mapped.business.additional_user_price = tier.monthly_per_user_price?.toString() || '';
         mapped.business.pricing_model = 'base_plan';
-        mapped.business.monthly_plan_id = tier.plans?.monthly_plan_id;
-        mapped.business.annual_plan_id = tier.plans?.annual_plan_id;
+        mapped.business.monthly_plan_id = tier.plans?.monthly_plan_id || tier.monthly_paddle_plan_id || tier.paddle_plan_id || '';
+        mapped.business.annual_plan_id = tier.plans?.annual_plan_id || tier.annual_paddle_plan_id || tier.paddle_plan_id || '';
+        mapped.business.tier_id = tier.id;
       } else if (tier.tier_name === 'ENTERPRISE') {
         // Enterprise plan (flat rate, unlimited users)
-        mapped.enterprise.monthly_price = tier.monthly_base_price?.toString() || '349';
-        mapped.enterprise.annual_price = tier.annual_base_price ? (tier.annual_base_price / 12).toFixed(2) : '299';
-        mapped.enterprise.annual_total = tier.annual_base_price?.toString() || '3490';
+        mapped.enterprise.monthly_price = tier.monthly_base_price?.toString() || '';
+        mapped.enterprise.annual_price = tier.annual_base_price ? (Number(tier.annual_base_price) / 12).toFixed(2) : '';
+        mapped.enterprise.annual_total = tier.annual_base_price?.toString() || '';
         mapped.enterprise.users_included = 'Unlimited';
         mapped.enterprise.max_users = 'Unlimited';
         mapped.enterprise.additional_user_price = '0';
         mapped.enterprise.pricing_model = 'base_plan';
-        mapped.enterprise.monthly_plan_id = tier.plans?.monthly_plan_id;
-        mapped.enterprise.annual_plan_id = tier.plans?.annual_plan_id;
+        mapped.enterprise.monthly_plan_id = tier.plans?.monthly_plan_id || tier.monthly_paddle_plan_id || tier.paddle_plan_id || '';
+        mapped.enterprise.annual_plan_id = tier.plans?.annual_plan_id || tier.annual_paddle_plan_id || tier.paddle_plan_id || '';
+        mapped.enterprise.tier_id = tier.id;
       } else if (tier.tier_name === 'FREE') {
         // Free plan
         mapped.free.monthly_price = '0';
         mapped.free.annual_price = '0';
-        mapped.free.users_included = tier.included_users?.toString() || '3';
-        mapped.free.max_users = tier.max_users?.toString() || '3';
+        mapped.free.users_included = tier.included_users?.toString() || '';
+        mapped.free.max_users = tier.max_users?.toString() || '';
         mapped.free.additional_user_price = '0';
         mapped.free.pricing_model = 'free';
+        mapped.free.tier_id = tier.id;
       }
       
       console.log(`Mapped tier ${tier.tier_name}:`, mapped);
@@ -278,9 +300,6 @@ const UpgradePlans = () => {
       // Backend integration enabled - fetch real tier-based pricing data:
       const pricingRes = await billingApiService.getPricingPlans();
       if (pricingRes.done && pricingRes.body) {
-        console.log('Backend pricing response:', pricingRes.body);
-
-        // Use the new tier-based data
         const tiers = pricingRes.body.tiers || [];
         
         // Filter tiers for AppSumo users - only show Business and Enterprise plans
@@ -292,10 +311,9 @@ const UpgradePlans = () => {
           });
         }
 
-        setBackendPlans(tiers);
+        setBackendPlans(tiers as any);
         const mappedPricing = mapTierBasedPricingToFrontend(filteredTiers);
-        console.log('Tier-based plans:', filteredTiers);
-        console.log('Mapped pricing data:', mappedPricing);
+
         setPricingData(mappedPricing);
       }
     } catch (error) {
@@ -429,7 +447,9 @@ const UpgradePlans = () => {
       setSwitchingToPaddlePlan(true);
       setPaddleLoading(true);
       setPaddleError(null);
-
+      const effectivePricingModel = getEffectivePricingModel(selectedPlanType as 'pro' | 'business' | 'enterprise');
+      console.log('Effective pricing model:', effectivePricingModel);
+      
       // Check if user should use upgrade API (free, trial, or no active paddle subscription)
       const shouldUseUpgradeAPI =
         !billingInfo?.subscription_id || // No paddle subscription
@@ -441,8 +461,8 @@ const UpgradePlans = () => {
       if (shouldUseUpgradeAPI) {
         // Use upgrade API for users without active paddle subscription
         // Determine pricing model using helper function
-        const effectivePricingModel = getEffectivePricingModel(selectedPlanType as 'pro' | 'business' | 'enterprise');
-           
+        const apiPricingModel = effectivePricingModel === 'base_plan' ? 'regular' : 'per_user';
+          
         console.log('Upgrade request:', {
           planId,
           pricingModel: effectivePricingModel,
@@ -453,7 +473,7 @@ const UpgradePlans = () => {
 
         const res = await billingApiService.upgradeToPaidPlan(
           planId,
-          effectivePricingModel,
+          apiPricingModel as 'per_user' | 'regular',
           effectivePricingModel === 'per_user' ? teamSize : undefined
         );
 
@@ -515,20 +535,60 @@ const UpgradePlans = () => {
 
       // Use the global billing frequency and selected plan type
       const isAnnual = billingFrequency === 'annual';
+      
+      // Ensure a plan type is selected
+      if (!selectedPlanType || selectedPlanType === 'free') {
+        setSwitchingToPaddlePlan(false);
+        setPaddleError('Please select a paid plan first');
+        message.error('Please select a plan first');
+        return;
+      }
 
       // Get the correct plan ID based on selected plan type and team size
       if (selectedPlanType === 'pro') {
         // Use per_user pricing for teams 1-5 if available, otherwise base_plan
         const planData = teamSize <= 5 && pricingData.pro_small ? pricingData.pro_small : pricingData.pro;
-        planId = isAnnual ? planData.annual_plan_id : planData.monthly_plan_id;
+        // Use the appropriate Paddle plan ID based on billing frequency
+        planId = isAnnual ? planData?.annual_plan_id : planData?.monthly_plan_id;
+        
+        // Fallback if planId is still null
+        if (!planId) {
+          console.warn('No Paddle plan ID found for pro plan', { planData, isAnnual });
+        }
       } else if (selectedPlanType === 'business') {
         // Use per_user pricing for teams 1-5 if available, otherwise base_plan
         const planData = teamSize <= 5 && pricingData.business_small ? pricingData.business_small : pricingData.business;
-        planId = isAnnual ? planData.annual_plan_id : planData.monthly_plan_id;
+        // Use the appropriate Paddle plan ID based on billing frequency
+        planId = isAnnual ? planData?.annual_plan_id : planData?.monthly_plan_id;
+        
+        // Fallback if planId is still null
+        if (!planId) {
+          console.warn('No Paddle plan ID found for business plan', { planData, isAnnual });
+        }
       } else if (selectedPlanType === 'enterprise') {
-        planId = isAnnual
-          ? pricingData.enterprise.annual_plan_id
-          : pricingData.enterprise.monthly_plan_id;
+        // Use the appropriate Paddle plan ID based on billing frequency
+        planId = isAnnual ? pricingData.enterprise?.annual_plan_id : pricingData.enterprise?.monthly_plan_id;
+          
+        // Fallback if planId is still null
+        if (!planId) {
+          console.warn('No Paddle plan ID found for enterprise plan', { planData: pricingData.enterprise, isAnnual });
+        }
+      }
+      
+      // Additional safety check for planId
+      if (!planId) {
+        console.error('Plan ID not found. Plan selection details:', {
+          selectedPlanType,
+          teamSize,
+          isAnnual,
+          pricingData: {
+            pro: pricingData.pro,
+            pro_small: pricingData.pro_small,
+            business: pricingData.business,
+            business_small: pricingData.business_small,
+            enterprise: pricingData.enterprise
+          }
+        });
       }
 
       console.log('Plan selection debug:', {
@@ -550,8 +610,25 @@ const UpgradePlans = () => {
         upgradeToPaddlePlan(planId);
       } else {
         setSwitchingToPaddlePlan(false);
-        setPaddleError('Plan not available or not configured');
-        message.error('Selected plan is not available');
+        const errorMsg = `Plan not available: ${selectedPlanType} (${billingFrequency}) for ${teamSize} users. Please try a different configuration or contact support.`;
+        setPaddleError(errorMsg);
+        message.error('Selected plan is not available. Please try a different configuration.');
+        
+        // Log detailed error for debugging
+        console.error('Plan selection failed:', {
+          selectedPlanType,
+          billingFrequency,
+          teamSize,
+          isAnnual,
+          availablePlans: Object.keys(pricingData),
+          pricingDataStructure: {
+            pro: !!pricingData.pro,
+            pro_small: !!pricingData.pro_small,
+            business: !!pricingData.business,
+            business_small: !!pricingData.business_small,
+            enterprise: !!pricingData.enterprise
+          }
+        });
       }
     } catch (error) {
       setSwitchingToPaddlePlan(false);
@@ -812,7 +889,7 @@ const UpgradePlans = () => {
       <Row justify="center" align="middle" style={{ marginTop: isAppSumoUser() ? 8 : 24, marginBottom: 16 }}>
         <Space size="large" align="center">
           {/* Team Size Dropdown */}
-          <Space align="center" size="medium">
+          <Space align="center" size="middle">
             <Typography.Text strong>Team Size:</Typography.Text>
             <Select
               value={teamSize}
@@ -830,7 +907,7 @@ const UpgradePlans = () => {
           </Space>
 
           {/* Billing Frequency Toggle */}
-          <Space align="center" size="medium">
+          <Space align="center" size="middle">
             <Typography.Text strong>Billing Cycle:</Typography.Text>
             <Button.Group size="large">
               <Button
