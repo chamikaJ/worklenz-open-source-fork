@@ -105,10 +105,10 @@ export default class UserTypeController extends WorklenzControllerBase {
             remainingDays: appSumoStatus.remainingMigrationDays,
             specialOfferDiscount: appSumoStatus.specialOfferDiscount
           },
-          migrationOptions: appSumoRecommendations.eligiblePlans,
+          migrationOptions: appSumoRecommendations?.eligiblePlans || [],
           specialOffers: {
             discountedMigration: appSumoStatus.eligibleForSpecialDiscount,
-            postDiscountOptions: appSumoRecommendations.postDiscountOptions
+            postDiscountOptions: appSumoRecommendations?.postDiscountOptions || null
           }
         };
       }

@@ -45,9 +45,9 @@ export class AppSumoService {
     if (!tierKey) return null;
     
     const cycleKey = billingCycle.toUpperCase();
-    const planKey = `${tierKey}_${cycleKey}` as keyof typeof this.APPSUMO_PADDLE_PLANS;
+    const planKey = `${tierKey}_${cycleKey}` as keyof typeof AppSumoService.APPSUMO_PADDLE_PLANS;
     
-    return this.APPSUMO_PADDLE_PLANS[planKey] || null;
+    return AppSumoService.APPSUMO_PADDLE_PLANS[planKey] || null;
   }
 
   /**

@@ -743,7 +743,7 @@ export default class PlanRecommendationController extends WorklenzControllerBase
             customPlanAnalytics.mappedPlans,
           urgentActions: appSumoAnalytics.urgentUsers,
           potentialRevenue:
-            appSumoAnalytics.revenueImpact +
+            appSumoAnalytics.revenueImpact.potentialRevenue +
             customPlanAnalytics.potentialRevenue,
           conversionRate: appSumoAnalytics.conversionRate,
         },
