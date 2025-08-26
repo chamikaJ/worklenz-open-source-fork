@@ -19,7 +19,7 @@ const SettingSidebar: React.FC = () => {
   };
 
   // Get accessible settings based on user role
-  const accessibleSettings = getAccessibleSettings(isOwnerOrAdmin);
+  const accessibleSettings = getAccessibleSettings(isOwnerOrAdmin, currentSession);
 
   const items: Required<MenuProps>['items'] = accessibleSettings
     .map(item => {

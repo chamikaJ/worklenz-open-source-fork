@@ -47,5 +47,6 @@
   "license-badge-days": "剩余{{days}}天",
   "license-badge-today": "最后一天！",
   "license-badge-hours": "剩余{{hours}}小时",
-  "business-plan-upgrade": "升级到商业版以访问此功能"
+  "business-plan-upgrade": "升级到商业版以访问此功能",
+  "upgrade-plan": "升级您的计划以访问此功能"
 }

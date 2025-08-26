@@ -47,5 +47,6 @@
   "license-badge-days": "{{days}} ditë të mbetura",
   "license-badge-today": "Dita e fundit!",
   "license-badge-hours": "{{hours}} orë të mbetura",
-  "business-plan-upgrade": "Përmirësoni në planin Business për të aksesuar këtë veçori"
+  "business-plan-upgrade": "Përmirësoni në planin Business për të aksesuar këtë veçori",
+  "upgrade-plan": "Përmirësoni planin tuaj për të aksesuar këtë veçori"
 }

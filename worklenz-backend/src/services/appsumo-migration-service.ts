@@ -17,6 +17,14 @@ export class AppSumoMigrationService {
   private static readonly APPSUMO_DISCOUNT_RATE = 50; // 50% off
   private static readonly MIGRATION_WINDOW_DAYS = 5; // 5-day migration window
   private static readonly MINIMUM_PLAN_TIER = PlanTier.BUSINESS_SMALL;
+  
+  // AppSumo-specific Paddle plan IDs (these should be configured in your Paddle dashboard)
+  private static readonly APPSUMO_PADDLE_PLANS = {
+    BUSINESS_MONTHLY: 'pri_01jd8b9xr2q3w4e5t6y7u8i9o0p1',  // 50% off Business Monthly for AppSumo users
+    BUSINESS_ANNUAL: 'pri_01jd8c1xs3r4w5e6t7y8u9i0o1p2',   // 50% off Business Annual for AppSumo users
+    ENTERPRISE_MONTHLY: 'pri_01jd8c2yt4s5w6e7t8y9u0i1o2p3', // 50% off Enterprise Monthly for AppSumo users
+    ENTERPRISE_ANNUAL: 'pri_01jd8c3zu5t6w7e8t9y0u1i2o3p4'   // 50% off Enterprise Annual for AppSumo users
+  };
 
   /**
    * Check AppSumo migration eligibility and status
@@ -563,6 +571,91 @@ export class AppSumoMigrationService {
       return {
         success: false,
         message: error instanceof Error ? error.message : "Migration failed"
+      };
+    }
+  }
+
+  /**
+   * Get AppSumo-specific Paddle plan ID based on selected plan and billing cycle
+   */
+  public static getAppSumoPaddlePlanId(
+    planTier: PlanTier, 
+    billingCycle: 'monthly' | 'annual',
+    teamSize: number = 25
+  ): string | null {
+    // For AppSumo users with 40+ members upgrading to Business plan, allow up to 50 users
+    const isLargeTeam = teamSize > 25 && teamSize <= 50;
+    
+    if (planTier === PlanTier.BUSINESS || planTier === PlanTier.BUSINESS_LARGE) {
+      return billingCycle === 'monthly' 
+        ? this.APPSUMO_PADDLE_PLANS.BUSINESS_MONTHLY
+        : this.APPSUMO_PADDLE_PLANS.BUSINESS_ANNUAL;
+    }
+    
+    if (planTier === PlanTier.ENTERPRISE) {
+      return billingCycle === 'monthly'
+        ? this.APPSUMO_PADDLE_PLANS.ENTERPRISE_MONTHLY
+        : this.APPSUMO_PADDLE_PLANS.ENTERPRISE_ANNUAL;
+    }
+    
+    // No AppSumo plan available for other tiers
+    return null;
+  }
+
+  /**
+   * Check if AppSumo user can upgrade to selected plan with special pricing
+   */
+  public static async canUseAppSumoDiscount(
+    organizationId: string,
+    selectedPlanTier: PlanTier,
+    teamSize: number
+  ): Promise<{
+    canUseDiscount: boolean;
+    paddlePlanId?: string;
+    specialUserLimit?: number;
+    discountRate?: number;
+    reason?: string;
+  }> {
+    try {
+      const appSumoStatus = await this.checkAppSumoEligibility(organizationId);
+      
+      if (!appSumoStatus || !appSumoStatus.isAppSumoUser) {
+        return {
+          canUseDiscount: false,
+          reason: "User is not an AppSumo customer"
+        };
+      }
+
+      if (!appSumoStatus.eligibleForSpecialDiscount) {
+        return {
+          canUseDiscount: false,
+          reason: "AppSumo discount period has expired"
+        };
+      }
+
+      // Check if the selected plan is eligible
+      const eligiblePlans = [PlanTier.BUSINESS_SMALL, PlanTier.BUSINESS_LARGE, PlanTier.ENTERPRISE];
+      if (!eligiblePlans.includes(selectedPlanTier)) {
+        return {
+          canUseDiscount: false,
+          reason: "Selected plan is not eligible for AppSumo discount"
+        };
+      }
+
+      // For AppSumo users, allow up to 50 users for Business plan (normally 25)
+      const specialUserLimit = (selectedPlanTier === PlanTier.BUSINESS_LARGE || selectedPlanTier === PlanTier.BUSINESS) ? 50 : undefined;
+
+      return {
+        canUseDiscount: true,
+        specialUserLimit,
+        discountRate: appSumoStatus.specialOfferDiscount
+      };
+
+    } catch (error) {
+      log_error(error);
+      return {
+        canUseDiscount: false,
+        reason: "Error checking AppSumo eligibility"
       };
     }
   }

@@ -57,5 +57,6 @@
   "license-badge-days": "{{days}}T übrig",
   "license-badge-today": "Letzter Tag!",
   "license-badge-hours": "{{hours}}h übrig",
-  "business-plan-upgrade": "Auf Business-Plan upgraden, um auf diese Funktion zuzugreifen"
+  "business-plan-upgrade": "Auf Business-Plan upgraden, um auf diese Funktion zuzugreifen",
+  "upgrade-plan": "Upgraden Sie Ihren Plan, um auf diese Funktion zuzugreifen"
 }

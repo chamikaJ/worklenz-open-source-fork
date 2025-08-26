@@ -45,6 +45,7 @@ type SettingMenuItems = {
   element: ReactNode;
   adminOnly?: boolean;
   isDangerous?: boolean;
+  businessPlanRequired?: boolean;
 };
 // settings all element items use for sidebar and routes
 export const settingsItems: SettingMenuItems[] = [
@@ -147,6 +148,7 @@ export const settingsItems: SettingMenuItems[] = [
     endpoint: 'ratecard',
     icon: React.createElement(DollarCircleOutlined),
     element: React.createElement(RateCardSettings),
+    businessPlanRequired: true,
   },
   {
     key: 'teams',
@@ -167,6 +169,19 @@ export const settingsItems: SettingMenuItems[] = [
   },
 ];
 
-export const getAccessibleSettings = (isAdmin: boolean) => {
-  return settingsItems.filter(item => !item.adminOnly || isAdmin);
+import { hasBusinessFeatureAccess } from '@/utils/subscription-utils';
+import { ILocalSession } from '@/types/auth/local-session.types';
+
+export const getAccessibleSettings = (isAdmin: boolean, session: ILocalSession | null) => {
+  const hasBusinessAccess = hasBusinessFeatureAccess(session);
+  
+  return settingsItems.filter(item => {
+    // Check admin requirement
+    if (item.adminOnly && !isAdmin) return false;
+    
+    // Check business plan requirement
+    if (item.businessPlanRequired && !hasBusinessAccess) return false;
+    
+    return true;
+  });
 };

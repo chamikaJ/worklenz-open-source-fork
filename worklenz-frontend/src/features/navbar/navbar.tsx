@@ -76,27 +76,23 @@ const Navbar = () => {
   const navlinkItems = useMemo(
     () => {
       const hasBusinessAccess = hasBusinessFeatureAccess(currentSession);
+      const isFreePlan = currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE;
       
       return navRoutesList
         .filter(route => {
-          if (
-            !route.freePlanFeature &&
-            currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE
-          )
-            return false;
           if (route.adminOnly && !isOwnerOrAdmin) return false;
-
           return true;
         })
         .map((route, index) => {
           const isBusinessRoute = route.businessPlanRequired;
-          const shouldDisable = isBusinessRoute && !hasBusinessAccess;
+          const isFreePlanRoute = !route.freePlanFeature;
+          const shouldDisable = (isBusinessRoute && !hasBusinessAccess) || (isFreePlanRoute && isFreePlan);
           
           return {
             key: route.path.split('/').pop() || index,
             disabled: shouldDisable,
             label: shouldDisable ? (
-              <Tooltip title={tCommon('business-plan-upgrade')} placement="bottom">
+              <Tooltip title={isFreePlanRoute && isFreePlan ? tCommon('upgrade-plan') : tCommon('business-plan-upgrade')} placement="bottom">
                 <span style={{ 
                   fontWeight: 600, 
                   opacity: 0.5, 

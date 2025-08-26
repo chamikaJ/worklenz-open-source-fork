@@ -522,7 +522,7 @@ const UpgradePlans = () => {
     }
   };
 
-  const continueWithPaddlePlan = async () => {
+  const continueWithPaddlePlan = async (planType?: 'pro' | 'business' | 'enterprise') => {
     if (teamSize >= 100) {
       message.info('Please contact sales for custom pricing on large teams');
       return;
@@ -536,8 +536,11 @@ const UpgradePlans = () => {
       // Use the global billing frequency and selected plan type
       const isAnnual = billingFrequency === 'annual';
       
+      // Use provided planType or fallback to selectedPlanType
+      const targetPlanType = planType || selectedPlanType;
+      
       // Ensure a plan type is selected
-      if (!selectedPlanType || selectedPlanType === 'free') {
+      if (!targetPlanType || targetPlanType === 'free') {
         setSwitchingToPaddlePlan(false);
         setPaddleError('Please select a paid plan first');
         message.error('Please select a plan first');
@@ -545,7 +548,7 @@ const UpgradePlans = () => {
       }
 
       // Get the correct plan ID based on selected plan type and team size
-      if (selectedPlanType === 'pro') {
+      if (targetPlanType === 'pro') {
         // Use per_user pricing for teams 1-5 if available, otherwise base_plan
         const planData = teamSize <= 5 && pricingData.pro_small ? pricingData.pro_small : pricingData.pro;
         // Use the appropriate Paddle plan ID based on billing frequency
@@ -555,7 +558,7 @@ const UpgradePlans = () => {
         if (!planId) {
           console.warn('No Paddle plan ID found for pro plan', { planData, isAnnual });
         }
-      } else if (selectedPlanType === 'business') {
+      } else if (targetPlanType === 'business') {
         // Use per_user pricing for teams 1-5 if available, otherwise base_plan
         const planData = teamSize <= 5 && pricingData.business_small ? pricingData.business_small : pricingData.business;
         // Use the appropriate Paddle plan ID based on billing frequency
@@ -565,7 +568,7 @@ const UpgradePlans = () => {
         if (!planId) {
           console.warn('No Paddle plan ID found for business plan', { planData, isAnnual });
         }
-      } else if (selectedPlanType === 'enterprise') {
+      } else if (targetPlanType === 'enterprise') {
         // Use the appropriate Paddle plan ID based on billing frequency
         planId = isAnnual ? pricingData.enterprise?.annual_plan_id : pricingData.enterprise?.monthly_plan_id;
           
@@ -578,7 +581,7 @@ const UpgradePlans = () => {
       // Additional safety check for planId
       if (!planId) {
         console.error('Plan ID not found. Plan selection details:', {
-          selectedPlanType,
+          targetPlanType,
           teamSize,
           isAnnual,
           pricingData: {
@@ -592,7 +595,7 @@ const UpgradePlans = () => {
       }
 
       console.log('Plan selection debug:', {
-        selectedPlanType,
+        targetPlanType,
         billingFrequency,
         isAnnual,
         planId,
@@ -606,17 +609,22 @@ const UpgradePlans = () => {
         setSelectedCard(paddlePlans.MONTHLY);
       }
 
+      // Update the selected plan type
+      if (planType) {
+        setSelectedPlanType(planType);
+      }
+
       if (planId) {
         upgradeToPaddlePlan(planId);
       } else {
         setSwitchingToPaddlePlan(false);
-        const errorMsg = `Plan not available: ${selectedPlanType} (${billingFrequency}) for ${teamSize} users. Please try a different configuration or contact support.`;
+        const errorMsg = `Plan not available: ${targetPlanType} (${billingFrequency}) for ${teamSize} users. Please try a different configuration or contact support.`;
         setPaddleError(errorMsg);
         message.error('Selected plan is not available. Please try a different configuration.');
         
         // Log detailed error for debugging
         console.error('Plan selection failed:', {
-          selectedPlanType,
+          targetPlanType,
           billingFrequency,
           teamSize,
           isAnnual,
@@ -679,15 +687,17 @@ const UpgradePlans = () => {
     // For teams 1-5, use per-user pricing from small team data
     if (teamSize <= 5) {
       if (planType === 'pro' && pricingData.pro_small?.pricing_model === 'per_user') {
-        // Use Pro Small Team per-user pricing (annual rate)
-        const perUserAnnualPrice = parseFloat(pricingData.pro_small.annual_price || '0');
-        finalPrice = perUserAnnualPrice * teamSize; // annual price per user * users
-        console.log(`Pro Small Team: $${perUserAnnualPrice}/user/year x ${teamSize} users = ${finalPrice}`);
+        // Pro Small Team: annual_price is monthly rate when paid annually (e.g., 6.99)
+        // So yearly total = monthly rate * 12 * users
+        const perUserMonthlyIfAnnual = parseFloat(pricingData.pro_small.annual_price || '0');
+        finalPrice = perUserMonthlyIfAnnual * 12 * teamSize; // e.g., 6.99 * 12 * 5 = 419.40
+        console.log(`Pro Small Team: $${perUserMonthlyIfAnnual}/month x 12 months x ${teamSize} users = ${finalPrice}`);
       } else if (planType === 'business' && pricingData.business_small?.pricing_model === 'per_user') {
-        // Use Business Small Team per-user pricing (annual rate)
-        const perUserAnnualPrice = parseFloat(pricingData.business_small.annual_price || '0');
-        finalPrice = perUserAnnualPrice * teamSize; // annual price per user * users
-        console.log(`Business Small Team: $${perUserAnnualPrice}/user/year x ${teamSize} users = ${finalPrice}`);
+        // Business Small Team: annual_price is monthly rate when paid annually
+        // So yearly total = monthly rate * 12 * users
+        const perUserMonthlyIfAnnual = parseFloat(pricingData.business_small.annual_price || '0');
+        finalPrice = perUserMonthlyIfAnnual * 12 * teamSize;
+        console.log(`Business Small Team: $${perUserMonthlyIfAnnual}/month x 12 months x ${teamSize} users = ${finalPrice}`);
       } else if (planType === 'enterprise') {
         // Enterprise is always flat rate
         const annualTotal = parseFloat(pricingData.enterprise.annual_total || '0');
@@ -996,17 +1006,6 @@ const UpgradePlans = () => {
                 {renderFeature(t('labelsFilters', 'Labels & Filters'))}
               </div>
 
-              <div style={{ marginTop: 'auto' }}>
-                <Button
-                  type="primary"
-                  block
-                  size="large"
-                  onClick={switchToFreePlan}
-                  loading={switchingToFreePlan}
-                >
-                  {t('pricing-modal:buttons.getStartedFree')}
-                </Button>
-              </div>
             </Card>
           </Col>
         )}
@@ -1046,26 +1045,60 @@ const UpgradePlans = () => {
                   
                   if (useSmallTeamPricing && planData.pricing_model === 'per_user') {
                     // Show per-user price for small teams
-                    const perUserPrice = billingFrequency === 'annual' 
-                      ? planData.annual_price 
-                      : planData.monthly_price;
+                    const perUserMonthlyPrice = parseFloat(planData.monthly_price || '0');
+                    // annual_price is the monthly rate when paid annually (e.g., 6.99/month)
+                    const perUserMonthlyIfAnnual = parseFloat(planData.annual_price || '0');
+                    const perUserYearlyTotal = perUserMonthlyIfAnnual * 12; // e.g., 6.99 * 12 = 83.88
                     const total = billingFrequency === 'annual'
-                      ? calculateAnnualTotal('pro')
+                      ? (perUserYearlyTotal * teamSize).toFixed(2)
                       : calculateMonthlyTotal('pro');
                     
+                                      // For annual billing, show monthly price in big font with yearly total below
+                  if (billingFrequency === 'annual') {
                     return (
                       <>
                         <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
-                          ${perUserPrice}
+                          ${perUserMonthlyIfAnnual}
                         </Typography.Title>
                         <Typography.Text>
-                          per user/{billingFrequency === 'annual' ? 'year' : 'month'}
-                          {billingFrequency === 'annual' && ' (billed annually)'}
+                          /month per user (billed annually)
                         </Typography.Text>
                         <div style={{ marginTop: 8 }}>
-                          <Typography.Text style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                            Total: ${total} for {teamSize} user{teamSize > 1 ? 's' : ''}
+                          <Typography.Text type="secondary" style={{ fontSize: '14px' }}>
+                            ${total}/year total for {teamSize} user{teamSize > 1 ? 's' : ''}
                           </Typography.Text>
+                          <Typography.Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                            (${perUserYearlyTotal.toFixed(2)}/user/year × {teamSize} user{teamSize > 1 ? 's' : ''})
+                          </Typography.Text>
+                        </div>
+                      </>
+                    );
+                  }
+                    
+                    // For monthly billing, show monthly total with yearly projection
+                    const yearlyProjection = (perUserMonthlyPrice * 12 * teamSize).toFixed(2);
+                    return (
+                      <>
+                        <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
+                          ${total}
+                        </Typography.Title>
+                        <Typography.Text>
+                          /month
+                        </Typography.Text>
+                        <div style={{ marginTop: 8 }}>
+                          <Typography.Text type="secondary" style={{ fontSize: '14px' }}>
+                            ${perUserMonthlyPrice}/user × {teamSize} user{teamSize > 1 ? 's' : ''}
+                          </Typography.Text>
+                        </div>
+                        <div style={{ marginTop: 4 }}>
+                          <Tooltip 
+                            title={`$${perUserMonthlyPrice} × 12 months × ${teamSize} seat${teamSize > 1 ? 's' : ''}`}
+                            placement="bottom"
+                          >
+                            <Typography.Text type="secondary" style={{ fontSize: '12px', cursor: 'help' }}>
+                              ${yearlyProjection} if billed yearly
+                            </Typography.Text>
+                          </Tooltip>
                         </div>
                         {isAppSumoUser() && (
                           <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px', marginTop: 4 }}>
@@ -1122,18 +1155,6 @@ const UpgradePlans = () => {
                 {renderFeature(t('projectInsights', 'Project Insights & Reports'))}
               </div>
 
-              <div style={{ marginTop: 'auto' }}>
-                <Button
-                  type="primary"
-                  block
-                  size="large"
-                  onClick={continueWithPaddlePlan}
-                  loading={switchingToPaddlePlan || paddleLoading}
-                  disabled={selectedPlanType !== 'pro'}
-                >
-                  {t('pricing-modal:buttons.choosePlan')}
-                </Button>
-              </div>
             </Card>
           </Col>
         )}
@@ -1172,26 +1193,60 @@ const UpgradePlans = () => {
                 
                 if (useSmallTeamPricing && planData.pricing_model === 'per_user') {
                   // Show per-user price for small teams
-                  const perUserPrice = billingFrequency === 'annual' 
-                    ? planData.annual_price 
-                    : planData.monthly_price;
+                  const perUserMonthlyPrice = parseFloat(planData.monthly_price || '0');
+                  // annual_price is the monthly rate when paid annually
+                  const perUserMonthlyIfAnnual = parseFloat(planData.annual_price || '0');
+                  const perUserYearlyTotal = perUserMonthlyIfAnnual * 12;
                   const total = billingFrequency === 'annual'
-                    ? calculateAnnualTotal('business')
+                    ? (perUserYearlyTotal * teamSize).toFixed(2)
                     : calculateMonthlyTotal('business');
                   
+                  // For annual billing, show monthly price in big font with yearly total below
+                  if (billingFrequency === 'annual') {
+                    return (
+                      <>
+                        <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
+                          ${perUserMonthlyIfAnnual}
+                        </Typography.Title>
+                        <Typography.Text>
+                          /month per user (billed annually)
+                        </Typography.Text>
+                        <div style={{ marginTop: 8 }}>
+                          <Typography.Text type="secondary" style={{ fontSize: '14px' }}>
+                            ${total}/year total for {teamSize} user{teamSize > 1 ? 's' : ''}
+                          </Typography.Text>
+                          <Typography.Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                            (${perUserYearlyTotal.toFixed(2)}/user/year × {teamSize} user{teamSize > 1 ? 's' : ''})
+                          </Typography.Text>
+                        </div>
+                      </>
+                    );
+                  }
+                  
+                  // For monthly billing, show monthly total with yearly projection
+                  const yearlyProjection = (perUserMonthlyPrice * 12 * teamSize).toFixed(2);
                   return (
                     <>
                       <Typography.Title level={1} style={{ fontSize: '36px', margin: 0 }}>
-                        ${perUserPrice}
+                        ${total}
                       </Typography.Title>
                       <Typography.Text>
-                        per user/{billingFrequency === 'annual' ? 'year' : 'month'}
-                        {billingFrequency === 'annual' && ' (billed annually)'}
+                        /month
                       </Typography.Text>
                       <div style={{ marginTop: 8 }}>
-                        <Typography.Text style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                          Total: ${total} for {teamSize} user{teamSize > 1 ? 's' : ''}
+                        <Typography.Text type="secondary" style={{ fontSize: '14px' }}>
+                          ${perUserMonthlyPrice}/user × {teamSize} user{teamSize > 1 ? 's' : ''}
                         </Typography.Text>
+                      </div>
+                      <div style={{ marginTop: 4 }}>
+                        <Tooltip 
+                          title={`$${perUserMonthlyPrice} × 12 months × ${teamSize} seat${teamSize > 1 ? 's' : ''}`}
+                          placement="bottom"
+                        >
+                          <Typography.Text type="secondary" style={{ fontSize: '12px', cursor: 'help' }}>
+                            ${yearlyProjection} if billed yearly
+                          </Typography.Text>
+                        </Tooltip>
                       </div>
                       {isAppSumoUser() && (
                         <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block', fontSize: '12px', marginTop: 4 }}>
@@ -1253,18 +1308,6 @@ const UpgradePlans = () => {
               {renderFeature(t('scheduler', 'Advanced Scheduler'))}
             </div>
 
-            <div style={{ marginTop: 'auto' }}>
-              <Button
-                type="primary"
-                block
-                size="large"
-                onClick={continueWithPaddlePlan}
-                loading={switchingToPaddlePlan || paddleLoading}
-                disabled={selectedPlanType !== 'business'}
-              >
-                {t('pricing-modal:buttons.choosePlan')}
-              </Button>
-            </div>
           </Card>
         </Col>
 
@@ -1346,18 +1389,6 @@ const UpgradePlans = () => {
               {renderFeature(t('prioritySupport', 'Priority Support'))}
             </div>
 
-            <div style={{ marginTop: 'auto' }}>
-              <Button
-                type="primary"
-                block
-                size="large"
-                onClick={continueWithPaddlePlan}
-                loading={switchingToPaddlePlan || paddleLoading}
-                disabled={selectedPlanType !== 'enterprise'}
-              >
-                {t('pricing-modal:buttons.choosePlan')}
-              </Button>
-            </div>
           </Card>
         </Col>
       </Row>
@@ -1367,6 +1398,75 @@ const UpgradePlans = () => {
           <Alert message={paddleError} type="error" showIcon />
         </Row>
       )}
+
+      {/* Single Action Button */}
+      <Row justify="center" style={{ marginTop: 24, marginBottom: 16 }}>
+        <Col xs={24} sm={16} md={12} lg={8}>
+          <Button
+            type="primary"
+            block
+            size="large"
+            onClick={() => {
+              if (selectedPlanType === 'free') {
+                switchToFreePlan();
+              } else if (selectedPlanType === 'pro' || selectedPlanType === 'business' || selectedPlanType === 'enterprise') {
+                continueWithPaddlePlan(selectedPlanType);
+              } else {
+                message.warning('Please select a plan first');
+              }
+            }}
+            loading={switchingToPaddlePlan || paddleLoading || switchingToFreePlan}
+            disabled={!selectedPlanType}
+          >
+            {(() => {
+              if (!selectedPlanType) {
+                return 'Select a Plan';
+              }
+              if (selectedPlanType === 'free') {
+                return t('pricing-modal:buttons.getStartedFree', 'Get Started Free');
+              }
+              return t('pricing-modal:buttons.choosePlan', 'Continue with Selected Plan');
+            })()}
+          </Button>
+          {selectedPlanType && (
+            <Typography.Text 
+              type="secondary" 
+              style={{ display: 'block', textAlign: 'center', marginTop: 8 }}
+            >
+              {(() => {
+                if (selectedPlanType === 'free') {
+                  return 'Switch to Free Plan';
+                } else if (selectedPlanType === 'pro') {
+                  const useSmallTeamPricing = teamSize <= 5;
+                  const planData = useSmallTeamPricing && pricingData.pro_small ? pricingData.pro_small : pricingData.pro;
+                  const total = billingFrequency === 'annual'
+                    ? calculateAnnualTotal('pro')
+                    : calculateMonthlyTotal('pro');
+                  return `Pro Plan - $${total} ${billingFrequency === 'annual' ? '/year' : '/month'} for ${teamSize} user${teamSize > 1 ? 's' : ''}`;
+                } else if (selectedPlanType === 'business') {
+                  const useSmallTeamPricing = teamSize <= 5;
+                  const planData = useSmallTeamPricing && pricingData.business_small ? pricingData.business_small : pricingData.business;
+                  const total = billingFrequency === 'annual'
+                    ? calculateAnnualTotal('business')
+                    : calculateMonthlyTotal('business');
+                  return `Business Plan - $${total} ${billingFrequency === 'annual' ? '/year' : '/month'} for ${teamSize} user${teamSize > 1 ? 's' : ''}`;
+                } else if (selectedPlanType === 'enterprise') {
+                  const total = billingFrequency === 'annual'
+                    ? calculateAnnualTotal('enterprise')
+                    : calculateMonthlyTotal('enterprise');
+                  return `Enterprise Plan - $${total} ${billingFrequency === 'annual' ? '/year' : '/month'}`;
+                }
+                return '';
+              })()}
+              {isAppSumoUser() && selectedPlanType !== 'free' && (
+                <span style={{ color: '#52c41a', fontWeight: 'bold', display: 'block' }}>
+                  50% AppSumo Discount Applied
+                </span>
+              )}
+            </Typography.Text>
+          )}
+        </Col>
+      </Row>
     </div>
   );
 };
