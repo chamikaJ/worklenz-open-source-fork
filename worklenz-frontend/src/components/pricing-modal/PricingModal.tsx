@@ -31,21 +31,19 @@ import {
   StarFilled,
   CrownOutlined,
   TeamOutlined,
-  CalendarOutlined,
   DollarOutlined,
   ShoppingCartOutlined,
-  QuestionCircleOutlined,
   FireOutlined,
   ClockCircleOutlined,
 } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '@/store';
 import { toggleTheme } from '@/features/theme/themeSlice';
 import { usePricingData } from './hooks/usePricingData';
 import CheckoutModal from './CheckoutModal';
 import MobilePricingDrawer from './MobilePricingDrawer';
 import './PricingModal.css';
+import { RootState } from '@/app/store';
 
 // Types and interfaces
 export type PricingModel = 'BASE_PLAN' | 'PER_USER';
