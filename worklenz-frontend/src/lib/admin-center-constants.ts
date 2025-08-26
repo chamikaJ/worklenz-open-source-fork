@@ -12,7 +12,7 @@ const Users = lazy(() => import('../pages/admin-center/users/users'));
 const Teams = lazy(() => import('../pages/admin-center/teams/teams'));
 const Billing = lazy(() => import('../pages/admin-center/billing/billing'));
 const Projects = lazy(() => import('../pages/admin-center/projects/projects'));
-const Settings = lazy(() => import('../pages/admin-center/settings/Settings'));
+const Settings = lazy(() => import('../pages/admin-center/settings/settings'));
 
 // type of a menu item in admin center sidebar
 type AdminCenterMenuItems = {
