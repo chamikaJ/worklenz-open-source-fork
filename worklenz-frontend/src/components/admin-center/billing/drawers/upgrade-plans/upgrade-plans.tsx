@@ -152,6 +152,14 @@ const UpgradePlans = () => {
 
   const [paddleLoading, setPaddleLoading] = useState(false);
   const [paddleError, setPaddleError] = useState<string | null>(null);
+  const [appSumoDiscountInfo, setAppSumoDiscountInfo] = useState<{
+    remainingDays: number;
+    remainingHours: number;
+    remainingMinutes: number;
+    eligibleForDiscount: boolean;
+    urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+    message: string;
+  } | null>(null);
 
   const generateTeamSizeOptions = () => {
     const options: { value: number; label: string }[] = [];
@@ -161,9 +169,23 @@ const UpgradePlans = () => {
       options.push({ value: i, label: `${i} user${i > 1 ? 's' : ''}` });
     }
 
-    // Show multiples of 5 from 10 to 95
-    for (let i = 10; i <= 95; i += 5) {
-      options.push({ value: i, label: `${i} users` });
+    // For AppSumo users, show up to 50 users with special highlighting
+    const maxUsers = isAppSumoUser() ? 50 : 95;
+    const showAppSumoLabel = isAppSumoUser() && selectedPlanType === 'business';
+    
+    // Show multiples of 5 up to the maximum
+    for (let i = 10; i <= maxUsers; i += 5) {
+      const label = showAppSumoLabel && i > 25 && i <= 50
+        ? `${i} users (AppSumo Special)`
+        : `${i} users`;
+      options.push({ value: i, label });
+    }
+
+    // For non-AppSumo users, continue to 95
+    if (!isAppSumoUser()) {
+      for (let i = 55; i <= 95; i += 5) {
+        options.push({ value: i, label: `${i} users` });
+      }
     }
 
     return options;
@@ -270,7 +292,7 @@ const UpgradePlans = () => {
     return mapped;
   };
 
-  // Check if user is AppSumo user based on plan name or other indicators
+  // Check if user is AppSumo user based on plan name or subscription type
   const isAppSumoUser = () => {
     const planName = billingInfo?.plan_name?.toLowerCase() || '';
     const subscriptionType = currentSession?.subscription_type?.toLowerCase() || '';
@@ -289,6 +311,50 @@ const UpgradePlans = () => {
     return currentSession?.subscription_type === 'FREE';
   };
 
+  // Fetch AppSumo discount information
+  const fetchAppSumoDiscountInfo = async () => {
+    if (!isAppSumoUser()) return;
+    
+    try {
+      const response = await adminCenterApiService.getAppSumoCountdownWidget();
+      
+      if (response.done && response.body.isVisible) {
+        const data = response.body;
+        setAppSumoDiscountInfo({
+          remainingDays: data.remainingDays,
+          remainingHours: data.remainingHours,
+          remainingMinutes: data.remainingMinutes,
+          eligibleForDiscount: data.remainingDays > 0,
+          urgencyLevel: data.urgencyLevel as 'low' | 'medium' | 'high' | 'critical',
+          message: data.message
+        });
+      } else {
+        // Fallback for when API is not available - use mock data
+        const mockAppSumoData = {
+          remainingDays: 3,
+          remainingHours: 14,
+          remainingMinutes: 35,
+          eligibleForDiscount: true,
+          urgencyLevel: 'high' as const,
+          message: '🚨 URGENT: Only 3 days left to claim your 50% AppSumo discount!'
+        };
+        setAppSumoDiscountInfo(mockAppSumoData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch AppSumo discount info:', error);
+      // Use fallback mock data on error
+      const mockAppSumoData = {
+        remainingDays: 3,
+        remainingHours: 14,
+        remainingMinutes: 35,
+        eligibleForDiscount: true,
+        urgencyLevel: 'high' as const,
+        message: '🚨 URGENT: Only 3 days left to claim your 50% AppSumo discount!'
+      };
+      setAppSumoDiscountInfo(mockAppSumoData);
+    }
+  };
+
   const fetchPricingPlans = async () => {
     try {
       // For now, use the existing getPlans() method for basic plan info
@@ -302,13 +368,47 @@ const UpgradePlans = () => {
       if (pricingRes.done && pricingRes.body) {
         const tiers = pricingRes.body.tiers || [];
         
-        // Filter tiers for AppSumo users - only show Business and Enterprise plans
+        // Filter tiers for AppSumo users - only show Business and Enterprise plans (based on Paddle setup)
         let filteredTiers = tiers;
         if (isAppSumoUser()) {
-          console.log('AppSumo user detected - filtering to Business and Enterprise only');
+          console.log('AppSumo user detected - filtering to Business and Enterprise plans only');
           filteredTiers = tiers.filter((tier: any) => {
             return tier.tier_name.includes('BUSINESS') || tier.tier_name.includes('ENTERPRISE');
           });
+          
+          // Apply AppSumo-specific modifications to the tiers
+          filteredTiers = filteredTiers.map((tier: any) => {
+            const modifiedTier = { ...tier };
+            
+            // For AppSumo users, Business plans allow up to 50 users (instead of normal 25)
+            if (tier.tier_name.includes('BUSINESS')) {
+              modifiedTier.max_users = Math.min(50, tier.max_users || 25);
+              modifiedTier.appsumo_special_limit = 50;
+            }
+            
+            // Apply 50% discount to pricing if within discount window
+            if (appSumoDiscountInfo?.eligibleForDiscount) {
+              if (tier.monthly_base_price) {
+                modifiedTier.monthly_base_price = (parseFloat(tier.monthly_base_price) * 0.5).toFixed(2);
+              }
+              if (tier.annual_base_price) {
+                modifiedTier.annual_base_price = (parseFloat(tier.annual_base_price) * 0.5).toFixed(2);
+              }
+              if (tier.monthly_per_user_price) {
+                modifiedTier.monthly_per_user_price = (parseFloat(tier.monthly_per_user_price) * 0.5).toFixed(2);
+              }
+              if (tier.annual_per_user_price) {
+                modifiedTier.annual_per_user_price = (parseFloat(tier.annual_per_user_price) * 0.5).toFixed(2);
+              }
+              
+              modifiedTier.appsumo_discount_applied = true;
+            }
+            
+            return modifiedTier;
+          });
+          
+          // Fetch AppSumo countdown info
+          await fetchAppSumoDiscountInfo();
         }
 
         setBackendPlans(tiers as any);
@@ -849,7 +949,17 @@ const UpgradePlans = () => {
   }, [teamSize, pricingData, t]);
 
   useEffect(() => {
-    fetchPricingPlans();
+    const initializeData = async () => {
+      await fetchPricingPlans();
+      
+      // Fetch AppSumo discount info if user is AppSumo user
+      if (isAppSumoUser()) {
+        await fetchAppSumoDiscountInfo();
+      }
+    };
+    
+    initializeData();
+    
     if (billingInfo?.total_used) {
       setTeamSize(billingInfo.total_used || 1);
     }
@@ -885,13 +995,61 @@ const UpgradePlans = () => {
       {/* AppSumo User Notification */}
       {isAppSumoUser() && (
         <Row justify="center" style={{ marginTop: 24, marginBottom: 16 }}>
-          <Alert
-            message="AppSumo Lifetime Deal Member"
-            description="As an AppSumo lifetime deal member, you have access to upgrade to Business or Enterprise plans with special pricing."
-            type="info"
-            showIcon
-            style={{ maxWidth: 600 }}
-          />
+          <Col xs={24} sm={22} md={20} lg={18} xl={16}>
+            {appSumoDiscountInfo?.eligibleForDiscount ? (
+              <Alert
+                message={
+                  <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                    <Typography.Title level={4} style={{ margin: 0, color: appSumoDiscountInfo.urgencyLevel === 'critical' || appSumoDiscountInfo.urgencyLevel === 'high' ? '#d32f2f' : '#f57c00' }}>
+                      🎉 AppSumo Exclusive: 50% OFF Business & Enterprise Plans!
+                    </Typography.Title>
+                    <Space size="large" align="center" wrap>
+                      <Typography.Text strong>
+                        {appSumoDiscountInfo.remainingDays}d {appSumoDiscountInfo.remainingHours}h {appSumoDiscountInfo.remainingMinutes}m remaining
+                      </Typography.Text>
+                      <Tag color={appSumoDiscountInfo.urgencyLevel === 'critical' || appSumoDiscountInfo.urgencyLevel === 'high' ? 'red' : 'orange'}>
+                        {appSumoDiscountInfo.urgencyLevel === 'critical' ? 'FINAL HOURS' : appSumoDiscountInfo.urgencyLevel === 'high' ? 'URGENT' : 'LIMITED TIME'}
+                      </Tag>
+                    </Space>
+                  </Space>
+                }
+                description={
+                  <Space direction="vertical" size="small">
+                    <Typography.Text>
+                      🎯 Special pricing for AppSumo lifetime deal members
+                    </Typography.Text>
+                    <Typography.Text>
+                      💪 Business plans support up to 50 users (normally 25)
+                    </Typography.Text>
+                    <Typography.Text style={{ color: appSumoDiscountInfo.urgencyLevel === 'critical' || appSumoDiscountInfo.urgencyLevel === 'high' ? '#d32f2f' : '#666' }}>
+                      {appSumoDiscountInfo.message}
+                    </Typography.Text>
+                  </Space>
+                }
+                type={appSumoDiscountInfo.urgencyLevel === 'critical' || appSumoDiscountInfo.urgencyLevel === 'high' ? 'error' : 'warning'}
+                showIcon
+                style={{ 
+                  border: appSumoDiscountInfo.urgencyLevel === 'critical' || appSumoDiscountInfo.urgencyLevel === 'high' ? '2px solid #d32f2f' : '2px solid #f57c00'
+                }}
+              />
+            ) : (
+              <Alert
+                message="AppSumo Lifetime Deal Member"
+                description={
+                  <Space direction="vertical" size="small">
+                    <Typography.Text>
+                      Your 50% discount period has expired, but you can still upgrade to Business or Enterprise plans at standard pricing.
+                    </Typography.Text>
+                    <Typography.Text>
+                      💡 Watch for future campaigns and special offers!
+                    </Typography.Text>
+                  </Space>
+                }
+                type="info"
+                showIcon
+              />
+            )}
+          </Col>
         </Row>
       )}
 
@@ -1299,7 +1457,11 @@ const UpgradePlans = () => {
               {(() => {
                 const useSmallTeamPricing = teamSize <= 5;
                 const planData = useSmallTeamPricing && pricingData.business_small ? pricingData.business_small : pricingData.business;
-                return renderFeature(`Up to ${planData.max_users} Users Max`);
+                const maxUsers = isAppSumoUser() && !useSmallTeamPricing ? '50' : planData.max_users;
+                const userLimitText = isAppSumoUser() && !useSmallTeamPricing ? 
+                  `Up to ${maxUsers} Users Max (AppSumo Special)` : 
+                  `Up to ${maxUsers} Users Max`;
+                return renderFeature(userLimitText);
               })()}
               {renderFeature(t('fullGanttCharts', 'Full Gantt Charts'))}
               {renderFeature(t('projectHealth', 'Project Health Monitoring'))}

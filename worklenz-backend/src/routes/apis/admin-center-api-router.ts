@@ -61,4 +61,7 @@ adminCenterApiRouter.get("/billing/free-plan", teamOwnerOrAdminValidator, safeCo
 
 adminCenterApiRouter.post("/billing/redeem", teamOwnerOrAdminValidator, safeControllerFunction(AdminCenterController.redeem));
 
+// AppSumo endpoints
+adminCenterApiRouter.get("/appsumo/countdown-widget", teamOwnerOrAdminValidator, safeControllerFunction(AdminCenterController.getAppSumoCountdownWidget));
+
 export default adminCenterApiRouter;

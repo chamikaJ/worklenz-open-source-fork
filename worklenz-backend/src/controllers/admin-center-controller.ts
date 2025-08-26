@@ -22,6 +22,7 @@ import {
   getTeamMemberCount,
   getUsedStorage,
 } from "../shared/paddle-utils";
+import { AppSumoService } from "../services/appsumo-service";
 import {
   addModifier,
   cancelSubscription,
@@ -1327,5 +1328,40 @@ export default class AdminCenterController extends WorklenzControllerBase {
     }
 
     return res.status(200).send(new ServerResponse(true, countriesWithStates));
+  }
+
+  /**
+   * Get AppSumo countdown widget data
+   * GET /api/admin-center/appsumo/countdown-widget
+   */
+  @HandleExceptions()
+  public static async getAppSumoCountdownWidget(req: IWorkLenzRequest, res: IWorkLenzResponse): Promise<IWorkLenzResponse> {
+    const organizationId = req.user?.organization_team_id;
+    
+    if (!organizationId) {
+      return res.status(400).send(new ServerResponse(false, null, "Organization ID is required"));
+    }
+
+    try {
+      const countdownData = await AppSumoService.getCountdownWidget(organizationId);
+      
+      if (!countdownData) {
+        return res.status(200).send(new ServerResponse(true, {
+          isVisible: false,
+          remainingDays: 0,
+          remainingHours: 0,
+          remainingMinutes: 0,
+          urgencyLevel: 'normal',
+          message: 'Not an AppSumo user or discount period expired',
+          ctaText: 'View Plans',
+          ctaUrl: '/settings/billing'
+        }));
+      }
+
+      return res.status(200).send(new ServerResponse(true, countdownData));
+    } catch (error) {
+      log_error(error);
+      return res.status(500).send(new ServerResponse(false, null, "Failed to get AppSumo countdown widget data"));
+    }
   }
 }

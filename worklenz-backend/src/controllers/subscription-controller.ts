@@ -8,6 +8,7 @@ import { PlanRecommendationService } from "../services/plan-recommendation-servi
 import { UserAnalyticsService } from "../services/user-analytics-service";
 import { CustomPlanMappingService } from "../services/custom-plan-mapping-service";
 import { MigrationCostBenefitService } from "../services/migration-cost-benefit-service";
+import { AppSumoService } from "../services/appsumo-service";
 
 import {
   PlanTier,
@@ -118,11 +119,12 @@ export default class SubscriptionController extends WorklenzControllerBase {
       }
 
       // Apply discounts
-      const { finalPrice, appliedDiscounts } = await this.calculateFinalPricing(
+      const { finalPrice, appliedDiscounts, isAppSumoDiscount, specialUserLimit } = await this.calculateFinalPricing(
         planDetails,
         organizationId,
         discountCode,
-        preserveGrandfathering
+        preserveGrandfathering,
+        userCount
       );
 
       // Create subscription (integrate with Paddle here)
@@ -134,7 +136,10 @@ export default class SubscriptionController extends WorklenzControllerBase {
         billingCycle,
         paymentMethodId,
         appliedDiscounts,
-        migrationContext
+        migrationContext,
+        teamSize: userCount,
+        isAppSumoDiscount,
+        specialUserLimit
       });
 
       if (!subscriptionResult.success) {
@@ -161,7 +166,10 @@ export default class SubscriptionController extends WorklenzControllerBase {
         appliedDiscounts,
         migrationContext,
         nextSteps: this.getSubscriptionNextSteps(planId, migrationContext),
-        confirmationEmail: true
+        confirmationEmail: true,
+        isAppSumoDiscount,
+        specialUserLimit,
+        paddlePlanId: subscriptionResult.paddlePlanId
       };
 
       return res.status(201).send(new ServerResponse(true, response, "Subscription created successfully"));
@@ -607,12 +615,44 @@ export default class SubscriptionController extends WorklenzControllerBase {
     planDetails: any,
     organizationId: string,
     discountCode?: string,
-    preserveGrandfathering?: boolean
-  ): Promise<{ finalPrice: number; appliedDiscounts: any[] }> {
-    let finalPrice = planDetails.recurring_price;
+    preserveGrandfathering?: boolean,
+    teamSize?: number
+  ): Promise<{ finalPrice: number; appliedDiscounts: any[]; isAppSumoDiscount?: boolean; specialUserLimit?: number }> {
+    let finalPrice = parseFloat(planDetails.recurring_price);
     const appliedDiscounts = [];
+    let isAppSumoDiscount = false;
+    let specialUserLimit;
 
-    // Apply organization-specific discounts
+    // Check for AppSumo discount first (highest priority)
+    const appSumoDiscount = await AppSumoService.applyAppSumoDiscount(
+      organizationId,
+      finalPrice,
+      planDetails.tier || planDetails.key
+    );
+    
+    if (appSumoDiscount.discountApplied) {
+      finalPrice = appSumoDiscount.finalPrice;
+      isAppSumoDiscount = true;
+      specialUserLimit = appSumoDiscount.specialUserLimit;
+      
+      appliedDiscounts.push({
+        code: 'APPSUMO_50_SPECIAL',
+        type: 'percentage',
+        value: 50,
+        description: 'AppSumo Exclusive 50% Discount',
+        conditions: [
+          'AppSumo customer exclusive',
+          'Limited time promotional offer',
+          'Business or Enterprise plan required'
+        ],
+        appliedAmount: appSumoDiscount.discountAmount
+      });
+      
+      // Return early - AppSumo discount overrides other discounts
+      return { finalPrice, appliedDiscounts, isAppSumoDiscount, specialUserLimit };
+    }
+
+    // Apply organization-specific discounts only if no AppSumo discount applied
     const userAnalytics = await PlanRecommendationService.generateRecommendations(organizationId);
     const availableDiscounts = userAnalytics.userAnalytics.migrationEligibility.discounts;
 
@@ -628,8 +668,8 @@ export default class SubscriptionController extends WorklenzControllerBase {
       }
     }
 
-    // Apply grandfathered pricing if applicable
-    if (preserveGrandfathering && userAnalytics.userAnalytics.customPlanDetails) {
+    // Apply grandfathered pricing if applicable and no other discounts applied
+    if (preserveGrandfathering && userAnalytics.userAnalytics.customPlanDetails && appliedDiscounts.length === 0) {
       const grandfatheredDiscount = await CustomPlanMappingService.generateGrandfatheredDiscount(
         organizationId,
         planDetails.key as PlanTier
@@ -641,18 +681,45 @@ export default class SubscriptionController extends WorklenzControllerBase {
       }
     }
 
-    return { finalPrice, appliedDiscounts };
+    return { finalPrice, appliedDiscounts, isAppSumoDiscount, specialUserLimit };
   }
 
-  private static async createPaddleSubscription(params: any): Promise<{ success: boolean; subscriptionId?: string; message: string }> {
-    // This would integrate with Paddle API
-    // For now, return a mock success response
-    return {
-      success: true,
-      subscriptionId: `paddle_sub_${Date.now()}`,
-      message: "Subscription created successfully in Paddle"
-    };
+  private static async createPaddleSubscription(params: any): Promise<{ success: boolean; subscriptionId?: string; message: string; paddlePlanId?: number }> {
+    try {
+      let paddlePlanId = params.planDetails.paddle_id; // Default paddle plan ID
+      let subscriptionMessage = "Subscription created successfully in Paddle";
+      
+      // Check if this is an AppSumo user and should use special Paddle plans
+      if (params.organizationId && params.isAppSumoDiscount) {
+        const appSumoPaddlePlan = AppSumoService.getAppSumoPaddlePlanId(
+          params.planDetails.tier || params.planDetails.key, 
+          params.billingCycle
+        );
+        
+        if (appSumoPaddlePlan) {
+          paddlePlanId = appSumoPaddlePlan;
+          subscriptionMessage = `AppSumo subscription created with 50% discount - Plan ID: ${appSumoPaddlePlan}`;
+        }
+      }
+      
+      // Here you would make the actual Paddle API call with the correct plan ID
+      // For now, return a mock success response with the plan ID used
+      return {
+        success: true,
+        subscriptionId: `paddle_sub_${Date.now()}`,
+        message: subscriptionMessage,
+        paddlePlanId: paddlePlanId
+      };
+      
+    } catch (error) {
+      log_error(error);
+      return {
+        success: false,
+        message: "Failed to create Paddle subscription"
+      };
+    }
   }
+  
 
   private static async recordSubscription(params: any): Promise<void> {
     const query = `
