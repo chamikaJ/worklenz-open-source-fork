@@ -34,8 +34,11 @@ export {
   Timeline,
   Statistic,
   Progress,
-  Tooltip
-} from "antd";
+  Tooltip,
+  Image,
+  Popconfirm,
+  List,
+} from "antd/es";
 
 // Icons
 export {
@@ -68,5 +71,5 @@ export {
   LockOutlined,
   SearchOutlined,
   CalendarOutlined,
-  ShareAltOutlined
+  ShareAltOutlined,
 } from "@ant-design/icons";

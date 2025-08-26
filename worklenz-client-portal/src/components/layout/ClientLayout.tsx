@@ -26,6 +26,7 @@ import type { RootState } from '@/store';
 import { useTranslation } from 'react-i18next';
 import ClientPortalSidebar from './ClientPortalSidebar';
 import { useResponsive } from '@/hooks/useResponsive';
+import NotificationCenter from '../NotificationCenter';
 // import { useGetSettingsQuery } from '@/store/api';
 
 const { Header, Sider, Content } = Layout;
@@ -250,35 +251,7 @@ const ClientLayout: React.FC = () => {
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 20 }}>
-            <Dropdown
-              menu={{ items: notificationMenuItems }}
-              placement="bottomRight"
-              trigger={['click']}
-            >
-              <Badge count={notifications.unreadCount} size="small" offset={[-2, 2]}>
-                <Button
-                  type="text"
-                  icon={<BellOutlined />}
-                  style={{ 
-                    fontSize: '18px',
-                    width: 44,
-                    height: 44,
-                    borderRadius: '10px',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  onClick={() => dispatch(toggleNotificationPanel())}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = token.colorBgTextHover;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                  }}
-                />
-              </Badge>
-            </Dropdown>
+            <NotificationCenter />
             
             <Dropdown
               menu={{ items: userMenuItems }}
