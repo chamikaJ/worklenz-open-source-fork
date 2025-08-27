@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Col, ConfigProvider, Flex, Menu, Tooltip } from '@/shared/antd-imports';
+import { Col, ConfigProvider, Flex, Menu, Tooltip, Button } from '@/shared/antd-imports';
 import { CrownOutlined } from '@ant-design/icons';
 import { createPortal } from 'react-dom';
 
@@ -25,11 +25,16 @@ import logger from '@/utils/errorLogger';
 import TimerButton from './timers/TimerButton';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
 import { hasBusinessFeatureAccess } from '@/utils/subscription-utils';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
+import { toggleUpgradeModal } from '@/features/admin-center/admin-center.slice';
 
 const Navbar = () => {
+  const dispatch = useAppDispatch();
   const [current, setCurrent] = useState<string>('home');
   const currentSession = useAuthService().getCurrentSession();
   const [daysUntilExpiry, setDaysUntilExpiry] = useState<number | null>(null);
+
+
 
   const location = useLocation();
   const { isDesktop, isMobile, isTablet } = useResponsive();
@@ -73,11 +78,11 @@ const Navbar = () => {
     }
   }, [currentSession?.trial_expire_date]);
 
-  const navlinkItems = useMemo(
+    const navlinkItems = useMemo(
     () => {
       const hasBusinessAccess = hasBusinessFeatureAccess(currentSession);
       const isFreePlan = currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE;
-      
+
       return navRoutesList
         .filter(route => {
           if (route.adminOnly && !isOwnerOrAdmin) return false;
@@ -87,13 +92,20 @@ const Navbar = () => {
           const isBusinessRoute = route.businessPlanRequired;
           const isFreePlanRoute = !route.freePlanFeature;
           const shouldDisable = (isBusinessRoute && !hasBusinessAccess) || (isFreePlanRoute && isFreePlan);
-          
+
           return {
-            key: route.path.split('/').pop() || index,
-            disabled: shouldDisable,
+            key: route.path.split('/').pop() || route.name,
+            disabled: false, // Don't disable the menu item so click events work
             label: shouldDisable ? (
               <Tooltip title={isFreePlanRoute && isFreePlan ? tCommon('upgrade-plan') : tCommon('business-plan-upgrade')} placement="bottom">
-                <span className="disabled-navlink disabled-navlink-with-crown">
+                <span
+                  className="disabled-navlink disabled-navlink-with-crown"
+                  style={{
+                    cursor: 'pointer',
+                    color: '#8c8c8c',
+                    opacity: 0.6,
+                  }}
+                >
                   {t(route.name)}
                   <CrownOutlined style={{ fontSize: '14px', color: '#faad14' }} />
                 </span>
@@ -106,7 +118,7 @@ const Navbar = () => {
           };
         });
     },
-    [navRoutesList, t, isOwnerOrAdmin, currentSession]
+    [navRoutesList, t, isOwnerOrAdmin, currentSession, tCommon, dispatch]
   );
 
   useEffect(() => {
@@ -157,6 +169,26 @@ const Navbar = () => {
                 border: 'none',
               }}
               items={navlinkItems}
+              onClick={({ key }) => {
+                // Handle clicks on disabled items to open upgrade modal
+                const hasBusinessAccess = hasBusinessFeatureAccess(currentSession);
+                const isFreePlan = currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE;
+
+                const clickedRoute = navRoutesList.find(r => {
+                  const routeKey = r.path.split('/').pop() || r.name;
+                  return routeKey === key || r.name === key;
+                });
+
+                if (clickedRoute) {
+                  const isBusinessRoute = clickedRoute.businessPlanRequired;
+                  const isFreePlanRoute = !clickedRoute.freePlanFeature;
+                  const shouldOpenModal = (isBusinessRoute && !hasBusinessAccess) || (isFreePlanRoute && isFreePlan);
+
+                  if (shouldOpenModal) {
+                    dispatch(toggleUpgradeModal());
+                  }
+                }
+              }}
             />
           )}
 
@@ -197,6 +229,8 @@ const Navbar = () => {
           </Flex>
         </Flex>
       </Flex>
+
+
 
       {isOwnerOrAdmin && createPortal(<InviteTeamMembers />, document.body, 'invite-team-members')}
       {createPortal(<NotificationDrawer />, document.body, 'notification-drawer')}

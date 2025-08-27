@@ -16,6 +16,9 @@ import { CrownOutlined } from '@ant-design/icons';
 
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
+import { toggleUpgradeModal } from '@/features/admin-center/admin-center.slice';
+import { hasBusinessFeatureAccess } from '@/utils/subscription-utils';
+import { hasFinanceViewPermission } from '@/utils/finance-permissions';
 import { getProject, setProjectId, setProjectView } from '@/features/project/project.slice';
 import { fetchStatuses, resetStatuses } from '@/features/taskAttributes/taskStatusSlice';
 import { projectsApiService } from '@/api/projects/projects.api.service';
@@ -248,18 +251,22 @@ const ProjectView = React.memo(() => {
     [projectId, activeTab, navigate]
   );
 
-  // Optimized tab change handler
+    // Optimized tab change handler
   const handleTabChange = useCallback(
     (key: string) => {
       // Find the tab item to check if it's disabled
       const filteredTabItems = getFilteredTabItems(currentSession, selectedProject);
       const tabItem = filteredTabItems.find(item => item.key === key);
-      
-      // Don't allow navigation to disabled tabs
-      if (tabItem?.disabled) {
+
+      if (!tabItem) {
         return;
       }
-      
+
+      // If tab is disabled, open upgrade modal instead of navigating
+      if (tabItem?.disabled) {
+        dispatch(toggleUpgradeModal());
+        return;
+      }
       setActiveTab(key);
       dispatch(setProjectView(key === 'board' ? 'kanban' : 'list'));
 
@@ -286,23 +293,33 @@ const ProjectView = React.memo(() => {
     }
 
     const filteredTabItems = getFilteredTabItems(currentSession, selectedProject);
-    const menuItems = filteredTabItems.map(item => ({
-      key: item.key,
+
+    const menuItems = filteredTabItems.map(item => {
+      return {
+        key: item.key,
       disabled: item.disabled,
-      label: (
-        <Tooltip 
-          title={item.disabled ? item.disabledReason : undefined}
-          placement="bottom"
-        >
-          <Flex 
-            align="center" 
-            gap={6} 
-            style={{ 
-              color: 'inherit',
-              opacity: item.disabled ? 0.5 : 1,
-              cursor: item.disabled ? 'not-allowed' : 'pointer'
-            }}
-          >
+                  label: (
+              <Tooltip
+                title={item.disabled ? item.disabledReason : undefined}
+                placement="bottom"
+              >
+                <Flex
+                  align="center"
+                  gap={6}
+                  style={{
+                    color: item.disabled ? '#8c8c8c' : 'inherit',
+                    opacity: item.disabled ? 0.6 : 1,
+                    cursor: item.disabled ? 'pointer' : 'pointer'
+                  }}
+                  onClick={(e) => {
+                    // Fallback: Direct click handler for disabled tabs
+                    if (item.disabled) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      dispatch(toggleUpgradeModal());
+                    }
+                  }}
+                >
             <span style={{ fontWeight: 500, fontSize: '13px' }}>{item.label}</span>
             {item.disabled && <CrownOutlined style={{ fontSize: '14px', color: '#faad14' }} />}
             {(item.key === 'tasks-list' || item.key === 'board') && !item.disabled && (
@@ -352,7 +369,8 @@ const ProjectView = React.memo(() => {
         </Tooltip>
       ),
       children: item.element,
-    }));
+    };
+    });
 
     return menuItems;
   }, [pinnedTab, pinToDefaultTab, t, translationsReady, currentSession, selectedProject]);
@@ -409,6 +427,10 @@ const ProjectView = React.memo(() => {
         className="project-view-tabs"
         activeKey={activeTab}
         onChange={handleTabChange}
+        onTabClick={(key, e) => {
+          // Ant Design sometimes calls onTabClick even for disabled tabs
+          handleTabChange(key);
+        }}
         items={tabMenuItems}
         destroyOnHidden={true}
         animated={{
