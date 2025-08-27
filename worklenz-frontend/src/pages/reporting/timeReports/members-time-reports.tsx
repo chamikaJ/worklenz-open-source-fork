@@ -1,7 +1,7 @@
 import { Card, Flex } from 'antd';
 import MembersTimeSheet, {
   MembersTimeSheetRef,
-} from '@/pages/reporting/time-reports/members-time-sheet/members-time-sheet';
+} from '@/components/reporting/time-reports/sheets/MembersTimeSheet';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDoumentTItle';
 import { useRef, useState } from 'react';

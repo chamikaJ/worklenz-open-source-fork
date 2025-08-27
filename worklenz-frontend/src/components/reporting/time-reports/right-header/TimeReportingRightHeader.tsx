@@ -6,7 +6,7 @@ import TimeWiseFilter from '@/components/reporting/time-wise-filter';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { setArchived } from '@/features/reporting/time-reports/time-reports-overview.slice';
-import CustomPageHeader from '@/pages/reporting/page-header/custom-page-header';
+import CustomPageHeader from '@/components/reporting/common/CustomPageHeader';
 
 interface headerState {
   title: string;

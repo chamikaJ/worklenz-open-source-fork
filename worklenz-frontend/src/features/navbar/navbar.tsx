@@ -93,15 +93,7 @@ const Navbar = () => {
             disabled: shouldDisable,
             label: shouldDisable ? (
               <Tooltip title={isFreePlanRoute && isFreePlan ? tCommon('upgrade-plan') : tCommon('business-plan-upgrade')} placement="bottom">
-                <span style={{ 
-                  fontWeight: 600, 
-                  opacity: 0.5, 
-                  cursor: 'not-allowed',
-                  color: 'inherit',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
+                <span className="disabled-navlink disabled-navlink-with-crown">
                   {t(route.name)}
                   <CrownOutlined style={{ fontSize: '14px', color: '#faad14' }} />
                 </span>

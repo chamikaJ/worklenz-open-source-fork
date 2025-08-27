@@ -2,7 +2,7 @@ import { Card, Flex, Segmented } from '@/shared/antd-imports';
 import TimeReportPageHeader from '@/components/reporting/time-reports/page-header/TimeReportPageHeader';
 import EstimatedVsActualTimeSheet, {
   EstimatedVsActualTimeSheetRef,
-} from '@/pages/reporting/time-reports/estimated-vs-actual-time-sheet/estimated-vs-actual-time-sheet';
+} from '@/components/reporting/time-reports/sheets/EstimatedVsActualTimeSheet';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDoumentTItle';
 import TimeReportingRightHeader from '@/components/reporting/time-reports/right-header/TimeReportingRightHeader';

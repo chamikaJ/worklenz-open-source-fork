@@ -16,7 +16,7 @@ import { useAppSelector } from '@/hooks/useAppSelector';
 import { useTranslation } from 'react-i18next';
 import CustomSearchbar from '@components/CustomSearchbar';
 import { useDocumentTitle } from '@/hooks/useDoumentTItle';
-import CustomPageHeader from '../page-header/custom-page-header';
+import CustomPageHeader from '@/components/reporting/common/CustomPageHeader';
 import {
   fetchMembersData,
   setArchived,

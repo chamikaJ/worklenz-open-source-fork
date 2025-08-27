@@ -2,7 +2,7 @@ import { Button, Card, Checkbox, Dropdown, Flex, Space, Typography } from '@/sha
 import { useMemo, useCallback, memo, useEffect } from 'react';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
 import { evt_reporting_projects_overview } from '@/shared/worklenz-analytics-events';
-import CustomPageHeader from '@/pages/reporting/page-header/custom-page-header';
+import CustomPageHeader from '@/components/reporting/common/CustomPageHeader';
 import { DownOutlined } from '@/shared/antd-imports';
 import ProjectReportsTable from './projects-reports-table/projects-reports-table';
 import ProjectsReportsFilters from './projects-reports-filters/project-reports-filters';

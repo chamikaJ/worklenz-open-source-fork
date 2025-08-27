@@ -2,7 +2,7 @@ import { Card, Flex } from '@/shared/antd-imports';
 import TimeReportPageHeader from '@/components/reporting/time-reports/page-header/TimeReportPageHeader';
 import ProjectTimeSheetChart, {
   ProjectTimeSheetChartRef,
-} from '@/pages/reporting/time-reports/project-time-sheet/project-time-sheet-chart';
+} from '@/components/reporting/time-reports/sheets/ProjectTimeSheetChart';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDoumentTItle';
 import TimeReportingRightHeader from '@/components/reporting/time-reports/right-header/TimeReportingRightHeader';

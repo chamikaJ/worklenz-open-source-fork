@@ -1,6 +1,6 @@
 import { Tag } from '@/shared/antd-imports';
 import React from 'react';
-import { colors } from '../../../../../../styles/colors';
+import { colors } from '@/styles/colors';
 
 const ProjectTeamCell = ({ team }: { team: string }) => {
   return (
