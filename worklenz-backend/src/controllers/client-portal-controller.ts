@@ -8,6 +8,7 @@ import { IEmailTemplateType } from "../interfaces/email-template-type";
 import { getBaseUrl, getClientPortalBaseUrl } from "../cron_jobs/helpers";
 import { uploadBase64, getClientPortalLogoKey } from "../shared/storage";
 import { log_error } from "../shared/utils";
+import { IO } from "../shared/io";
 import { IWorkLenzRequest } from "../interfaces/worklenz-request";
 import { IWorkLenzResponse } from "../interfaces/worklenz-response";
 import crypto from "crypto";
@@ -458,6 +459,24 @@ class ClientPortalController {
       }
 
       const updatedRequest = result.rows[0];
+
+      // Emit socket event for request update
+      try {
+        const io = IO.getMainInstance();
+        if (io) {
+          io.emit(`client_portal:request_status_updated`, {
+            requestId: updatedRequest.id,
+            requestNumber: updatedRequest.req_no,
+            status: updatedRequest.status,
+            clientId: clientId,
+            organizationId: organizationId,
+            notes: updatedRequest.notes,
+            updatedAt: updatedRequest.updated_at
+          });
+        }
+      } catch (socketError) {
+        console.error("Error emitting request update socket event:", socketError);
+      }
 
       return res.json(new ServerResponse(true, {
         id: updatedRequest.id,
@@ -1567,6 +1586,42 @@ class ClientPortalController {
       ]);
 
       const newMessage = result.rows[0];
+
+      // Emit socket events for real-time updates
+      try {
+        const io = IO.getMainInstance();
+        if (io) {
+          // Emit to organization team members
+          io.emit(`client_portal:new_message`, {
+            id: newMessage.id,
+            clientId: clientId,
+            organizationId: organizationId,
+            senderName: clientEmail || 'Client',
+            senderType: 'client',
+            message: newMessage.message,
+            messageType: newMessage.message_type,
+            fileUrl: newMessage.file_url,
+            createdAt: newMessage.created_at
+          });
+
+          // Emit chat message event
+          io.emit('chat:message_received', {
+            id: newMessage.id,
+            chatId: `client_${clientId}`,
+            senderId: clientUserId,
+            senderName: clientEmail || 'Client',
+            senderType: 'client',
+            message: newMessage.message,
+            messageType: newMessage.message_type,
+            fileUrl: newMessage.file_url,
+            createdAt: newMessage.created_at,
+            isMe: false
+          });
+        }
+      } catch (socketError) {
+        console.error("Error emitting socket events:", socketError);
+        // Don't fail the request if socket fails
+      }
 
       return res.json(new ServerResponse(true, {
         id: newMessage.id,

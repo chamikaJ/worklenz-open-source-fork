@@ -51,6 +51,15 @@ class SocketManager {
       console.log('Connected to server via Socket.IO');
       this.isConnected = true;
       this.reconnectAttempts = 0;
+      
+      // Send client portal authentication
+      const token = localStorage.getItem('clientToken');
+      if (token) {
+        this.socket.emit('client_portal:connect', {
+          token,
+          type: 'client'
+        });
+      }
     });
 
     this.socket.on('disconnect', (reason) => {
@@ -66,6 +75,19 @@ class SocketManager {
     this.socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
       this.handleReconnect();
+    });
+
+    // Client portal authentication response
+    this.socket.on('client_portal:connected', (data) => {
+      console.log('Client portal authenticated:', data);
+      if (data.success) {
+        message.success(`Connected as ${data.clientName}`, 3);
+      }
+    });
+
+    this.socket.on('error', (data) => {
+      console.error('Socket error:', data);
+      message.error(data.message || 'Connection error', 3);
     });
 
     // Client Portal specific events
