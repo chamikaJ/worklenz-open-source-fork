@@ -10,18 +10,19 @@ import {
   Popconfirm,
   Tag,
   Tooltip,
-  Image
-} from '@/shared/antd-imports';
-import {
+  Image,
   UploadOutlined,
   DeleteOutlined,
   DownloadOutlined,
   EyeOutlined,
   FileOutlined,
-  ImageIcon,
+  FileImageOutlined,
   VideoCameraOutlined,
   FileTextOutlined,
   FilePdfOutlined
+} from '@/shared/antd-imports';
+import {
+
 } from '@ant-design/icons';
 import { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import clientPortalAPI from '@/services/api';
@@ -68,7 +69,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const [uploading, setUploading] = useState(false);
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith('image/')) return <ImageIcon />;
+    if (fileType.startsWith('image/')) return <FileImageOutlined />;
     if (fileType.startsWith('video/')) return <VideoCameraOutlined />;
     if (fileType.includes('pdf')) return <FilePdfOutlined />;
     if (fileType.includes('text') || fileType.includes('doc')) return <FileTextOutlined />;

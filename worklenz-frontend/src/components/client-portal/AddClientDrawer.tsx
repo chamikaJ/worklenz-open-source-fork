@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Drawer, Flex, Form, Input, message, Typography, Select, Spin } from 'antd';
+import { Button, Drawer, Flex, Form, Input, message, Typography, Select, Spin } from '@/shared/antd-imports';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useTranslation } from 'react-i18next';

@@ -25,7 +25,7 @@ import {
   IGroupBy,
 } from '@/features/enhanced-kanban/enhanced-kanban.slice';
 import { createPortal } from 'react-dom';
-import { Modal } from 'antd';
+import { Modal } from '@/shared/antd-imports';
 
 // Simple Portal component
 const Portal: React.FC<{ children: React.ReactNode }> = ({ children }) => {

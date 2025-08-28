@@ -1,4 +1,4 @@
-import { Flex, Typography } from 'antd';
+import { Flex, Typography } from '@/shared/antd-imports';
 import React, { ReactNode } from 'react';
 import { durationDateFormat } from '../../../../../utils/durationDateFormat';
 import { useTranslation } from 'react-i18next';

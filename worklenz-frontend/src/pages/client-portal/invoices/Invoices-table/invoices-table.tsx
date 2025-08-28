@@ -16,7 +16,7 @@ import {
   Spin,
   Alert,
   Empty,
-} from 'antd';
+} from '@/shared/antd-imports';
 import { TableProps } from 'antd/lib';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

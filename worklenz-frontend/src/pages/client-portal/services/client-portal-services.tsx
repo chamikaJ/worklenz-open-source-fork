@@ -1,4 +1,4 @@
-import { Button, Flex, Typography, Card } from 'antd';
+import { Button, Flex, Typography, Card } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined, AppstoreOutlined } from '@ant-design/icons';

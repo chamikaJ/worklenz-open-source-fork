@@ -1,5 +1,5 @@
 import { AppstoreOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { Button, Card, Flex, Form, Input, Select, Typography } from 'antd';
+import { Button, Card, Flex, Form, Input, Select, Typography } from '@/shared/antd-imports';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

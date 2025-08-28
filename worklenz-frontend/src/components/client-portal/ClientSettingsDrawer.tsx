@@ -12,13 +12,14 @@ import {
   message,
   Popconfirm,
   Tag,
-} from 'antd';
-import {
   ProjectOutlined,
   PlusOutlined,
   DeleteOutlined,
   EyeOutlined,
-  ExclamationCircleFilled,
+  ExclamationCircleFilled
+} from '@/shared/antd-imports';
+import {
+
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../hooks/useAppSelector';

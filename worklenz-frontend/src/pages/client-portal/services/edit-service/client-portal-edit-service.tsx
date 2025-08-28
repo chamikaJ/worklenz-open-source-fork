@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Steps, Spin, Alert, message } from 'antd';
+import { Card, Steps, Spin, Alert, message } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetOrganizationServiceByIdQuery, useUpdateOrganizationServiceMutation } from '../../../../api/client-portal/client-portal-api';

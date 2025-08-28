@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button, Input, Typography, Alert, Space, message } from 'antd';
+import { Modal, Button, Input, Typography, Alert, Space, message } from '@/shared/antd-imports';
 import { CopyOutlined, ReloadOutlined, LinkOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useGenerateClientInvitationLinkMutation } from '@/api/client-portal/client-portal-api';

@@ -42,12 +42,12 @@ const NewRequestPage: React.FC = () => {
           title: values.title,
           description: values.description,
           priority: values.priority,
-          attachments: attachments.map(file => ({
+          attachments: attachments.map((file) => ({
             url: file.url,
             filename: file.filename,
             originalName: file.originalName,
-            size: file.size
-          }))
+            size: file.size,
+          })),
         },
         notes: values.description,
       };
@@ -103,11 +103,13 @@ const NewRequestPage: React.FC = () => {
                 showSearch
                 optionFilterProp="children"
               >
-                {servicesData?.body?.map((service: { id: string; name: string }) => (
-                  <Select.Option key={service.id} value={service.id}>
-                    {service.name}
-                  </Select.Option>
-                ))}
+                {servicesData?.body?.map(
+                  (service: { id: string; name: string }) => (
+                    <Select.Option key={service.id} value={service.id}>
+                      {service.name}
+                    </Select.Option>
+                  )
+                )}
               </Select>
             </Form.Item>
           </Col>

@@ -5,7 +5,7 @@ import {
   Menu,
   MenuProps,
   Typography,
-} from 'antd';
+} from '@/shared/antd-imports';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { colors } from '../../../styles/colors';

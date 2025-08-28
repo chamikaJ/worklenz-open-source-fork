@@ -1,4 +1,4 @@
-import { Card, Table, Typography } from 'antd';
+import { Card, Table, Typography } from '@/shared/antd-imports';
 import { TableProps } from 'antd/lib';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../hooks/useAppSelector';

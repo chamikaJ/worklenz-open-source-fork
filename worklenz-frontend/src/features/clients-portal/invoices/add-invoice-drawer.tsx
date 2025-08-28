@@ -1,4 +1,4 @@
-import { Button, Drawer, Flex, Form, Input, message, Typography } from 'antd';
+import { Button, Drawer, Flex, Form, Input, message, Typography } from '@/shared/antd-imports';
 import { useAppSelector } from '../../../hooks/useAppSelector';
 import { useAppDispatch } from '../../../hooks/useAppDispatch';
 import { nanoid } from '@reduxjs/toolkit';

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Gantt, Task, ViewMode } from 'gantt-task-react';
-import { Button, Space, Badge } from 'antd';
+import { Button, Space, Badge } from '@/shared/antd-imports';
 import { CalendarOutlined, TeamOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { ProjectPhase, ProjectRoadmap, GanttViewOptions, PhaseModalData } from '../../types/project-roadmap.types';
 import PhaseModal from './PhaseModal';

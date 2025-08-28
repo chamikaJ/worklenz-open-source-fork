@@ -13,14 +13,12 @@ import {
   Alert,
   Upload,
   message,
-  Divider
-} from 'antd';
-import { 
+  Divider,
   SendOutlined, 
   PaperClipOutlined, 
   ReloadOutlined,
   MessageOutlined 
-} from '@ant-design/icons';
+} from '@/shared/antd-imports';
 import clientPortalAPI from '@/services/api';
 import { ClientMessage, ClientChat, ApiResponse } from '@/types';
 import { useAppSelector } from '@/hooks/useAppSelector';

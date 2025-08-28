@@ -1,4 +1,4 @@
-import { Card, Descriptions, Flex, Typography, Button, Tag, Divider } from 'antd';
+import { Card, Descriptions, Flex, Typography, Button, Tag, Divider } from '@/shared/antd-imports';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';

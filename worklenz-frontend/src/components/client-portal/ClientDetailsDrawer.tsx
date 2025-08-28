@@ -15,7 +15,7 @@ import {
   Empty,
   Tooltip,
   message,
-} from 'antd';
+} from '@/shared/antd-imports';
 import {
   UserOutlined,
   TeamOutlined,

@@ -1,4 +1,4 @@
-import { ConfigProvider, Flex, Menu, Badge, Button, Drawer, Typography } from 'antd';
+import { ConfigProvider, Flex, Menu, Badge, Button, Drawer, Typography } from '@/shared/antd-imports';
 import { Link, useLocation } from 'react-router-dom';
 import { colors } from '../../../styles/colors';
 import { useTranslation } from 'react-i18next';

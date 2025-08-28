@@ -1,4 +1,4 @@
-import { Button, Card, Form, Input, Select, Typography, Upload, message, Flex } from 'antd';
+import { Button, Card, Form, Input, Select, Typography, Upload, message, Flex } from '@/shared/antd-imports';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';

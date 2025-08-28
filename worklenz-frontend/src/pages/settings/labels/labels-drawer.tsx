@@ -1,7 +1,7 @@
 import { Button, Drawer, Form, Input, message, Typography, Flex, Dropdown } from '@/shared/antd-imports';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { theme } from 'antd';
+import { theme } from '@/shared/antd-imports';
 import { labelsApiService } from '@/api/taskAttributes/labels/labels.api.service';
 
 const WorklenzColorShades = {

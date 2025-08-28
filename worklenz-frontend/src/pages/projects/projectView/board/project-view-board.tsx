@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAppSelector } from '@/hooks/useAppSelector';
 
 import TaskListFilters from '../taskList/task-list-filters/task-list-filters';
-import { Flex, Skeleton } from 'antd';
+import { Flex, Skeleton } from '@/shared/antd-imports';
 import BoardSectionCardContainer from './board-section/board-section-container';
 import {
   fetchBoardTaskGroups,

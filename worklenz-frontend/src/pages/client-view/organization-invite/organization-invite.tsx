@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, Spin, Result, Button, Typography, Space } from 'antd';
+import { Card, Spin, Result, Button, Typography, Space } from '@/shared/antd-imports';
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useHandleOrganizationInviteMutation } from '@/api/client-portal/client-portal-api';
 

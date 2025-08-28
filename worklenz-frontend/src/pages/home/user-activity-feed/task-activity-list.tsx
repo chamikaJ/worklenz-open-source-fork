@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Table, Typography, Tooltip, theme } from 'antd';
+import { Table, Typography, Tooltip, theme } from '@/shared/antd-imports';
 import { FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch } from '@/hooks/useAppDispatch';

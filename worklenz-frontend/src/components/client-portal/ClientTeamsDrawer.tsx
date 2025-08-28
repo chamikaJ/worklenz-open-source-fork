@@ -15,7 +15,7 @@ import {
   Tag,
   List,
   Empty,
-} from 'antd';
+} from '@/shared/antd-imports';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useTranslation } from 'react-i18next';

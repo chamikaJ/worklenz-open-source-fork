@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Button, Space, message, Card } from 'antd';
+import { Button, Space, message, Card } from '@/shared/antd-imports';
 import AdvancedGanttChart from './AdvancedGanttChart';
 import { GanttTask, ColumnConfig } from '../../types/advanced-gantt.types';
 import { useAppSelector } from '../../hooks/useAppSelector';

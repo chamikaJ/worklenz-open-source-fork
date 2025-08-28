@@ -1,6 +1,6 @@
 import React, { memo, useMemo, forwardRef, RefObject, useState, useCallback, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Input, message } from 'antd';
+import { Input, message } from '@/shared/antd-imports';
 import { GanttTask, GanttViewMode, GanttPhase } from '../../types/gantt-types';
 import { useGanttDimensions } from '../../hooks/useGanttDimensions';
 import { useUpdateTaskDatesMutation } from '../../services/roadmap-api.service';

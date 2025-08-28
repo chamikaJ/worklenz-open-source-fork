@@ -1,4 +1,4 @@
-import { Card, Table, Typography, Spin, Alert, Empty } from 'antd';
+import { Card, Table, Typography, Spin, Alert, Empty } from '@/shared/antd-imports';
 import { TableProps } from 'antd/lib';
 import { useTranslation } from 'react-i18next';
 import { durationDateFormat } from '../../../utils/durationDateFormat';

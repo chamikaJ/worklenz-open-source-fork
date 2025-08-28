@@ -1,4 +1,4 @@
-import { Button, Card, Flex, Steps, Typography } from 'antd';
+import { Button, Card, Flex, Steps, Typography } from '@/shared/antd-imports';
 import React, { useState } from 'react';
 import { nanoid } from '@reduxjs/toolkit';
 import { useTranslation } from 'react-i18next';

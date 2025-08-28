@@ -1,4 +1,4 @@
-import { Flex, Typography } from 'antd';
+import { Flex, Typography } from '@/shared/antd-imports';
 import React, { ReactNode } from 'react';
 import CustomAvatar from '../../../../../components/CustomAvatar';
 import { durationDateFormat } from '../../../../../utils/durationDateFormat';

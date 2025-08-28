@@ -1,4 +1,4 @@
-import { Card, Flex } from 'antd';
+import { Card, Flex } from '@/shared/antd-imports';
 import MembersTimeSheet, {
   MembersTimeSheetRef,
 } from '@/components/reporting/time-reports/sheets/MembersTimeSheet';

@@ -1,4 +1,4 @@
-import { Card, Form, Input, Button, Typography, Flex, Switch, Divider, message } from 'antd';
+import { Card, Form, Input, Button, Typography, Flex, Switch, Divider, message } from '@/shared/antd-imports';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../hooks/useAppSelector';

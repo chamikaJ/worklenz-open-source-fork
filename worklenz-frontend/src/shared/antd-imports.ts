@@ -68,7 +68,9 @@ import {
   Radio,
   Steps,
   Slider,
-  Descriptions
+  Descriptions,
+  Upload, 
+  UploadProps, 
 } from 'antd/es';
 
 import TextArea from 'antd/es/input/TextArea';
@@ -269,6 +271,7 @@ export {
   TextArea,
   Slider,
   Descriptions,
+  Upload, 
 };
 
 // TypeScript Types - Import commonly used ones
@@ -293,6 +296,7 @@ export type {
   CollapseProps,
   TablePaginationConfig,
   CheckboxChangeEvent,
+  UploadProps,
 } from 'antd/es';
 
 // Dayjs

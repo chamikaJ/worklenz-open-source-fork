@@ -1,4 +1,4 @@
-import { Flex, InputNumber, Skeleton, Tooltip, Typography } from 'antd';
+import { Flex, InputNumber, Skeleton, Tooltip, Typography } from '@/shared/antd-imports';
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { DollarCircleOutlined, DownOutlined, RightOutlined } from '@ant-design/icons';

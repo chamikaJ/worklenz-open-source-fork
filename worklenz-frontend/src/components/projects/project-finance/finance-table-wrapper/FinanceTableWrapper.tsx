@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Flex, Typography, Empty, Tooltip } from 'antd';
+import { Flex, Typography, Empty, Tooltip } from '@/shared/antd-imports';
 import { themeWiseColor } from '@/utils/themeWiseColor';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useTranslation } from 'react-i18next';

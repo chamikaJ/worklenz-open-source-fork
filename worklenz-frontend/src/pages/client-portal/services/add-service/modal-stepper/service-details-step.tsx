@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Form, Input, Button, Upload, message, Card, Space, Typography, Divider } from 'antd';
+import { Form, Input, Button, Upload, message, Card, Space, Typography, Divider } from '@/shared/antd-imports';
 import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { RcFile } from 'antd/es/upload';

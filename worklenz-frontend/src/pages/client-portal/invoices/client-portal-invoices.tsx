@@ -1,4 +1,4 @@
-import { Flex, Typography, Card } from 'antd';
+import { Flex, Typography, Card } from '@/shared/antd-imports';
 import Button from 'antd/lib/button';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, FileTextOutlined } from '@ant-design/icons';

@@ -1,4 +1,4 @@
-import { Tag } from 'antd';
+import { Tag } from '@/shared/antd-imports';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

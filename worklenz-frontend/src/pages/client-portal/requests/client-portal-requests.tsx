@@ -1,4 +1,4 @@
-import { Flex, Typography, Card } from 'antd';
+import { Flex, Typography, Card } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { FileTextOutlined } from '@ant-design/icons';
 import { useResponsive } from '../../../hooks/useResponsive';

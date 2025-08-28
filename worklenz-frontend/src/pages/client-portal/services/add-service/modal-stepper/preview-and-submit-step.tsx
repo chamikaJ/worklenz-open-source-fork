@@ -1,4 +1,4 @@
-import { Button, Flex, Space, Typography, message, Card, Tag, Divider } from 'antd';
+import { Button, Flex, Space, Typography, message, Card, Tag, Divider } from '@/shared/antd-imports';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TempServicesType } from '../../../../../types/client-portal/temp-client-portal.types';

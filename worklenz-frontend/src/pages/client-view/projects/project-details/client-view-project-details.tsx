@@ -1,4 +1,4 @@
-import { Card, Descriptions, Flex, Progress, Typography, Button, Row, Col, Tag } from 'antd';
+import { Card, Descriptions, Flex, Progress, Typography, Button, Row, Col, Tag } from '@/shared/antd-imports';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';

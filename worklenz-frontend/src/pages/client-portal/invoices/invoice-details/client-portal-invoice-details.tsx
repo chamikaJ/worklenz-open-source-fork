@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../hooks/useAppSelector';
-import { Card, Typography, Button, Descriptions, Flex, Row, Col, Table, Tag } from 'antd';
+import { Card, Typography, Button, Descriptions, Flex, Row, Col, Table, Tag } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { LeftOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 

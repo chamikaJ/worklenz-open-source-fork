@@ -6,7 +6,7 @@ import {
   TableProps,
   Tooltip,
   Typography,
-} from 'antd';
+} from '@/shared/antd-imports';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { durationDateFormat } from '../../../utils/durationDateFormat';

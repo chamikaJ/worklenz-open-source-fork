@@ -1,4 +1,4 @@
-import { Button, Flex, Form, Input, Typography, Spin, Alert } from 'antd';
+import { Button, Flex, Form, Input, Typography, Spin, Alert } from '@/shared/antd-imports';
 import React, { useEffect, useRef, useState } from 'react';
 import SendChatItem from './send-chat-item';
 import RecivedChatItem from './recived-chat-item';

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Modal } from 'antd';
+import { Modal } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { useSocket } from '@/socket/socketContext';
 import { SocketEvents } from '@/shared/socket-events';

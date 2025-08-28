@@ -1,4 +1,4 @@
-import { Drawer, Typography, Button, Table, Menu, Flex, Spin, Alert } from 'antd';
+import { Drawer, Typography, Button, Table, Menu, Flex, Spin, Alert } from '@/shared/antd-imports';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../hooks/useAppSelector';

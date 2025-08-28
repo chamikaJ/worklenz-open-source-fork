@@ -7,7 +7,7 @@ import {
   CalendarOutlined,
   FolderOpenOutlined,
 } from '@ant-design/icons';
-import { Button, Tooltip, Input, DatePicker, Space, message } from 'antd';
+import { Button, Tooltip, Input, DatePicker, Space, message } from '@/shared/antd-imports';
 import dayjs, { Dayjs } from 'dayjs';
 import {
   DndContext,

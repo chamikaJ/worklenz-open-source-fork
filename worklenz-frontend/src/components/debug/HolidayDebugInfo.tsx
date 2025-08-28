@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Tag, Space } from 'antd';
+import { Card, Typography, Tag, Space } from '@/shared/antd-imports';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { RootState } from '@/app/store';
 import dayjs from 'dayjs';

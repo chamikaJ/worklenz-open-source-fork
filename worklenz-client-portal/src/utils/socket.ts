@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { store } from '@/store';
-import { message } from 'antd';
+import { message } from '@/shared/antd-imports';
 
 interface ClientMessage {
   id: string;

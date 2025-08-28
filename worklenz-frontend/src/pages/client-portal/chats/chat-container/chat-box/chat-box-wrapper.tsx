@@ -1,4 +1,4 @@
-import { Card, Divider, Flex, Typography, Spin, Empty, Button } from 'antd';
+import { Card, Divider, Flex, Typography, Spin, Empty, Button } from '@/shared/antd-imports';
 import React, { ReactNode, useState, useEffect } from 'react';
 import ChatList from '../chat-list';
 import ChatBox from './chat-box';

@@ -15,7 +15,7 @@ import {
   Image,
   Tooltip,
   Alert
-} from 'antd';
+} from '@/shared/antd-imports';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 

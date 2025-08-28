@@ -1,4 +1,4 @@
-import { Badge, Button, Flex, Table, Typography, Tooltip } from 'antd';
+import { Badge, Button, Flex, Table, Typography, Tooltip } from '@/shared/antd-imports';
 import React from 'react';
 import { TempChatsType } from './chat-box/chat-box-wrapper';
 import { PlusOutlined } from '@ant-design/icons';

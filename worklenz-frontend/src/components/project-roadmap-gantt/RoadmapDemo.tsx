@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Space, message } from 'antd';
+import { Button, Space, message } from '@/shared/antd-imports';
 import ProjectRoadmapGantt from './ProjectRoadmapGantt';
 import { sampleProjectRoadmap } from './sample-data';
 import { ProjectPhase, ProjectRoadmap } from '../../types/project-roadmap.types';

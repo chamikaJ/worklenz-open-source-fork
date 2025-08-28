@@ -1,4 +1,4 @@
-import { Flex, Typography, Button, Badge, Tooltip } from 'antd';
+import { Flex, Typography, Button, Badge, Tooltip } from '@/shared/antd-imports';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import ChatBoxWrapper from './chat-container/chat-box/chat-box-wrapper';

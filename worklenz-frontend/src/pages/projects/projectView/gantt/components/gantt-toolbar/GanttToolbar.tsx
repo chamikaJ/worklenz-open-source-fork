@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Select, Button, Space } from 'antd';
+import { Select, Button, Space } from '@/shared/antd-imports';
 import {
   ZoomInOutlined,
   ZoomOutOutlined,

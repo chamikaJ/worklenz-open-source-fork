@@ -10,7 +10,7 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd';
+} from '@/shared/antd-imports';
 import {
   CalendarOutlined,
   InboxOutlined,

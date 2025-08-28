@@ -1,4 +1,4 @@
-import { Card, Table, Typography, Spin, Alert, Empty, Button, Space, Dropdown, message, Modal } from 'antd';
+import { Card, Table, Typography, Spin, Alert, Empty, Button, Space, Dropdown, message, Modal } from '@/shared/antd-imports';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { TableProps } from 'antd/lib';
 import { useTranslation } from 'react-i18next';

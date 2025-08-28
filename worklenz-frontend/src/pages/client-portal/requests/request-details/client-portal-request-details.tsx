@@ -10,7 +10,7 @@ import {
   Tabs,
   TabsProps,
   Typography,
-} from 'antd';
+} from '@/shared/antd-imports';
 import { ArrowLeftOutlined, DownOutlined } from '@ant-design/icons';
 import { colors } from '../../../../styles/colors';
 import { useNavigate } from 'react-router-dom';

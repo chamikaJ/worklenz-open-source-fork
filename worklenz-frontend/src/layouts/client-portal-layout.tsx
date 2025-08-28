@@ -1,4 +1,4 @@
-import { Col, ConfigProvider, Flex, Layout, Alert, Result, Button } from 'antd';
+import { Col, ConfigProvider, Flex, Layout, Alert, Result, Button } from '@/shared/antd-imports';
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../hooks/useAppSelector';
