@@ -14,7 +14,7 @@ const RequestsTable = () => {
 
   //   get requests list from requests reducer
   const requestsList: TempRequestsType[] = useAppSelector(
-    (state) => state.clientsPortalReducer.requestsReducer.requests
+    state => state.clientsPortalReducer.requestsReducer.requests
   );
 
   const dispatch = useAppDispatch();
@@ -24,27 +24,23 @@ const RequestsTable = () => {
     {
       key: 'service',
       title: t('table.header.service'),
-      render: (record) => <Typography.Text>{record.service}</Typography.Text>,
+      render: record => <Typography.Text>{record.service}</Typography.Text>,
     },
     {
       key: 'status',
       title: t('table.header.status'),
-      render: (record) => <ClientPortalStatusTags status={record.status} />,
+      render: record => <ClientPortalStatusTags status={record.status} />,
     },
     {
       key: 'time',
       title: t('table.header.time'),
-      render: (record) => (
-        <Typography.Text>{durationDateFormat(record.time)}</Typography.Text>
-      ),
+      render: record => <Typography.Text>{durationDateFormat(record.time)}</Typography.Text>,
     },
     {
       key: 'lastChat',
       title: t('table.header.lastChat'),
-      render: (record) => (
-        <Typography.Text style={{ textTransform: 'capitalize' }}>
-          _
-        </Typography.Text>
+      render: record => (
+        <Typography.Text style={{ textTransform: 'capitalize' }}>_</Typography.Text>
       ),
     },
   ];
@@ -60,7 +56,7 @@ const RequestsTable = () => {
         scroll={{
           x: 'max-content',
         }}
-        onRow={(record) => {
+        onRow={record => {
           return {
             onClick: () => {
               // dispatch(toggleRequestModal(record.req_no));

@@ -113,7 +113,7 @@ export const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: false,
     }).concat(
-      homePageApiService.middleware, 
+      homePageApiService.middleware,
       projectsApi.middleware,
       clientPortalApi.middleware,
       userActivityApiService.middleware,

@@ -24,16 +24,14 @@ import { PricingModal } from '@/components/pricing-modal';
 function App() {
   const [showPricing, setShowPricing] = useState(false);
 
-  const handlePlanSelect = (calculation) => {
+  const handlePlanSelect = calculation => {
     console.log('Selected plan:', calculation);
   };
 
   return (
     <div>
-      <button onClick={() => setShowPricing(true)}>
-        View Pricing
-      </button>
-      
+      <button onClick={() => setShowPricing(true)}>View Pricing</button>
+
       <PricingModal
         visible={showPricing}
         onClose={() => setShowPricing(false)}
@@ -53,7 +51,7 @@ import { PricingModal, UserPersonalization } from '@/components/pricing-modal';
 
 function AdvancedApp() {
   const [showPricing, setShowPricing] = useState(false);
-  
+
   const userPersonalization: UserPersonalization = {
     userType: 'appsumo',
     appSumoDiscountExpiry: new Date('2024-12-31'),
@@ -64,7 +62,7 @@ function AdvancedApp() {
     },
   };
 
-  const handlePlanSelect = (calculation) => {
+  const handlePlanSelect = calculation => {
     console.log('Plan selected:', calculation);
     // Handle plan selection logic
   };
@@ -117,19 +115,19 @@ function MobileApp() {
 
 ### PricingModal Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `visible` | `boolean` | - | Controls modal visibility |
-| `onClose` | `() => void` | - | Callback when modal is closed |
-| `onPlanSelect` | `(calculation: PricingCalculation) => void` | - | Callback when plan is selected |
-| `userPersonalization` | `UserPersonalization` | - | User-specific customization data |
-| `loading` | `boolean` | `false` | Shows loading state |
-| `defaultPricingModel` | `'BASE_PLAN' \| 'PER_USER'` | `'BASE_PLAN'` | Initial pricing model |
-| `defaultBillingCycle` | `'MONTHLY' \| 'YEARLY'` | `'YEARLY'` | Initial billing cycle |
-| `defaultTeamSize` | `number` | `5` | Initial team size |
-| `organizationId` | `string` | - | Organization ID for API calls |
-| `showMobileDrawer` | `boolean` | `false` | Force mobile drawer mode |
-| `preselectedPlan` | `string` | - | Pre-select a specific plan |
+| Prop                  | Type                                        | Default       | Description                      |
+| --------------------- | ------------------------------------------- | ------------- | -------------------------------- |
+| `visible`             | `boolean`                                   | -             | Controls modal visibility        |
+| `onClose`             | `() => void`                                | -             | Callback when modal is closed    |
+| `onPlanSelect`        | `(calculation: PricingCalculation) => void` | -             | Callback when plan is selected   |
+| `userPersonalization` | `UserPersonalization`                       | -             | User-specific customization data |
+| `loading`             | `boolean`                                   | `false`       | Shows loading state              |
+| `defaultPricingModel` | `'BASE_PLAN' \| 'PER_USER'`                 | `'BASE_PLAN'` | Initial pricing model            |
+| `defaultBillingCycle` | `'MONTHLY' \| 'YEARLY'`                     | `'YEARLY'`    | Initial billing cycle            |
+| `defaultTeamSize`     | `number`                                    | `5`           | Initial team size                |
+| `organizationId`      | `string`                                    | -             | Organization ID for API calls    |
+| `showMobileDrawer`    | `boolean`                                   | `false`       | Force mobile drawer mode         |
+| `preselectedPlan`     | `string`                                    | -             | Pre-select a specific plan       |
 
 ### UserPersonalization Interface
 
@@ -171,6 +169,7 @@ interface PricingCalculation {
 ## Pricing Models
 
 ### Base Plan Pricing (Default)
+
 - **Target**: Teams with 6+ users
 - **Structure**: Fixed base price + per-user add-ons
 - **Plans**:
@@ -179,6 +178,7 @@ interface PricingCalculation {
   - Enterprise: $349/month unlimited users
 
 ### Per User Pricing
+
 - **Target**: Small teams with 1-5 users
 - **Structure**: Simple per-user multiplication
 - **Plans**:

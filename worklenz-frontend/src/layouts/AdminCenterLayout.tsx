@@ -14,11 +14,7 @@ const AdminCenterLayout: React.FC = () => {
       <Typography.Title level={4}>{t('adminCenter')}</Typography.Title>
 
       {isTablet ? (
-        <Flex
-          gap={24}
-          align="flex-start"
-          className="w-full mt-6"
-        >
+        <Flex gap={24} align="flex-start" className="w-full mt-6">
           <Flex className="w-full max-w-60">
             <AdminCenterSidebar />
           </Flex>
@@ -27,11 +23,7 @@ const AdminCenterLayout: React.FC = () => {
           </Flex>
         </Flex>
       ) : (
-        <Flex
-          vertical
-          gap={24}
-          className="mt-6"
-        >
+        <Flex vertical gap={24} className="mt-6">
           <AdminCenterSidebar />
           <Outlet />
         </Flex>

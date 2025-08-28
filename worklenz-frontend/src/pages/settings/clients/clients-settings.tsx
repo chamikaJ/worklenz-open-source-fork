@@ -88,7 +88,6 @@ const ClientsSettings: React.FC = () => {
     }
   };
 
-
   const columns: TableProps['columns'] = useMemo(
     () => [
       {

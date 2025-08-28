@@ -97,8 +97,8 @@ const HomeTasksStatusDropdown = ({ task, teamId }: HomeTasksStatusDropdownProps)
           onChange={handleStatusChange}
           styles={{
             popup: {
-              root: { borderRadius: 8, minWidth: 150, maxWidth: 200 }
-            }
+              root: { borderRadius: 8, minWidth: 150, maxWidth: 200 },
+            },
           }}
           style={{
             backgroundColor: selectedStatus?.color_code + ALPHA_CHANNEL,

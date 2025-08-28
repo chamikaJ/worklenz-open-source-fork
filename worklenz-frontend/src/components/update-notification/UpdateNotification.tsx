@@ -15,11 +15,7 @@ interface UpdateNotificationProps {
   onUpdate: () => void;
 }
 
-const UpdateNotification: React.FC<UpdateNotificationProps> = ({
-  visible,
-  onClose,
-  onUpdate
-}) => {
+const UpdateNotification: React.FC<UpdateNotificationProps> = ({ visible, onClose, onUpdate }) => {
   const { t } = useTranslation('common');
   const [isUpdating, setIsUpdating] = React.useState(false);
   const { hardReload } = useServiceWorker();
@@ -63,46 +59,40 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = ({
       maskClosable={false}
       width={460}
       styles={{
-        body: { padding: '20px 24px' }
+        body: { padding: '20px 24px' },
       }}
     >
       <div style={{ marginBottom: '20px' }}>
-        <Text style={{ fontSize: '16px', lineHeight: '1.6' }}>
-          {t('update-description')}
-        </Text>
+        <Text style={{ fontSize: '16px', lineHeight: '1.6' }}>{t('update-description')}</Text>
         <br />
         <br />
-        <Text style={{ fontSize: '14px', color: '#8c8c8c' }}>
-          {t('update-instruction')}
-        </Text>
+        <Text style={{ fontSize: '14px', color: '#8c8c8c' }}>{t('update-instruction')}</Text>
       </div>
 
-      <div style={{ 
-        background: '#f6ffed', 
-        border: '1px solid #b7eb8f', 
-        borderRadius: '6px', 
-        padding: '12px',
-        marginBottom: '20px'
-      }}>
+      <div
+        style={{
+          background: '#f6ffed',
+          border: '1px solid #b7eb8f',
+          borderRadius: '6px',
+          padding: '12px',
+          marginBottom: '20px',
+        }}
+      >
         <Text style={{ fontSize: '13px', color: '#389e0d' }}>
-          {t('update-whats-new', { 
-            interpolation: { escapeValue: false } 
+          {t('update-whats-new', {
+            interpolation: { escapeValue: false },
           })}
         </Text>
       </div>
 
-      <Space 
-        style={{ 
-          width: '100%', 
-          justifyContent: 'flex-end' 
-        }} 
+      <Space
+        style={{
+          width: '100%',
+          justifyContent: 'flex-end',
+        }}
         size="middle"
       >
-        <Button
-          icon={<CloseOutlined />}
-          onClick={handleLater}
-          disabled={isUpdating}
-        >
+        <Button icon={<CloseOutlined />} onClick={handleLater} disabled={isUpdating}>
           {t('update-later')}
         </Button>
         <Button

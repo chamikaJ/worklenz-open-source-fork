@@ -31,7 +31,7 @@ const ChatList = ({ chatList, setOpenedChatId }: ChatListProps) => {
         y: safeChatList.length >= 7 ? 'calc(100vh - 300px)' : undefined,
       }}
       style={{ minWidth: 320 }}
-      onRow={(record) => ({
+      onRow={record => ({
         style: { cursor: 'pointer' },
         onClick: () => setOpenedChatId(record.id),
       })}
@@ -40,25 +40,14 @@ const ChatList = ({ chatList, setOpenedChatId }: ChatListProps) => {
           key: 'chatItem',
           title: (
             <Flex justify="space-between" align="center">
-              <Typography.Text strong>
-                {t('chatsTitle') || 'Chats'}
-              </Typography.Text>
+              <Typography.Text strong>{t('chatsTitle') || 'Chats'}</Typography.Text>
               <Tooltip title={t('newChat') || 'New Chat'}>
-                <Button 
-                  type="text" 
-                  icon={<PlusOutlined />} 
-                  onClick={handleNewChat}
-                  size="small"
-                />
+                <Button type="text" icon={<PlusOutlined />} onClick={handleNewChat} size="small" />
               </Tooltip>
             </Flex>
           ),
           render: (record: TempChatsType) => (
-            <Flex
-              vertical
-              gap={8}
-              style={{ maxWidth: 280, overflow: 'hidden' }}
-            >
+            <Flex vertical gap={8} style={{ maxWidth: 280, overflow: 'hidden' }}>
               <Flex align="center" justify="space-between">
                 <Flex align="center" gap={8}>
                   <Typography.Text
@@ -73,39 +62,36 @@ const ChatList = ({ chatList, setOpenedChatId }: ChatListProps) => {
                   </Typography.Text>
 
                   {record.status === 'unread' && (
-                    <Badge 
-                      color={colors.vibrantOrange} 
+                    <Badge
+                      color={colors.vibrantOrange}
                       count={record.unreadCount || 1}
                       size="small"
                     />
                   )}
                 </Flex>
               </Flex>
-              
+
               <Flex vertical gap={4}>
-                <Typography.Text 
-                  type="secondary" 
+                <Typography.Text
+                  type="secondary"
                   style={{ fontSize: 12 }}
                   ellipsis={{ tooltip: true }}
                 >
-                  {record.lastMessage || 
-                    (record.chats_data && Array.isArray(record.chats_data) && record.chats_data.length > 0 
-                      ? (record.chats_data[record.chats_data.length - 1].is_me
-                          ? `You: ${record.chats_data[record.chats_data.length - 1].content}`
-                          : record.chats_data[record.chats_data.length - 1].content)
-                      : 'No messages yet'
-                    )
-                  }
+                  {record.lastMessage ||
+                    (record.chats_data &&
+                    Array.isArray(record.chats_data) &&
+                    record.chats_data.length > 0
+                      ? record.chats_data[record.chats_data.length - 1].is_me
+                        ? `You: ${record.chats_data[record.chats_data.length - 1].content}`
+                        : record.chats_data[record.chats_data.length - 1].content
+                      : 'No messages yet')}
                 </Typography.Text>
-                
+
                 {record.lastMessageTime && (
-                  <Typography.Text 
-                    type="secondary" 
-                    style={{ fontSize: 11 }}
-                  >
+                  <Typography.Text type="secondary" style={{ fontSize: 11 }}>
                     {new Date(record.lastMessageTime).toLocaleTimeString([], {
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
                     })}
                   </Typography.Text>
                 )}

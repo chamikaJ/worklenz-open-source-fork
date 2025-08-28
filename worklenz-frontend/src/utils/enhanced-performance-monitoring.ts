@@ -85,7 +85,7 @@ export class EnhancedPerformanceMonitor {
     this.setupObservers();
     this.collectInitialMetrics();
     this.startPeriodicCollection();
-    
+
     // console.log('🚀 Enhanced performance monitoring started');
   }
 
@@ -96,7 +96,7 @@ export class EnhancedPerformanceMonitor {
     this.isMonitoring = false;
     this.cleanupObservers();
     this.clearIntervals();
-    
+
     // console.log('🛑 Enhanced performance monitoring stopped');
   }
 
@@ -358,7 +358,7 @@ export class EnhancedPerformanceMonitor {
 
     const recent = this.metrics.slice(-10); // Last 10 metrics
     const report = this.analyzeMetrics(recent);
-    
+
     // console.log('📊 Performance Report:', report);
 
     // Check for performance issues

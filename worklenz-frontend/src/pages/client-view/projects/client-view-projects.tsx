@@ -9,9 +9,7 @@ const ClientViewProjects = () => {
   const { t } = useTranslation('client-view/client-view-projects');
 
   // get project list from client view reducer project reducer
-  const projectList = useAppSelector(
-    (state) => state.clientViewReducer.projectsReducer.projectsList
-  );
+  const projectList = useAppSelector(state => state.clientViewReducer.projectsReducer.projectsList);
 
   return (
     <Flex vertical gap={24} style={{ width: '100%' }}>

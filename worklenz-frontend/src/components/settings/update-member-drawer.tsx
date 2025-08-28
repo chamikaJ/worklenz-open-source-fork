@@ -57,18 +57,11 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
 
   const currentUser = auth.getCurrentSession();
   const canManageTarget = useMemo(() => {
-    return canManageUserRole(
-      currentUser?.role_name,
-      teamMember?.role_name,
-      currentUser?.owner
-    );
+    return canManageUserRole(currentUser?.role_name, teamMember?.role_name, currentUser?.owner);
   }, [currentUser?.role_name, currentUser?.owner, teamMember?.role_name]);
 
   const availableRoles = useMemo(() => {
-    return getAvailableRoleOptions(
-      currentUser?.role_name,
-      currentUser?.owner
-    );
+    return getAvailableRoleOptions(currentUser?.role_name, currentUser?.owner);
   }, [currentUser?.role_name, currentUser?.owner]);
 
   const isResendAvailable = useMemo(() => {
@@ -97,7 +90,7 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
       const res = await teamMembersApiService.getById(selectedMemberId);
       if (res.done) {
         setTeamMember(res.body);
-        
+
         // Determine access level based on role_name
         let accessLevel = 'member';
         if (res.body.role_name === 'Admin') {
@@ -105,7 +98,7 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
         } else if (res.body.role_name === 'Team Lead') {
           accessLevel = 'team-lead';
         }
-        
+
         form.setFieldsValue({
           jobTitle: jobTitles.find(job => job.id === res.body?.job_title)?.id,
           access: accessLevel,
@@ -124,9 +117,12 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
         job_title: form.getFieldValue('jobTitle'),
         emails: [teamMember.email],
         is_admin: values.access === 'admin',
-        role_name: values.access === 'team-lead' ? ROLE_NAMES.TEAM_LEAD : 
-                   values.access === 'admin' ? ROLE_NAMES.ADMIN : 
-                   ROLE_NAMES.MEMBER,
+        role_name:
+          values.access === 'team-lead'
+            ? ROLE_NAMES.TEAM_LEAD
+            : values.access === 'admin'
+              ? ROLE_NAMES.ADMIN
+              : ROLE_NAMES.MEMBER,
       };
 
       const res = await teamMembersApiService.update(selectedMemberId, body);
@@ -136,8 +132,12 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
         dispatch(toggleUpdateMemberDrawer());
 
         // Update role_name in parent component
-        const newRoleName = values.access === 'team-lead' ? 'Team Lead' : 
-                            values.access === 'admin' ? 'Admin' : 'Member';
+        const newRoleName =
+          values.access === 'team-lead'
+            ? 'Team Lead'
+            : values.access === 'admin'
+              ? 'Admin'
+              : 'Member';
         onRoleUpdate?.(selectedMemberId, newRoleName);
 
         const authorizeResponse = await authApiService.verify();
@@ -249,9 +249,14 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
           <Select
             disabled={isOwnAccount || !canManageTarget}
             options={availableRoles.map(role => ({
-              value: role.value === 'Member' ? 'member' : 
-                     role.value === 'Team Lead' ? 'team-lead' : 
-                     role.value === 'Admin' ? 'admin' : role.value.toLowerCase(),
+              value:
+                role.value === 'Member'
+                  ? 'member'
+                  : role.value === 'Team Lead'
+                    ? 'team-lead'
+                    : role.value === 'Admin'
+                      ? 'admin'
+                      : role.value.toLowerCase(),
               label: role.label,
             }))}
           />
@@ -259,9 +264,9 @@ const UpdateMemberDrawer = ({ selectedMemberId, onRoleUpdate }: UpdateMemberDraw
 
         <Form.Item>
           <Flex vertical gap={8}>
-            <Button 
-              type="primary" 
-              style={{ width: '100%' }} 
+            <Button
+              type="primary"
+              style={{ width: '100%' }}
               htmlType="submit"
               disabled={!canManageTarget}
             >

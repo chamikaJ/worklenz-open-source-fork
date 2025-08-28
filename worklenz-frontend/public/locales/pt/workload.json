@@ -4,7 +4,7 @@
   "tableView": "Table View",
   "noWorkloadData": "No workload data available",
   "noMembersFound": "No team members found",
-  
+
   "overview": {
     "teamMembers": "Team Members",
     "totalWorkload": "Total Workload",
@@ -95,7 +95,7 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "thisWeek": "This Week",
-    "lastWeek": "Last Week", 
+    "lastWeek": "Last Week",
     "thisMonth": "This Month",
     "lastMonth": "Last Month",
     "thisQuarter": "This Quarter",

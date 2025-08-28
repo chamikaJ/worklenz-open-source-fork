@@ -40,27 +40,27 @@
   .pricing-comparison-grid {
     gap: 12px;
   }
-  
+
   .plan-comparison-card .ant-card-body {
     padding: 12px;
   }
-  
+
   .pricing-option {
     padding: 4px;
   }
 }
 
 /* Dark mode support */
-[data-theme='dark'] .pricing-calculator {
+[data-theme="dark"] .pricing-calculator {
   background: #141414;
 }
 
-[data-theme='dark'] .plan-comparison-card {
+[data-theme="dark"] .plan-comparison-card {
   background: #1f1f1f;
   border-color: #434343;
 }
 
-[data-theme='dark'] .plan-comparison-card:hover {
+[data-theme="dark"] .plan-comparison-card:hover {
   border-color: #717171;
   box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
 }

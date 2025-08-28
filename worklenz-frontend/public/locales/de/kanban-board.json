@@ -41,7 +41,7 @@
   "noSubtasks": "Keine Unteraufgaben",
   "showSubtasks": "Unteraufgaben anzeigen",
   "hideSubtasks": "Unteraufgaben ausblenden",
-  
+
   "errorLoadingTasks": "Fehler beim Laden der Aufgaben",
   "noTasksFound": "Keine Aufgaben gefunden",
   "loadingFilters": "Filter werden geladen...",

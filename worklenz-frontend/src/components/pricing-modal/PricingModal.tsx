@@ -131,7 +131,7 @@ const PLAN_TIERS: PlanTier[] = [
     category: 'free',
     features: [
       '3 projects',
-      'Basic task management', 
+      'Basic task management',
       'Team collaboration',
       'Manual management',
       'Community support',
@@ -350,7 +350,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
     return PLAN_TIERS.filter(plan => {
       if (plan.id === 'free') return true;
       if (plan.id === 'enterprise') return true;
-      
+
       if (pricingModel === 'PER_USER') {
         return plan.pricing.perUser && teamSize <= 5;
       } else {
@@ -360,9 +360,21 @@ const PricingModal: React.FC<PricingModalProps> = ({
   }, [pricingModel, teamSize]);
 
   // Calculate pricing for each plan
-  const calculatePlanPricing = useCallback((plan: PlanTier): PricingCalculation | null => {
-    if (plan.id === 'free') {
-      return {
+  const calculatePlanPricing = useCallback(
+    (plan: PlanTier): PricingCalculation | null => {
+      if (plan.id === 'free') {
+        return {
+          model: pricingModel,
+          cycle: billingCycle,
+          teamSize,
+          planId: plan.id,
+          basePrice: 0,
+          additionalUsersCost: 0,
+          totalCost: 0,
+        };
+      }
+
+      let calculation: PricingCalculation = {
         model: pricingModel,
         cycle: billingCycle,
         teamSize,
@@ -371,62 +383,55 @@ const PricingModal: React.FC<PricingModalProps> = ({
         additionalUsersCost: 0,
         totalCost: 0,
       };
-    }
 
-    let calculation: PricingCalculation = {
-      model: pricingModel,
-      cycle: billingCycle,
-      teamSize,
-      planId: plan.id,
-      basePrice: 0,
-      additionalUsersCost: 0,
-      totalCost: 0,
-    };
+      if (plan.pricing.enterprise) {
+        calculation.basePrice = plan.pricing.enterprise.price;
+        calculation.totalCost = plan.pricing.enterprise.price;
+      } else if (pricingModel === 'PER_USER' && plan.pricing.perUser) {
+        const pricePerUser =
+          billingCycle === 'YEARLY' ? plan.pricing.perUser.annual : plan.pricing.perUser.monthly;
 
-    if (plan.pricing.enterprise) {
-      calculation.basePrice = plan.pricing.enterprise.price;
-      calculation.totalCost = plan.pricing.enterprise.price;
-    } else if (pricingModel === 'PER_USER' && plan.pricing.perUser) {
-      const pricePerUser = billingCycle === 'YEARLY' 
-        ? plan.pricing.perUser.annual 
-        : plan.pricing.perUser.monthly;
-      
-      calculation.basePrice = pricePerUser * teamSize;
-      calculation.totalCost = pricePerUser * teamSize;
-      
-      if (billingCycle === 'YEARLY') {
-        const monthlyCost = plan.pricing.perUser.monthly * teamSize * 12;
-        const annualCost = pricePerUser * teamSize * 12;
-        calculation.annualSavings = monthlyCost - annualCost;
+        calculation.basePrice = pricePerUser * teamSize;
+        calculation.totalCost = pricePerUser * teamSize;
+
+        if (billingCycle === 'YEARLY') {
+          const monthlyCost = plan.pricing.perUser.monthly * teamSize * 12;
+          const annualCost = pricePerUser * teamSize * 12;
+          calculation.annualSavings = monthlyCost - annualCost;
+        }
+      } else if (pricingModel === 'BASE_PLAN' && plan.pricing.basePlan) {
+        const { basePrice, includedUsers, additionalUserPrice } = plan.pricing.basePlan;
+
+        calculation.basePrice = basePrice;
+
+        if (teamSize > includedUsers) {
+          calculation.additionalUsersCost = (teamSize - includedUsers) * additionalUserPrice;
+        }
+
+        calculation.totalCost = calculation.basePrice + calculation.additionalUsersCost;
       }
-    } else if (pricingModel === 'BASE_PLAN' && plan.pricing.basePlan) {
-      const { basePrice, includedUsers, additionalUserPrice } = plan.pricing.basePlan;
-      
-      calculation.basePrice = basePrice;
-      
-      if (teamSize > includedUsers) {
-        calculation.additionalUsersCost = (teamSize - includedUsers) * additionalUserPrice;
+
+      // Apply AppSumo discount if applicable
+      if (
+        (currentUser?.userType === 'appsumo' || userPersonalization?.userType === 'appsumo') &&
+        plan.category !== 'free'
+      ) {
+        const discountPercentage = 50;
+        const discountAmount = calculation.totalCost * (discountPercentage / 100);
+
+        calculation.discountApplied = {
+          type: 'appsumo',
+          percentage: discountPercentage,
+          amount: discountAmount,
+        };
+
+        calculation.totalCost -= discountAmount;
       }
-      
-      calculation.totalCost = calculation.basePrice + calculation.additionalUsersCost;
-    }
 
-    // Apply AppSumo discount if applicable
-    if ((currentUser?.userType === 'appsumo' || userPersonalization?.userType === 'appsumo') && plan.category !== 'free') {
-      const discountPercentage = 50;
-      const discountAmount = calculation.totalCost * (discountPercentage / 100);
-      
-      calculation.discountApplied = {
-        type: 'appsumo',
-        percentage: discountPercentage,
-        amount: discountAmount,
-      };
-      
-      calculation.totalCost -= discountAmount;
-    }
-
-    return calculation;
-  }, [pricingModel, billingCycle, teamSize, currentUser, userPersonalization]);
+      return calculation;
+    },
+    [pricingModel, billingCycle, teamSize, currentUser, userPersonalization]
+  );
 
   // Handle team size change with pricing model recommendation
   const handleTeamSizeChange = useCallback((value: number | null) => {
@@ -441,46 +446,55 @@ const PricingModal: React.FC<PricingModalProps> = ({
   }, []);
 
   // Handle plan selection
-  const handlePlanSelect = useCallback(async (planId: string) => {
-    setSelectedPlan(planId);
-    
-    // Calculate pricing
-    const plan = PLAN_TIERS.find(p => p.id === planId);
-    if (plan) {
-      const calculation = calculatePlanPricing(plan);
-      if (calculation) {
-        setSelectedCalculation(calculation);
-        if (onPlanSelect) {
-          onPlanSelect(calculation);
+  const handlePlanSelect = useCallback(
+    async (planId: string) => {
+      setSelectedPlan(planId);
+
+      // Calculate pricing
+      const plan = PLAN_TIERS.find(p => p.id === planId);
+      if (plan) {
+        const calculation = calculatePlanPricing(plan);
+        if (calculation) {
+          setSelectedCalculation(calculation);
+          if (onPlanSelect) {
+            onPlanSelect(calculation);
+          }
         }
       }
-    }
-  }, [calculatePlanPricing, onPlanSelect]);
+    },
+    [calculatePlanPricing, onPlanSelect]
+  );
 
   // Handle checkout initiation
-  const handleCheckoutStart = useCallback((planId: string) => {
-    if (planId === 'enterprise') {
-      // Contact sales for enterprise
-      window.open('mailto:sales@worklenz.com?subject=Enterprise Plan Inquiry', '_blank');
-      return;
-    }
-    
-    handlePlanSelect(planId).then(() => {
-      setShowCheckout(true);
-    });
-  }, [handlePlanSelect]);
+  const handleCheckoutStart = useCallback(
+    (planId: string) => {
+      if (planId === 'enterprise') {
+        // Contact sales for enterprise
+        window.open('mailto:sales@worklenz.com?subject=Enterprise Plan Inquiry', '_blank');
+        return;
+      }
+
+      handlePlanSelect(planId).then(() => {
+        setShowCheckout(true);
+      });
+    },
+    [handlePlanSelect]
+  );
 
   // Handle successful checkout
-  const handleCheckoutSuccess = useCallback((subscriptionId: string) => {
-    message.success('Subscription created successfully!');
-    setShowCheckout(false);
-    onClose();
-    
-    // Optionally redirect to dashboard or billing page
-    setTimeout(() => {
-      window.location.href = '/admin-center/billing';
-    }, 1000);
-  }, [onClose]);
+  const handleCheckoutSuccess = useCallback(
+    (subscriptionId: string) => {
+      message.success('Subscription created successfully!');
+      setShowCheckout(false);
+      onClose();
+
+      // Optionally redirect to dashboard or billing page
+      setTimeout(() => {
+        window.location.href = '/admin-center/billing';
+      }, 1000);
+    },
+    [onClose]
+  );
 
   // Handle checkout error
   const handleCheckoutError = useCallback((error: string) => {
@@ -491,9 +505,14 @@ const PricingModal: React.FC<PricingModalProps> = ({
   // Get AppSumo countdown data
   useEffect(() => {
     const fetchAppSumoCountdown = async () => {
-      if ((currentUser?.userType === 'appsumo' || userPersonalization?.userType === 'appsumo') && organizationId) {
+      if (
+        (currentUser?.userType === 'appsumo' || userPersonalization?.userType === 'appsumo') &&
+        organizationId
+      ) {
         try {
-          const response = await fetch(`/api/plan-recommendations/organizations/${organizationId}/appsumo-countdown`);
+          const response = await fetch(
+            `/api/plan-recommendations/organizations/${organizationId}/appsumo-countdown`
+          );
           if (response.ok) {
             const countdownData = await response.json();
             setAppSumoCountdown(countdownData);
@@ -524,7 +543,8 @@ const PricingModal: React.FC<PricingModalProps> = ({
               <Space>
                 <ClockCircleOutlined />
                 <span>
-                  <strong>{t('userTypes.trial.title')}</strong> {t('userTypes.trial.message', { days: trialDaysRemaining })}
+                  <strong>{t('userTypes.trial.title')}</strong>{' '}
+                  {t('userTypes.trial.message', { days: trialDaysRemaining })}
                 </span>
               </Space>
             }
@@ -534,37 +554,38 @@ const PricingModal: React.FC<PricingModalProps> = ({
             style={{ marginBottom: 16 }}
           />
         );
-      
+
       case 'appsumo':
-        const daysLeft = appSumoCountdown?.remainingDays || 
-          (appSumoDiscountExpiry 
-            ? Math.ceil((appSumoDiscountExpiry.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        const daysLeft =
+          appSumoCountdown?.remainingDays ||
+          (appSumoDiscountExpiry
+            ? Math.ceil(
+                (appSumoDiscountExpiry.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+              )
             : 0);
-        
+
         return (
           <Alert
             message={
               <Space>
                 <FireOutlined />
                 <span>
-                  <strong>{t('userTypes.appsumo.title')}</strong> {t('userTypes.appsumo.message')} 
+                  <strong>{t('userTypes.appsumo.title')}</strong> {t('userTypes.appsumo.message')}
                   {daysLeft > 0 ? (
-                    <>
-                      {t('userTypes.appsumo.countdown', { days: daysLeft })}
-                    </>
+                    <>{t('userTypes.appsumo.countdown', { days: daysLeft })}</>
                   ) : (
                     <Tag color="blue">{t('userTypes.appsumo.standardPricing')}</Tag>
                   )}
                 </span>
               </Space>
             }
-            type={daysLeft > 0 ? "error" : "info"}
+            type={daysLeft > 0 ? 'error' : 'info'}
             showIcon
             banner
             style={{ marginBottom: 16 }}
           />
         );
-      
+
       case 'free':
         return (
           <Alert
@@ -582,7 +603,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
             style={{ marginBottom: 16 }}
           />
         );
-      
+
       case 'custom':
         return (
           <Alert
@@ -600,7 +621,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
             style={{ marginBottom: 16 }}
           />
         );
-      
+
       default:
         return null;
     }
@@ -611,15 +632,21 @@ const PricingModal: React.FC<PricingModalProps> = ({
     const calculation = calculatePlanPricing(plan);
     const isSelected = selectedPlan === plan.id;
     const isCurrent = (currentUser?.currentPlan || userPersonalization?.currentPlan) === plan.id;
-    
+
     if (!calculation) return null;
 
-    const { totalCost, basePrice, additionalUsersCost, annualSavings, discountApplied } = calculation;
+    const { totalCost, basePrice, additionalUsersCost, annualSavings, discountApplied } =
+      calculation;
 
     // Determine if plan should be filtered for AppSumo users
-    const isAppSumoUser = currentUser?.userType === 'appsumo' || userPersonalization?.userType === 'appsumo';
-    const shouldShowForAppSumo = !isAppSumoUser || plan.category === 'business' || plan.category === 'enterprise' || plan.id === 'free';
-    
+    const isAppSumoUser =
+      currentUser?.userType === 'appsumo' || userPersonalization?.userType === 'appsumo';
+    const shouldShowForAppSumo =
+      !isAppSumoUser ||
+      plan.category === 'business' ||
+      plan.category === 'enterprise' ||
+      plan.id === 'free';
+
     if (isAppSumoUser && !shouldShowForAppSumo) return null;
 
     return (
@@ -632,7 +659,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
           role="button"
           aria-pressed={isSelected}
           aria-label={`${plan.name} plan - $${totalCost.toFixed(2)} per month`}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               handlePlanSelect(plan.id);
@@ -649,18 +676,24 @@ const PricingModal: React.FC<PricingModalProps> = ({
                 {plan.badge && (
                   <Badge
                     count={
-                      plan.badge === 'most_popular' ? t('badges.mostPopular') :
-                      plan.badge === 'recommended' ? t('badges.recommended') :
-                      t('badges.bestValue')
+                      plan.badge === 'most_popular'
+                        ? t('badges.mostPopular')
+                        : plan.badge === 'recommended'
+                          ? t('badges.recommended')
+                          : t('badges.bestValue')
                     }
-                    style={{ 
-                      backgroundColor: plan.badge === 'most_popular' ? '#1890ff' : 
-                                     plan.badge === 'recommended' ? '#52c41a' : '#fa8c16' 
+                    style={{
+                      backgroundColor:
+                        plan.badge === 'most_popular'
+                          ? '#1890ff'
+                          : plan.badge === 'recommended'
+                            ? '#52c41a'
+                            : '#fa8c16',
                     }}
                   />
                 )}
               </div>
-              
+
               <Typography.Text type="secondary">
                 {t(`plans.${plan.id}.description`, plan.description)}
               </Typography.Text>
@@ -701,28 +734,26 @@ const PricingModal: React.FC<PricingModalProps> = ({
                     </Tag>
                   </div>
                 )}
-                
+
                 <Typography.Title level={2} style={{ margin: 0 }}>
                   ${totalCost.toFixed(2)}
                 </Typography.Title>
-                
+
                 <Typography.Text type="secondary">
-                  {pricingModel === 'PER_USER' ? (
-                    t('pricing.forUsers', { 
-                      count: teamSize, 
-                      unit: teamSize === 1 ? t('teamSize.user') : t('teamSize.users')
-                    }) + t('pricing.perMonth')
-                  ) : (
-                    t('pricing.perMonth')
-                  )}
+                  {pricingModel === 'PER_USER'
+                    ? t('pricing.forUsers', {
+                        count: teamSize,
+                        unit: teamSize === 1 ? t('teamSize.user') : t('teamSize.users'),
+                      }) + t('pricing.perMonth')
+                    : t('pricing.perMonth')}
                 </Typography.Text>
 
                 {pricingModel === 'BASE_PLAN' && plan.pricing.basePlan && (
                   <div className="pricing-breakdown">
                     <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                      {t('pricing.basePrice', { 
-                        price: `$${basePrice}`, 
-                        additionalCost: `$${additionalUsersCost.toFixed(2)}` 
+                      {t('pricing.basePrice', {
+                        price: `$${basePrice}`,
+                        additionalCost: `$${additionalUsersCost.toFixed(2)}`,
                       })}
                     </Typography.Text>
                   </div>
@@ -780,20 +811,32 @@ const PricingModal: React.FC<PricingModalProps> = ({
                 type={isSelected ? 'primary' : 'default'}
                 size="large"
                 block
-                onClick={() => plan.id === 'free' ? handlePlanSelect(plan.id) : handleCheckoutStart(plan.id)}
+                onClick={() =>
+                  plan.id === 'free' ? handlePlanSelect(plan.id) : handleCheckoutStart(plan.id)
+                }
                 disabled={loading || apiLoading || calculating}
-                icon={isCurrent ? <CheckCircleOutlined /> : 
-                      plan.id === 'enterprise' ? <CrownOutlined /> :
-                      plan.id === 'free' ? <StarFilled /> :
-                      <ShoppingCartOutlined />}
+                icon={
+                  isCurrent ? (
+                    <CheckCircleOutlined />
+                  ) : plan.id === 'enterprise' ? (
+                    <CrownOutlined />
+                  ) : plan.id === 'free' ? (
+                    <StarFilled />
+                  ) : (
+                    <ShoppingCartOutlined />
+                  )
+                }
                 loading={calculating && selectedPlan === plan.id}
               >
-                {isCurrent ? t('buttons.currentPlan') :
-                 plan.id === 'free' ? t('buttons.getStartedFree') :
-                 plan.id === 'enterprise' ? t('buttons.contactSales') :
-                 t('buttons.choosePlan')}
+                {isCurrent
+                  ? t('buttons.currentPlan')
+                  : plan.id === 'free'
+                    ? t('buttons.getStartedFree')
+                    : plan.id === 'enterprise'
+                      ? t('buttons.contactSales')
+                      : t('buttons.choosePlan')}
               </Button>
-              
+
               {plan.id !== 'free' && (
                 <Button
                   type="link"
@@ -817,14 +860,17 @@ const PricingModal: React.FC<PricingModalProps> = ({
     if (teamSize <= 5 && teamSize > 1) {
       const perUserSample = PLAN_TIERS.find(p => p.id === 'proSmall');
       const basePlanSample = PLAN_TIERS.find(p => p.id === 'proLarge');
-      
+
       if (perUserSample && basePlanSample) {
-        const perUserCost = (billingCycle === 'YEARLY' ? perUserSample.pricing.perUser!.annual : perUserSample.pricing.perUser!.monthly) * teamSize;
+        const perUserCost =
+          (billingCycle === 'YEARLY'
+            ? perUserSample.pricing.perUser!.annual
+            : perUserSample.pricing.perUser!.monthly) * teamSize;
         const basePlanCost = basePlanSample.pricing.basePlan!.basePrice;
-        
+
         const savings = Math.abs(perUserCost - basePlanCost);
         const betterOption = perUserCost < basePlanCost ? 'PER_USER' : 'BASE_PLAN';
-        
+
         if (pricingModel !== betterOption && savings > 10) {
           return (
             <Alert
@@ -832,8 +878,11 @@ const PricingModal: React.FC<PricingModalProps> = ({
                 <span>
                   {t('recommendations.switchModel', {
                     amount: savings.toFixed(2),
-                    model: betterOption === 'PER_USER' ? t('recommendations.perUserPricing') : t('recommendations.basePlanPricing'),
-                    count: teamSize
+                    model:
+                      betterOption === 'PER_USER'
+                        ? t('recommendations.perUserPricing')
+                        : t('recommendations.basePlanPricing'),
+                    count: teamSize,
                   })}
                 </span>
               }
@@ -896,7 +945,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
                 {t('subtitle')}
               </Typography.Text>
             </div>
-            
+
             <Space>
               {isMobile && (
                 <Tooltip title={t('buttons.switchToMobile')}>
@@ -908,7 +957,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
                   />
                 </Tooltip>
               )}
-              
+
               <Tooltip title={t('buttons.toggleTheme')}>
                 <Button
                   type="text"
@@ -917,7 +966,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
                   aria-label={isDarkMode ? t('buttons.switchToLight') : t('buttons.switchToDark')}
                 />
               </Tooltip>
-              
+
               <Button
                 type="text"
                 icon={<CloseOutlined />}
@@ -937,27 +986,31 @@ const PricingModal: React.FC<PricingModalProps> = ({
             <Row gutter={[24, 16]} align="middle">
               <Col xs={24} sm={12} md={8}>
                 <Space direction="vertical" size="small">
-                  <Typography.Text strong id="billing-cycle-label">{t('billingCycle.label')}</Typography.Text>
+                  <Typography.Text strong id="billing-cycle-label">
+                    {t('billingCycle.label')}
+                  </Typography.Text>
                   <Segmented
                     value={billingCycle}
                     onChange={setBillingCycle}
                     options={[
-                      { 
+                      {
                         label: (
                           <Space>
                             <span>{t('billingCycle.monthly')}</span>
                           </Space>
-                        ), 
-                        value: 'MONTHLY' 
+                        ),
+                        value: 'MONTHLY',
                       },
-                      { 
+                      {
                         label: (
                           <Space>
                             <span>{t('billingCycle.yearly')}</span>
-                            <Tag color="green" size="small">{t('billingCycle.savePercent')}</Tag>
+                            <Tag color="green" size="small">
+                              {t('billingCycle.savePercent')}
+                            </Tag>
                           </Space>
-                        ), 
-                        value: 'YEARLY' 
+                        ),
+                        value: 'YEARLY',
                       },
                     ]}
                     size="large"
@@ -968,29 +1021,35 @@ const PricingModal: React.FC<PricingModalProps> = ({
 
               <Col xs={24} sm={12} md={8}>
                 <Space direction="vertical" size="small">
-                  <Typography.Text strong id="pricing-model-label">{t('pricingModel.label')}</Typography.Text>
+                  <Typography.Text strong id="pricing-model-label">
+                    {t('pricingModel.label')}
+                  </Typography.Text>
                   <Segmented
                     value={pricingModel}
                     onChange={handlePricingModelChange}
                     options={[
-                      { 
+                      {
                         label: (
                           <Space>
                             <TeamOutlined />
                             <span>{t('pricingModel.perUser')}</span>
                           </Space>
-                        ), 
-                        value: 'PER_USER' 
+                        ),
+                        value: 'PER_USER',
                       },
-                      { 
+                      {
                         label: (
                           <Space>
                             <DollarOutlined />
                             <span>{t('pricingModel.basePlan')}</span>
-                            {pricingModel !== 'BASE_PLAN' && <Tag color="blue" size="small">{t('pricingModel.default')}</Tag>}
+                            {pricingModel !== 'BASE_PLAN' && (
+                              <Tag color="blue" size="small">
+                                {t('pricingModel.default')}
+                              </Tag>
+                            )}
                           </Space>
-                        ), 
-                        value: 'BASE_PLAN' 
+                        ),
+                        value: 'BASE_PLAN',
                       },
                     ]}
                     size="large"
@@ -1002,9 +1061,14 @@ const PricingModal: React.FC<PricingModalProps> = ({
               <Col xs={24} sm={24} md={8}>
                 <Space direction="vertical" size="small" style={{ width: '100%' }}>
                   <Space>
-                    <Typography.Text strong id="team-size-label">{t('teamSize.label')}</Typography.Text>
+                    <Typography.Text strong id="team-size-label">
+                      {t('teamSize.label')}
+                    </Typography.Text>
                     <Tooltip title={t('teamSize.help')}>
-                      <InfoCircleOutlined style={{ color: '#8c8c8c' }} aria-label={t('accessibility.teamSizeHelp')} />
+                      <InfoCircleOutlined
+                        style={{ color: '#8c8c8c' }}
+                        aria-label={t('accessibility.teamSizeHelp')}
+                      />
                     </Tooltip>
                   </Space>
                   <InputNumber
@@ -1033,13 +1097,15 @@ const PricingModal: React.FC<PricingModalProps> = ({
               message={
                 <div>
                   <Typography.Text strong>
-                    {pricingModel === 'PER_USER' ? t('pricingModel.perUser') : t('pricingModel.basePlan')} {t('pricingModel.label')}
+                    {pricingModel === 'PER_USER'
+                      ? t('pricingModel.perUser')
+                      : t('pricingModel.basePlan')}{' '}
+                    {t('pricingModel.label')}
                   </Typography.Text>
                   <Typography.Paragraph style={{ marginTop: 8, marginBottom: 0 }}>
-                    {pricingModel === 'PER_USER' ? 
-                      t('pricingModel.explanation.perUser') : 
-                      t('pricingModel.explanation.basePlan')
-                    }
+                    {pricingModel === 'PER_USER'
+                      ? t('pricingModel.explanation.perUser')
+                      : t('pricingModel.explanation.basePlan')}
                   </Typography.Paragraph>
                 </div>
               }
@@ -1072,19 +1138,12 @@ const PricingModal: React.FC<PricingModalProps> = ({
             <Typography.Title level={3} id="available-plans" className="sr-only">
               {t('accessibility.availablePlans')}
             </Typography.Title>
-            <Row gutter={[24, 24]}>
-              {availablePlanTiers.map(renderPlanCard)}
-            </Row>
+            <Row gutter={[24, 24]}>{availablePlanTiers.map(renderPlanCard)}</Row>
           </div>
 
           {/* Mobile Optimization Note */}
           <div className="mobile-note" style={{ marginTop: 24 }}>
-            <Alert
-              message={t('tips.switchAnytime')}
-              type="info"
-              showIcon
-              banner
-            />
+            <Alert message={t('tips.switchAnytime')} type="info" showIcon banner />
           </div>
         </div>
 
@@ -1107,66 +1166,77 @@ const PricingModal: React.FC<PricingModalProps> = ({
           open={!!showPlanDetails}
           width={400}
         >
-          {showPlanDetails && (() => {
-            const plan = PLAN_TIERS.find(p => p.id === showPlanDetails);
-            if (!plan) return null;
+          {showPlanDetails &&
+            (() => {
+              const plan = PLAN_TIERS.find(p => p.id === showPlanDetails);
+              if (!plan) return null;
 
-            return (
-              <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                <div>
-                  <Typography.Title level={4}>{plan.name}</Typography.Title>
-                  <Typography.Text type="secondary">{plan.description}</Typography.Text>
-                </div>
+              return (
+                <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                  <div>
+                    <Typography.Title level={4}>{plan.name}</Typography.Title>
+                    <Typography.Text type="secondary">{plan.description}</Typography.Text>
+                  </div>
 
-                <Divider />
+                  <Divider />
 
-                <div>
-                  <Typography.Title level={5}>{t('planDetails.features')}</Typography.Title>
-                  <List
-                    dataSource={plan.features}
-                    renderItem={(feature, index) => (
-                      <List.Item style={{ padding: '8px 0', border: 'none' }}>
-                        <Space>
-                          <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                          <Typography.Text>{t(`plans.${plan.id}.features.${index}`, feature)}</Typography.Text>
-                        </Space>
-                      </List.Item>
-                    )}
-                  />
-                </div>
+                  <div>
+                    <Typography.Title level={5}>{t('planDetails.features')}</Typography.Title>
+                    <List
+                      dataSource={plan.features}
+                      renderItem={(feature, index) => (
+                        <List.Item style={{ padding: '8px 0', border: 'none' }}>
+                          <Space>
+                            <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                            <Typography.Text>
+                              {t(`plans.${plan.id}.features.${index}`, feature)}
+                            </Typography.Text>
+                          </Space>
+                        </List.Item>
+                      )}
+                    />
+                  </div>
 
-                <Divider />
+                  <Divider />
 
-                <div>
-                  <Typography.Title level={5}>{t('planDetails.limits')}</Typography.Title>
-                  <Descriptions column={1} size="small">
-                    <Descriptions.Item label={t('planDetails.projects')}>
-                      {plan.limits.projects === 'unlimited' ? t('planDetails.unlimited') : plan.limits.projects}
-                    </Descriptions.Item>
-                    <Descriptions.Item label={t('planDetails.users')}>
-                      {plan.limits.users === 'unlimited' ? t('planDetails.unlimited') : `${t('pricing.upToUsers', { count: plan.limits.users })}`}
-                    </Descriptions.Item>
-                    <Descriptions.Item label={t('planDetails.storage')}>
-                      {plan.limits.storage === 'unlimited' ? t('planDetails.unlimited') : `${plan.limits.storage} MB`}
-                    </Descriptions.Item>
-                  </Descriptions>
-                </div>
+                  <div>
+                    <Typography.Title level={5}>{t('planDetails.limits')}</Typography.Title>
+                    <Descriptions column={1} size="small">
+                      <Descriptions.Item label={t('planDetails.projects')}>
+                        {plan.limits.projects === 'unlimited'
+                          ? t('planDetails.unlimited')
+                          : plan.limits.projects}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={t('planDetails.users')}>
+                        {plan.limits.users === 'unlimited'
+                          ? t('planDetails.unlimited')
+                          : `${t('pricing.upToUsers', { count: plan.limits.users })}`}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={t('planDetails.storage')}>
+                        {plan.limits.storage === 'unlimited'
+                          ? t('planDetails.unlimited')
+                          : `${plan.limits.storage} MB`}
+                      </Descriptions.Item>
+                    </Descriptions>
+                  </div>
 
-                <Button
-                  type="primary"
-                  size="large"
-                  block
-                  onClick={() => {
-                    setShowPlanDetails(null);
-                    handleCheckoutStart(plan.id);
-                  }}
-                  icon={<ShoppingCartOutlined />}
-                >
-                  {plan.id === 'enterprise' ? t('buttons.contactSales') : t('buttons.chooseThisPlan')}
-                </Button>
-              </Space>
-            );
-          })()}
+                  <Button
+                    type="primary"
+                    size="large"
+                    block
+                    onClick={() => {
+                      setShowPlanDetails(null);
+                      handleCheckoutStart(plan.id);
+                    }}
+                    icon={<ShoppingCartOutlined />}
+                  >
+                    {plan.id === 'enterprise'
+                      ? t('buttons.contactSales')
+                      : t('buttons.chooseThisPlan')}
+                  </Button>
+                </Space>
+              );
+            })()}
         </Drawer>
       </Modal>
     </>

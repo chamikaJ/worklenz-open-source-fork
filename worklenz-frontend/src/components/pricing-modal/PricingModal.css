@@ -62,7 +62,7 @@
 }
 
 .pricing-plan-card.selected::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -189,22 +189,38 @@
 }
 
 .ant-alert-info {
-  background: linear-gradient(135deg, rgba(24, 144, 255, 0.05) 0%, rgba(24, 144, 255, 0.02) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(24, 144, 255, 0.05) 0%,
+    rgba(24, 144, 255, 0.02) 100%
+  ) !important;
   border-color: rgba(24, 144, 255, 0.2) !important;
 }
 
 .ant-alert-success {
-  background: linear-gradient(135deg, rgba(82, 196, 26, 0.05) 0%, rgba(82, 196, 26, 0.02) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(82, 196, 26, 0.05) 0%,
+    rgba(82, 196, 26, 0.02) 100%
+  ) !important;
   border-color: rgba(82, 196, 26, 0.2) !important;
 }
 
 .ant-alert-warning {
-  background: linear-gradient(135deg, rgba(250, 173, 20, 0.05) 0%, rgba(250, 173, 20, 0.02) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(250, 173, 20, 0.05) 0%,
+    rgba(250, 173, 20, 0.02) 100%
+  ) !important;
   border-color: rgba(250, 173, 20, 0.2) !important;
 }
 
 .ant-alert-error {
-  background: linear-gradient(135deg, rgba(255, 77, 79, 0.05) 0%, rgba(255, 77, 79, 0.02) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 77, 79, 0.05) 0%,
+    rgba(255, 77, 79, 0.02) 100%
+  ) !important;
   border-color: rgba(255, 77, 79, 0.2) !important;
 }
 
@@ -560,7 +576,8 @@
 
   @keyframes slideInUp,
   @keyframes mobileSlideIn {
-    from, to {
+    from,
+    to {
       opacity: 1;
       transform: none;
     }
@@ -629,10 +646,18 @@
   animation: slideInUp 0.3s ease-out;
 }
 
-.pricing-plan-card:nth-child(1) { animation-delay: 0.1s; }
-.pricing-plan-card:nth-child(2) { animation-delay: 0.2s; }
-.pricing-plan-card:nth-child(3) { animation-delay: 0.3s; }
-.pricing-plan-card:nth-child(4) { animation-delay: 0.4s; }
+.pricing-plan-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.pricing-plan-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.pricing-plan-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.pricing-plan-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
 
 /* Modal Animation */
 .pricing-modal .ant-modal-content {
@@ -641,7 +666,8 @@
 
 /* Loading Animation */
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -781,15 +807,15 @@
   .mobile-pricing-drawer {
     height: 95% !important;
   }
-  
+
   .mobile-pricing-drawer .ant-drawer-body {
     padding: 12px !important;
   }
-  
+
   .mobile-plan-card {
     margin-bottom: 8px;
   }
-  
+
   .mobile-plan-card .ant-card-body {
     padding: 12px !important;
   }

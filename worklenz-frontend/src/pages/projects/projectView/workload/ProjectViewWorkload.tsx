@@ -19,27 +19,36 @@ const ProjectViewWorkload = React.memo(() => {
   const { t } = useTranslation('workload');
   const { projectId } = useParams<{ projectId: string }>();
   const dispatch = useAppDispatch();
-  
+
   const { workloadView, dateRange, filters } = useAppSelector(state => state.projectWorkload);
   const [localView, setLocalView] = useState<WorkloadView>(workloadView || 'chart');
-  
-  const { data: workloadData, isLoading, error, refetch, isFetching } = useGetProjectWorkloadQuery({
-    projectId: projectId!,
-    startDate: dateRange.startDate,
-    endDate: dateRange.endDate,
-  }, {
-    skip: !projectId || !dateRange.startDate || !dateRange.endDate,
-    refetchOnMountOrArgChange: true, // Always refetch when component mounts or args change
-    refetchOnFocus: false, // Don't refetch on window focus for performance
-    refetchOnReconnect: true // Refetch on network reconnect
-  });
+
+  const {
+    data: workloadData,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useGetProjectWorkloadQuery(
+    {
+      projectId: projectId!,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    },
+    {
+      skip: !projectId || !dateRange.startDate || !dateRange.endDate,
+      refetchOnMountOrArgChange: true, // Always refetch when component mounts or args change
+      refetchOnFocus: false, // Don't refetch on window focus for performance
+      refetchOnReconnect: true, // Refetch on network reconnect
+    }
+  );
 
   // Initialize date range on component mount if not set
   useEffect(() => {
     if (!dateRange.startDate || !dateRange.endDate) {
       const defaultRange = {
         startDate: dayjs().startOf('week').format('YYYY-MM-DD'),
-        endDate: dayjs().endOf('week').add(3, 'weeks').format('YYYY-MM-DD')
+        endDate: dayjs().endOf('week').add(3, 'weeks').format('YYYY-MM-DD'),
       };
       dispatch(setDateRange(defaultRange));
     }
@@ -54,12 +63,20 @@ const ProjectViewWorkload = React.memo(() => {
       isFetching,
       hasData: !!workloadData,
       dataLength: workloadData?.members?.length || 0,
-      error: error
+      error: error,
     };
     console.log('Workload Component State:', state);
 
     // Fallback: If we have all required params but no data and not loading, trigger fetch
-    if (projectId && dateRange.startDate && dateRange.endDate && !isLoading && !isFetching && !workloadData && !error) {
+    if (
+      projectId &&
+      dateRange.startDate &&
+      dateRange.endDate &&
+      !isLoading &&
+      !isFetching &&
+      !workloadData &&
+      !error
+    ) {
       console.log('Fallback: Triggering refetch due to missing data');
       const fallbackTimeout = setTimeout(() => {
         refetch();
@@ -105,7 +122,7 @@ const ProjectViewWorkload = React.memo(() => {
   // Memoize the content to prevent unnecessary re-renders
   const memoizedContent = useMemo(() => {
     if (!workloadData) return null;
-    
+
     switch (localView) {
       case 'calendar':
         return <WorkloadCalendar data={workloadData} />;
@@ -117,11 +134,14 @@ const ProjectViewWorkload = React.memo(() => {
     }
   }, [workloadData, localView]);
 
-  const handleViewChange = useCallback((value: string | number) => {
-    const view = value as WorkloadView;
-    setLocalView(view);
-    dispatch(setWorkloadView(view));
-  }, [dispatch]);
+  const handleViewChange = useCallback(
+    (value: string | number) => {
+      const view = value as WorkloadView;
+      setLocalView(view);
+      dispatch(setWorkloadView(view));
+    },
+    [dispatch]
+  );
 
   const renderContent = () => {
     if (isLoading || isFetching) {
@@ -135,23 +155,25 @@ const ProjectViewWorkload = React.memo(() => {
     if (error) {
       return (
         <div style={{ padding: '60px 0', textAlign: 'center' }}>
-          <Empty 
+          <Empty
             description={
               <div>
                 <p>Error loading workload data</p>
-                <p style={{ 
-                  fontSize: '12px', 
-                  opacity: 0.65,
-                  marginBottom: '16px' 
-                }}>
+                <p
+                  style={{
+                    fontSize: '12px',
+                    opacity: 0.65,
+                    marginBottom: '16px',
+                  }}
+                >
                   {typeof error === 'string' ? error : JSON.stringify(error)}
                 </p>
-                <button 
+                <button
                   onClick={handleRetry}
                   className="ant-btn ant-btn-primary"
                   style={{
                     padding: '8px 16px',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
                   }}
                 >
                   Retry
@@ -166,17 +188,17 @@ const ProjectViewWorkload = React.memo(() => {
     if (!workloadData || workloadData.members?.length === 0) {
       return (
         <div style={{ padding: '60px 0', textAlign: 'center' }}>
-          <Empty 
+          <Empty
             description={
               <div>
                 <p>{t('noWorkloadData')}</p>
-                <button 
+                <button
                   onClick={handleRetry}
                   className="ant-btn ant-btn-primary"
                   style={{
                     padding: '8px 16px',
                     cursor: 'pointer',
-                    marginTop: '16px'
+                    marginTop: '16px',
                   }}
                 >
                   Refresh Data
@@ -192,12 +214,12 @@ const ProjectViewWorkload = React.memo(() => {
   };
 
   return (
-    <Flex 
-      vertical 
-      gap={16} 
-      style={{ 
-        height: '100%', 
-        padding: '16px 0'
+    <Flex
+      vertical
+      gap={16}
+      style={{
+        height: '100%',
+        padding: '16px 0',
       }}
     >
       <Flex justify="space-between" align="center" wrap="wrap" gap={16}>
@@ -207,7 +229,7 @@ const ProjectViewWorkload = React.memo(() => {
           options={[
             { label: t('chartView'), value: 'chart' },
             { label: t('calendarView'), value: 'calendar' },
-            { label: t('tableView'), value: 'table' }
+            { label: t('tableView'), value: 'table' },
           ]}
         />
         <WorkloadFilters onRefresh={refetch} />
@@ -215,10 +237,10 @@ const ProjectViewWorkload = React.memo(() => {
 
       <WorkloadOverview data={workloadData} isLoading={isLoading} />
 
-      <Card 
-        style={{ 
-          flex: 1, 
-          overflow: 'auto'
+      <Card
+        style={{
+          flex: 1,
+          overflow: 'auto',
         }}
       >
         {renderContent()}

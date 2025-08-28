@@ -174,11 +174,21 @@
 }
 
 /* Staggered animation for multiple tasks */
-.gantt-task-stagger-1 { animation-delay: 0.05s; }
-.gantt-task-stagger-2 { animation-delay: 0.1s; }
-.gantt-task-stagger-3 { animation-delay: 0.15s; }
-.gantt-task-stagger-4 { animation-delay: 0.2s; }
-.gantt-task-stagger-5 { animation-delay: 0.25s; }
+.gantt-task-stagger-1 {
+  animation-delay: 0.05s;
+}
+.gantt-task-stagger-2 {
+  animation-delay: 0.1s;
+}
+.gantt-task-stagger-3 {
+  animation-delay: 0.15s;
+}
+.gantt-task-stagger-4 {
+  animation-delay: 0.2s;
+}
+.gantt-task-stagger-5 {
+  animation-delay: 0.25s;
+}
 
 /* Expand/collapse icon transitions */
 .gantt-expand-icon {
@@ -272,7 +282,9 @@
 /* Task bar resize and drag styles */
 .gantt-task-bar {
   user-select: none;
-  transition: opacity 0.2s ease, transform 0.1s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.1s ease;
 }
 
 .gantt-task-bar:hover {
@@ -301,7 +313,9 @@
   background: transparent;
   cursor: ew-resize !important;
   opacity: 0.3;
-  transition: opacity 0.2s ease, background-color 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    background-color 0.2s ease;
   z-index: 30;
   display: flex;
   align-items: center;
@@ -344,7 +358,7 @@
 
 /* Resize handle indicators */
 .gantt-resize-handle::after {
-  content: '';
+  content: "";
   width: 2px;
   height: 16px;
   background: rgba(255, 255, 255, 0.6);

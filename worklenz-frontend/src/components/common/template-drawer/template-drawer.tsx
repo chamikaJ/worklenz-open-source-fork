@@ -39,8 +39,7 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   templateSelected = (templateId: string) => {
     if (!templateId) return;
   },
-  selectedTemplateType = (type: 'worklenz' | 'custom') => {
-  },
+  selectedTemplateType = (type: 'worklenz' | 'custom') => {},
 }) => {
   const themeMode = useSelector((state: RootState) => state.themeReducer.mode);
   const { token } = theme.useToken();
@@ -149,11 +148,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
                 <Tag
                   key={phase.name}
                   color={phase.color_code}
-                  style={{ 
-                    color: token.colorText, 
+                  style={{
+                    color: token.colorText,
                     marginBottom: '8px',
                     backgroundColor: phase.color_code ? undefined : token.colorBgContainer,
-                    borderColor: phase.color_code ? undefined : token.colorBorder
+                    borderColor: phase.color_code ? undefined : token.colorBorder,
                   }}
                 >
                   {phase.name}
@@ -176,11 +175,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
                 <Tag
                   key={status.name}
                   color={status.color_code}
-                  style={{ 
-                    color: token.colorText, 
+                  style={{
+                    color: token.colorText,
                     marginBottom: '8px',
                     backgroundColor: status.color_code ? undefined : token.colorBgContainer,
-                    borderColor: status.color_code ? undefined : token.colorBorder
+                    borderColor: status.color_code ? undefined : token.colorBorder,
                   }}
                 >
                   {status.name}
@@ -203,11 +202,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
                 <Tag
                   key={priority.name}
                   color={priority.color_code}
-                  style={{ 
-                    color: token.colorText, 
+                  style={{
+                    color: token.colorText,
                     marginBottom: '8px',
                     backgroundColor: priority.color_code ? undefined : token.colorBgContainer,
-                    borderColor: priority.color_code ? undefined : token.colorBorder
+                    borderColor: priority.color_code ? undefined : token.colorBorder,
                   }}
                 >
                   {priority.name}
@@ -230,11 +229,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
                 <Tag
                   key={label.name}
                   color={label.color_code}
-                  style={{ 
-                    color: token.colorText, 
+                  style={{
+                    color: token.colorText,
                     marginBottom: '8px',
                     backgroundColor: label.color_code ? undefined : token.colorBgContainer,
-                    borderColor: label.color_code ? undefined : token.colorBorder
+                    borderColor: label.color_code ? undefined : token.colorBorder,
                   }}
                 >
                   {label.name}
@@ -273,21 +272,23 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   const menuContent = (
     <div style={{ display: 'flex', backgroundColor: token.colorBgContainer }}>
       {/* Menu Area */}
-      <div style={{ 
-        minWidth: '250px', 
-        overflowY: 'auto', 
-        height: '100%',
-        backgroundColor: token.colorBgContainer,
-        borderRight: `1px solid ${token.colorBorder}`
-      }}>
+      <div
+        style={{
+          minWidth: '250px',
+          overflowY: 'auto',
+          height: '100%',
+          backgroundColor: token.colorBgContainer,
+          borderRight: `1px solid ${token.colorBorder}`,
+        }}
+      >
         <Skeleton loading={loadingTemplates} active>
           <Menu
             className="template-menu"
             onClick={({ key }) => handleMenuClick(key)}
-            style={{ 
+            style={{
               width: 256,
               backgroundColor: token.colorBgContainer,
-              borderColor: token.colorBorder
+              borderColor: token.colorBorder,
             }}
             defaultSelectedKeys={[templates[0]?.id || '']}
             mode="inline"
@@ -303,10 +304,12 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
           maxHeight: 'calc(100vh - 200px)',
           padding: '16px',
           backgroundColor: token.colorBgContainer,
-          color: token.colorText
+          color: token.colorText,
         }}
       >
-        <Title level={4} style={{ color: token.colorText }}>Details</Title>
+        <Title level={4} style={{ color: token.colorText }}>
+          Details
+        </Title>
         <Skeleton loading={loadingSelectedTemplate} active>
           {selectedTemplate?.image_url && (
             <Image preview={false} src={selectedTemplate.image_url} alt={selectedTemplate.name} />
@@ -334,11 +337,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
         <Input
           placeholder={t('searchTemplates')}
           suffix={<SearchOutlined style={{ color: token.colorTextTertiary }} />}
-          style={{ 
+          style={{
             maxWidth: '300px',
             backgroundColor: token.colorBgContainer,
             borderColor: token.colorBorder,
-            color: token.colorText
+            color: token.colorText,
           }}
           onChange={e => setSearchQuery(e.target.value)}
         />
@@ -351,7 +354,7 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
         loading={loadingCustomTemplates}
         style={{
           backgroundColor: token.colorBgContainer,
-          borderColor: token.colorBorder
+          borderColor: token.colorBorder,
         }}
         renderItem={item => (
           <List.Item
@@ -361,7 +364,7 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
               backgroundColor: item.selected ? token.colorPrimaryBg : token.colorBgContainer,
               borderColor: item.selected ? token.colorPrimary : token.colorBorder,
               color: token.colorText,
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
             className={
               item.selected && themeMode === 'dark'
@@ -402,11 +405,13 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   };
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      overflow: 'hidden',
-      backgroundColor: token.colorBgLayout 
-    }}>
+    <div
+      style={{
+        height: '100vh',
+        overflow: 'hidden',
+        backgroundColor: token.colorBgLayout,
+      }}
+    >
       <div
         style={{
           position: 'sticky',
@@ -414,17 +419,17 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
           zIndex: 100,
           backgroundColor: token.colorBgContainer,
           overflow: 'hidden',
-          borderBottom: `1px solid ${token.colorBorder}`
+          borderBottom: `1px solid ${token.colorBorder}`,
         }}
       >
         {showBothTabs ? (
-          <Tabs 
-            type="card" 
-            items={tabs} 
-            onChange={handleTabChange} 
+          <Tabs
+            type="card"
+            items={tabs}
+            onChange={handleTabChange}
             destroyInactiveTabPane
             style={{
-              backgroundColor: token.colorBgContainer
+              backgroundColor: token.colorBgContainer,
             }}
           />
         ) : (

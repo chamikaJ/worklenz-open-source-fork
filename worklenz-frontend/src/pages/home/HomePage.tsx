@@ -119,7 +119,7 @@ const HomePage = memo(() => {
         <Col xs={24} lg={8}>
           <Flex vertical gap={24}>
             <TodoList />
-            
+
             <UserActivityFeed />
 
             <RecentAndFavouriteProjectList />

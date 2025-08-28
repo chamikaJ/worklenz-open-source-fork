@@ -24,11 +24,11 @@ export function useUpdateChecker(options: UseUpdateCheckerOptions = {}): UseUpda
   const {
     checkInterval = 5 * 60 * 1000, // 5 minutes
     enableAutoCheck = true,
-    showNotificationOnUpdate = true
+    showNotificationOnUpdate = true,
   } = options;
 
   const { checkForUpdates: serviceWorkerCheckUpdates, swManager } = useServiceWorker();
-  
+
   const [hasUpdate, setHasUpdate] = React.useState(false);
   const [isChecking, setIsChecking] = React.useState(false);
   const [lastChecked, setLastChecked] = React.useState<Date | null>(null);
@@ -44,12 +44,12 @@ export function useUpdateChecker(options: UseUpdateCheckerOptions = {}): UseUpda
       const hasUpdates = await serviceWorkerCheckUpdates();
       setHasUpdate(hasUpdates);
       setLastChecked(new Date());
-      
+
       // Show notification if update found and user hasn't dismissed it
       if (hasUpdates && showNotificationOnUpdate && !updateDismissed) {
         setShowUpdateNotification(true);
       }
-      
+
       console.log('Update check completed:', { hasUpdates });
     } catch (error) {
       console.error('Error checking for updates:', error);
@@ -136,6 +136,6 @@ export function useUpdateChecker(options: UseUpdateCheckerOptions = {}): UseUpda
     checkForUpdates,
     dismissUpdate,
     showUpdateNotification,
-    setShowUpdateNotification
+    setShowUpdateNotification,
   };
 }

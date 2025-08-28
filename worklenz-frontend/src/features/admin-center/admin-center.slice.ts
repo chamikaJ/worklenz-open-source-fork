@@ -134,9 +134,10 @@ export const fetchHolidays = createAsyncThunk(
   ) => {
     const state = getState() as { adminCenterReducer: adminCenterState };
     const currentRange = state.adminCenterReducer.holidaysDateRange;
-    
+
     // Get country code from holiday settings if not provided in params
-    const countryCode = params.country_code || state.adminCenterReducer.holidaySettings?.country_code;
+    const countryCode =
+      params.country_code || state.adminCenterReducer.holidaySettings?.country_code;
 
     // Check if we already have data for this range (cache hit)
     if (
@@ -286,7 +287,8 @@ const adminCenterSlice = createSlice({
   },
 });
 
-export const { toggleRedeemCodeDrawer, toggleUpgradeModal, clearHolidaysCache } = adminCenterSlice.actions;
+export const { toggleRedeemCodeDrawer, toggleUpgradeModal, clearHolidaysCache } =
+  adminCenterSlice.actions;
 
 // Selectors for optimized access
 export const selectHolidaysByDateRange = createSelector(

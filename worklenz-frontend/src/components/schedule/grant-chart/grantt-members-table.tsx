@@ -36,7 +36,7 @@ const GranttMembersTable = React.memo(
     const { workingHours } = useAppSelector(state => state.scheduleReducer);
 
     const dispatch = useAppDispatch();
-    
+
     // Calculate member workload statistics
     const calculateMemberWorkload = useMemo(() => {
       return (member: any) => {
@@ -49,18 +49,19 @@ const GranttMembersTable = React.memo(
             projectCount: 0,
           };
         }
-        
+
         const totalAllocatedHours = member.projects.reduce((sum: number, project: any) => {
           return sum + (project.allocated_hours || 0);
         }, 0);
-        
-        const utilizationPercent = workingHours > 0 ? (totalAllocatedHours / workingHours) * 100 : 0;
-        
+
+        const utilizationPercent =
+          workingHours > 0 ? (totalAllocatedHours / workingHours) * 100 : 0;
+
         let status: WorkloadStatus = 'available';
         if (utilizationPercent > 100) status = 'overallocated';
         else if (utilizationPercent === 100) status = 'fully-allocated';
         else if (utilizationPercent >= 75) status = 'normal';
-        
+
         return {
           totalAllocatedHours,
           utilizationPercent,
@@ -70,24 +71,34 @@ const GranttMembersTable = React.memo(
         };
       };
     }, [workingHours]);
-    
+
     const getStatusColor = (status: WorkloadStatus) => {
       switch (status) {
-        case 'available': return '#52c41a'; // Green
-        case 'normal': return '#1890ff'; // Blue
-        case 'fully-allocated': return '#faad14'; // Orange
-        case 'overallocated': return '#f5222d'; // Red
-        default: return '#d9d9d9'; // Gray
+        case 'available':
+          return '#52c41a'; // Green
+        case 'normal':
+          return '#1890ff'; // Blue
+        case 'fully-allocated':
+          return '#faad14'; // Orange
+        case 'overallocated':
+          return '#f5222d'; // Red
+        default:
+          return '#d9d9d9'; // Gray
       }
     };
-    
+
     const getStatusText = (status: WorkloadStatus) => {
       switch (status) {
-        case 'available': return t('available') || 'Available';
-        case 'normal': return t('normal') || 'Normal';
-        case 'fully-allocated': return t('fullyAllocated') || 'Fully Allocated';
-        case 'overallocated': return t('overAllocated') || 'Over Allocated';
-        default: return t('unknown') || 'Unknown';
+        case 'available':
+          return t('available') || 'Available';
+        case 'normal':
+          return t('normal') || 'Normal';
+        case 'fully-allocated':
+          return t('fullyAllocated') || 'Fully Allocated';
+        case 'overallocated':
+          return t('overAllocated') || 'Over Allocated';
+        default:
+          return t('unknown') || 'Unknown';
       }
     };
 
@@ -162,8 +173,8 @@ const GranttMembersTable = React.memo(
                       {(() => {
                         const workload = calculateMemberWorkload(member);
                         return (
-                          <Tag 
-                            color={getStatusColor(workload.status)} 
+                          <Tag
+                            color={getStatusColor(workload.status)}
                             size="small"
                             style={{ fontSize: '10px', margin: 0 }}
                           >
@@ -173,19 +184,17 @@ const GranttMembersTable = React.memo(
                       })()}
                     </Flex>
                     <Tooltip
-                      title={
-                        (() => {
-                          const workload = calculateMemberWorkload(member);
-                          return (
-                            <div style={{ fontSize: '12px' }}>
-                              <div>Projects: {workload.projectCount}</div>
-                              <div>Allocated: {workload.totalAllocatedHours}h</div>
-                              <div>Available: {workload.availableHours}h</div>
-                              <div>Status: {getStatusText(workload.status)}</div>
-                            </div>
-                          );
-                        })()
-                      }
+                      title={(() => {
+                        const workload = calculateMemberWorkload(member);
+                        return (
+                          <div style={{ fontSize: '12px' }}>
+                            <div>Projects: {workload.projectCount}</div>
+                            <div>Allocated: {workload.totalAllocatedHours}h</div>
+                            <div>Available: {workload.availableHours}h</div>
+                            <div>Status: {getStatusText(workload.status)}</div>
+                          </div>
+                        );
+                      })()}
                     >
                       <Progress
                         percent={(() => {

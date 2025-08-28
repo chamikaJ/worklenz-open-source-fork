@@ -1,10 +1,6 @@
 import React, { memo } from 'react';
 import { Select, Button, Space } from '@/shared/antd-imports';
-import {
-  ZoomInOutlined,
-  ZoomOutOutlined,
-  FullscreenOutlined,
-} from '@ant-design/icons';
+import { ZoomInOutlined, ZoomOutOutlined, FullscreenOutlined } from '@ant-design/icons';
 import { GanttViewMode } from '../../types/gantt-types';
 
 const { Option } = Select;

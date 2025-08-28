@@ -6,8 +6,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAuthService } from '@/hooks/useAuth';
 import { ISUBSCRIPTION_TYPE } from '@/shared/constants';
-import { CrownOutlined, ClockCircleOutlined, ThunderboltOutlined, RocketOutlined } from '@ant-design/icons';
-import type { UserPersonalization, PricingCalculation } from '@/components/pricing-modal/PricingModal';
+import {
+  CrownOutlined,
+  ClockCircleOutlined,
+  ThunderboltOutlined,
+  RocketOutlined,
+} from '@ant-design/icons';
+import type {
+  UserPersonalization,
+  PricingCalculation,
+} from '@/components/pricing-modal/PricingModal';
 import { fetchBillingInfo } from '@/features/admin-center/admin-center.slice';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 
@@ -19,9 +27,9 @@ interface UpgradePlanButtonProps {
   redirectToBilling?: boolean;
 }
 
-const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({ 
-  showModal = false, 
-  redirectToBilling = true 
+const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
+  showModal = false,
+  redirectToBilling = true,
 }) => {
   // localization
   const { t } = useTranslation('navbar');
@@ -36,16 +44,18 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
   const themeMode = useAppSelector(state => state.themeReducer.mode);
   const { billingInfo } = useAppSelector(state => state.adminCenterReducer);
   const currentSession = authService.getCurrentSession();
-  
+
   // Detect AppSumo user
   const checkAppSumoUser = useCallback(() => {
     const planName = billingInfo?.plan_name?.toLowerCase() || '';
     const subscriptionType = currentSession?.subscription_type?.toLowerCase() || '';
-    
-    return planName.includes('appsumo') || 
-           subscriptionType.includes('appsumo') ||
-           planName.includes('lifetime') ||
-           subscriptionType.includes('lifetime');
+
+    return (
+      planName.includes('appsumo') ||
+      subscriptionType.includes('appsumo') ||
+      planName.includes('lifetime') ||
+      subscriptionType.includes('lifetime')
+    );
   }, [billingInfo, currentSession]);
 
   useEffect(() => {
@@ -58,12 +68,12 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
   useEffect(() => {
     // Check if AppSumo user
     setIsAppSumoUser(checkAppSumoUser());
-    
+
     // Calculate days remaining for expirable subscription types
     const expirableTypes = [
       ISUBSCRIPTION_TYPE.TRIAL,
       ISUBSCRIPTION_TYPE.PADDLE,
-      ISUBSCRIPTION_TYPE.CUSTOM
+      ISUBSCRIPTION_TYPE.CUSTOM,
     ];
 
     if (
@@ -75,7 +85,7 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
       const expiryDate = new Date(expireDateStr!);
       const diffTime = expiryDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       // Show badge if 7 days or less remaining
       if (diffDays <= 7 && diffDays >= 0) {
         setDaysRemaining(diffDays);
@@ -136,7 +146,7 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
         color: '#fff',
       };
     }
-    
+
     if (daysRemaining !== null && daysRemaining <= 3) {
       return {
         ...baseStyles,
@@ -147,8 +157,8 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
 
     return {
       ...baseStyles,
-      background: isDark 
-        ? 'linear-gradient(135deg, #d4a574 0%, #b38750 100%)' 
+      background: isDark
+        ? 'linear-gradient(135deg, #d4a574 0%, #b38750 100%)'
         : 'linear-gradient(135deg, #fef3d7 0%, #fde8b5 100%)',
       color: isDark ? '#fff' : '#8b6914',
     };
@@ -167,17 +177,15 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
           navigate('/worklenz/admin-center/billing');
         }
       }}
-      onMouseEnter={(e) => {
+      onMouseEnter={e => {
         e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = themeMode === 'dark' 
-          ? '0 4px 8px rgba(0,0,0,0.3)' 
-          : '0 4px 8px rgba(0,0,0,0.1)';
+        e.currentTarget.style.boxShadow =
+          themeMode === 'dark' ? '0 4px 8px rgba(0,0,0,0.3)' : '0 4px 8px rgba(0,0,0,0.1)';
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={e => {
         e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = themeMode === 'dark' 
-          ? '0 2px 4px rgba(0,0,0,0.2)' 
-          : '0 2px 4px rgba(0,0,0,0.05)';
+        e.currentTarget.style.boxShadow =
+          themeMode === 'dark' ? '0 2px 4px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.05)';
       }}
     >
       {t('upgradePlan')}
@@ -196,7 +204,7 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
         </div>
       );
     }
-    
+
     if (daysRemaining === 0) {
       return (
         <div style={{ textAlign: 'center' }}>
@@ -208,7 +216,7 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
         </div>
       );
     }
-    
+
     if (daysRemaining !== null && daysRemaining <= 7) {
       return (
         <div style={{ textAlign: 'center' }}>
@@ -220,20 +228,16 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
         </div>
       );
     }
-    
+
     return t('upgradePlanTooltip');
   };
 
   if (daysRemaining !== null) {
     return (
-      <Tooltip 
-        title={getTooltipContent()}
-        placement="bottom"
-        overlayStyle={{ maxWidth: '280px' }}
-      >
-        <Badge 
-          count={getBadgeText()} 
-          style={{ 
+      <Tooltip title={getTooltipContent()} placement="bottom" overlayStyle={{ maxWidth: '280px' }}>
+        <Badge
+          count={getBadgeText()}
+          style={{
             backgroundColor: getBadgeColor(),
             fontSize: '11px',
             height: '20px',
@@ -269,11 +273,15 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
   // Create user personalization object for pricing modal
   const userPersonalization: UserPersonalization | undefined = useMemo(() => {
     if (!billingInfo) return undefined;
-    
-    const userType = isAppSumoUser ? 'appsumo' : 
-                     currentSession?.subscription_type === ISUBSCRIPTION_TYPE.TRIAL ? 'trial' :
-                     currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE ? 'free' : 'paid';
-    
+
+    const userType = isAppSumoUser
+      ? 'appsumo'
+      : currentSession?.subscription_type === ISUBSCRIPTION_TYPE.TRIAL
+        ? 'trial'
+        : currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE
+          ? 'free'
+          : 'paid';
+
     return {
       userType,
       currentPlan: billingInfo.plan_name,
@@ -281,24 +289,30 @@ const UpgradePlanButton: React.FC<UpgradePlanButtonProps> = ({
     };
   }, [billingInfo, isAppSumoUser, currentSession, daysRemaining]);
 
-  const handlePlanSelect = useCallback((calculation: PricingCalculation) => {
-    console.log('Plan selected:', calculation);
-    setShowPricingModal(false);
-    navigate('/worklenz/admin-center/billing');
-  }, [navigate]);
+  const handlePlanSelect = useCallback(
+    (calculation: PricingCalculation) => {
+      console.log('Plan selected:', calculation);
+      setShowPricingModal(false);
+      navigate('/worklenz/admin-center/billing');
+    },
+    [navigate]
+  );
 
   return (
     <>
-      <Tooltip 
-        title={getTooltipContent()}
-        placement="bottom"
-      >
+      <Tooltip title={getTooltipContent()} placement="bottom">
         {button}
       </Tooltip>
-      
+
       {/* Pricing Modal with lazy loading */}
       {showPricingModal && (
-        <Suspense fallback={<Modal visible={true} footer={null} closable={false}><div style={{ textAlign: 'center', padding: '20px' }}>Loading pricing options...</div></Modal>}>
+        <Suspense
+          fallback={
+            <Modal visible={true} footer={null} closable={false}>
+              <div style={{ textAlign: 'center', padding: '20px' }}>Loading pricing options...</div>
+            </Modal>
+          }
+        >
           <PricingModal
             visible={showPricingModal}
             onClose={() => setShowPricingModal(false)}

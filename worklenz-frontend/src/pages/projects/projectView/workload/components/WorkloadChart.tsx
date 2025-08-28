@@ -1,5 +1,16 @@
 import { useState, useMemo } from 'react';
-import { Flex, Select, Radio, Avatar, Progress, Typography, Badge, Empty, theme, Tooltip } from '@/shared/antd-imports';
+import {
+  Flex,
+  Select,
+  Radio,
+  Avatar,
+  Progress,
+  Typography,
+  Badge,
+  Empty,
+  theme,
+  Tooltip,
+} from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { IWorkloadData, IWorkloadMember } from '@/types/workload/workload.types';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -15,14 +26,7 @@ import {
   ChartOptions,
 } from 'chart.js';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  ChartTooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, ChartTooltip, Legend);
 
 interface WorkloadChartProps {
   data: IWorkloadData;
@@ -51,14 +55,14 @@ const WorkloadChart = ({ data }: WorkloadChartProps) => {
 
   const chartData = useMemo(() => {
     const labels = sortedMembers.map(member => member.name);
-    
+
     if (chartType === 'comparison') {
       return {
         labels,
         datasets: [
           {
             label: t('chart.capacity'),
-            data: sortedMembers.map(member => 
+            data: sortedMembers.map(member =>
               capacityUnit === 'hours' ? member.weeklyCapacity : member.weeklyCapacity / 8
             ),
             backgroundColor: token.colorPrimary,
@@ -67,13 +71,13 @@ const WorkloadChart = ({ data }: WorkloadChartProps) => {
           },
           {
             label: t('chart.allocated'),
-            data: sortedMembers.map(member => 
+            data: sortedMembers.map(member =>
               capacityUnit === 'hours' ? member.currentWorkload : member.currentWorkload / 8
             ),
-            backgroundColor: sortedMembers.map(member => 
+            backgroundColor: sortedMembers.map(member =>
               member.isOverallocated ? token.colorError : token.colorSuccess
             ),
-            borderColor: sortedMembers.map(member => 
+            borderColor: sortedMembers.map(member =>
               member.isOverallocated ? token.colorError : token.colorSuccess
             ),
             borderWidth: 1,
@@ -89,13 +93,17 @@ const WorkloadChart = ({ data }: WorkloadChartProps) => {
           label: t('chart.utilization'),
           data: sortedMembers.map(member => member.utilizationPercentage),
           backgroundColor: sortedMembers.map(member => {
-            if (member.utilizationPercentage > alertThresholds.overallocation) return token.colorError;
-            if (member.utilizationPercentage < alertThresholds.underutilization) return token.colorWarning;
+            if (member.utilizationPercentage > alertThresholds.overallocation)
+              return token.colorError;
+            if (member.utilizationPercentage < alertThresholds.underutilization)
+              return token.colorWarning;
             return token.colorSuccess;
           }),
           borderColor: sortedMembers.map(member => {
-            if (member.utilizationPercentage > alertThresholds.overallocation) return token.colorError;
-            if (member.utilizationPercentage < alertThresholds.underutilization) return token.colorWarning;
+            if (member.utilizationPercentage > alertThresholds.overallocation)
+              return token.colorError;
+            if (member.utilizationPercentage < alertThresholds.underutilization)
+              return token.colorWarning;
             return token.colorSuccess;
           }),
           borderWidth: 1,
@@ -118,7 +126,7 @@ const WorkloadChart = ({ data }: WorkloadChartProps) => {
         },
         tooltip: {
           callbacks: {
-            label: (context) => {
+            label: context => {
               if (chartType === 'comparison') {
                 const value = context.parsed.y;
                 const unit = capacityUnit === 'hours' ? 'h' : 'pts';
@@ -144,7 +152,7 @@ const WorkloadChart = ({ data }: WorkloadChartProps) => {
         y: {
           beginAtZero: true,
           ticks: {
-            callback: function(value) {
+            callback: function (value) {
               if (chartType === 'comparison') {
                 const unit = capacityUnit === 'hours' ? 'h' : 'pts';
                 return `${value}${unit}`;
@@ -196,55 +204,61 @@ const WorkloadChart = ({ data }: WorkloadChartProps) => {
   );
 };
 
-const MemberWorkloadCard = ({ 
-  member, 
-  capacityUnit 
-}: { 
-  member: IWorkloadMember; 
+const MemberWorkloadCard = ({
+  member,
+  capacityUnit,
+}: {
+  member: IWorkloadMember;
   capacityUnit: 'hours' | 'points';
 }) => {
   const { t } = useTranslation('workload');
   const { alertThresholds } = useAppSelector(state => state.projectWorkload);
   const { token } = theme.useToken();
-  
+
   // Calculate working days from weekly capacity and daily capacity
-  const workingDays = member.dailyCapacity > 0 ? Math.round(member.weeklyCapacity / member.dailyCapacity) : 5;
-  
+  const workingDays =
+    member.dailyCapacity > 0 ? Math.round(member.weeklyCapacity / member.dailyCapacity) : 5;
+
   const getStatusTooltip = () => {
     if (member.isOverallocated) {
       return t('calculations.statusTooltip.overallocated');
     }
     if (member.isUnderutilized) {
-      return t('calculations.statusTooltip.underutilized', { threshold: alertThresholds.underutilization });
+      return t('calculations.statusTooltip.underutilized', {
+        threshold: alertThresholds.underutilization,
+      });
     }
     return t('calculations.statusTooltip.optimal', { threshold: alertThresholds.underutilization });
   };
 
-  const status = 
-    member.utilizationPercentage > alertThresholds.overallocation ? 'exception' :
-    member.utilizationPercentage < alertThresholds.underutilization ? 'normal' :
-    'success';
+  const status =
+    member.utilizationPercentage > alertThresholds.overallocation
+      ? 'exception'
+      : member.utilizationPercentage < alertThresholds.underutilization
+        ? 'normal'
+        : 'success';
 
-  const statusBadge = 
-    member.isOverallocated ? { text: t('status.overallocated'), color: 'red' } :
-    member.isUnderutilized ? { text: t('status.underutilized'), color: 'orange' } :
-    { text: t('status.optimal'), color: 'green' };
+  const statusBadge = member.isOverallocated
+    ? { text: t('status.overallocated'), color: 'red' }
+    : member.isUnderutilized
+      ? { text: t('status.underutilized'), color: 'orange' }
+      : { text: t('status.optimal'), color: 'green' };
 
   return (
-    <Flex 
-      align="center" 
+    <Flex
+      align="center"
       gap={16}
-      style={{ 
-        padding: 12, 
-        borderRadius: 8, 
+      style={{
+        padding: 12,
+        borderRadius: 8,
         backgroundColor: token.colorFillAlter,
-        border: `1px solid ${token.colorBorder}`
+        border: `1px solid ${token.colorBorder}`,
       }}
     >
       <Avatar src={member.avatar} size={40}>
         {member.name.charAt(0).toUpperCase()}
       </Avatar>
-      
+
       <Flex vertical style={{ flex: 1 }}>
         <Flex align="center" gap={8}>
           <Typography.Text strong>{member.name}</Typography.Text>
@@ -258,33 +272,34 @@ const MemberWorkloadCard = ({
       </Flex>
 
       <Flex vertical align="end" style={{ minWidth: 200 }}>
-        <Tooltip 
+        <Tooltip
           title={t('calculations.utilizationTooltip', {
             utilization: member.utilizationPercentage,
             assignedHours: member.currentWorkload,
             weeklyCapacity: member.weeklyCapacity,
             dailyHours: member.dailyCapacity,
-            workingDays: workingDays
+            workingDays: workingDays,
           })}
           placement="left"
         >
           <Typography.Text>
-            {member.currentWorkload} / {member.weeklyCapacity} {capacityUnit === 'hours' ? t('overview.hours') : t('overview.points')}
+            {member.currentWorkload} / {member.weeklyCapacity}{' '}
+            {capacityUnit === 'hours' ? t('overview.hours') : t('overview.points')}
           </Typography.Text>
         </Tooltip>
-        <Tooltip 
+        <Tooltip
           title={t('calculations.utilizationTooltip', {
             utilization: member.utilizationPercentage,
             assignedHours: member.currentWorkload,
             weeklyCapacity: member.weeklyCapacity,
             dailyHours: member.dailyCapacity,
-            workingDays: workingDays
+            workingDays: workingDays,
           })}
           placement="left"
         >
-          <Progress 
-            percent={member.utilizationPercentage} 
-            size="small" 
+          <Progress
+            percent={member.utilizationPercentage}
+            size="small"
             status={status}
             style={{ marginBottom: 0 }}
           />

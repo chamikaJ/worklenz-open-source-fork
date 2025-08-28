@@ -62,7 +62,7 @@ const projectWorkloadSlice = createSlice({
     setFilters: (state, action: PayloadAction<IWorkloadFilters>) => {
       state.filters = { ...state.filters, ...action.payload };
     },
-    clearFilters: (state) => {
+    clearFilters: state => {
       state.filters = initialState.filters;
     },
     setSelectedMember: (state, action: PayloadAction<string | null>) => {
@@ -74,10 +74,13 @@ const projectWorkloadSlice = createSlice({
     setTimeScale: (state, action: PayloadAction<'day' | 'week' | 'month'>) => {
       state.timeScale = action.payload;
     },
-    toggleWeekends: (state) => {
+    toggleWeekends: state => {
       state.showWeekends = !state.showWeekends;
     },
-    setAlertThresholds: (state, action: PayloadAction<{ overallocation?: number; underutilization?: number }>) => {
+    setAlertThresholds: (
+      state,
+      action: PayloadAction<{ overallocation?: number; underutilization?: number }>
+    ) => {
       state.alertThresholds = { ...state.alertThresholds, ...action.payload };
     },
     resetWorkloadState: () => initialState,

@@ -11,7 +11,7 @@ import {
   TableProps,
   Tooltip,
   Typography,
-  Input
+  Input,
 } from '@/shared/antd-imports';
 
 // Icons

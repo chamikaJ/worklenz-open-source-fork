@@ -1,4 +1,15 @@
-import { AutoComplete, Button, Drawer, Flex, Form, message, Modal, Select, Spin, Typography } from '@/shared/antd-imports';
+import {
+  AutoComplete,
+  Button,
+  Drawer,
+  Flex,
+  Form,
+  message,
+  Modal,
+  Select,
+  Spin,
+  Typography,
+} from '@/shared/antd-imports';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import {
@@ -63,9 +74,12 @@ const InviteTeamMembers = () => {
         job_title: selectedJobTitle,
         emails: emails,
         is_admin: values.access === 'admin',
-        role_name: values.access === 'team-lead' ? ROLE_NAMES.TEAM_LEAD : 
-                   values.access === 'admin' ? ROLE_NAMES.ADMIN : 
-                   ROLE_NAMES.MEMBER,
+        role_name:
+          values.access === 'team-lead'
+            ? ROLE_NAMES.TEAM_LEAD
+            : values.access === 'admin'
+              ? ROLE_NAMES.ADMIN
+              : ROLE_NAMES.MEMBER,
       };
       const res = await teamMembersApiService.createTeamMember(body);
       if (res.done) {

@@ -109,7 +109,7 @@ const LoginPage: React.FC = () => {
         // Normalize email to lowercase for case-insensitive comparison
         const normalizedValues = {
           ...values,
-          email: values.email.toLowerCase().trim()
+          email: values.email.toLowerCase().trim(),
         };
 
         const result = await dispatch(login(normalizedValues)).unwrap();

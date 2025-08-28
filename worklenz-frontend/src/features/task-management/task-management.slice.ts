@@ -708,10 +708,10 @@ const taskManagementSlice = createSlice({
           const newTasks = Array.from(group.taskIds);
           const sourceIndex = newTasks.indexOf(sourceTaskId);
           const destinationIndex = newTasks.indexOf(destinationTaskId);
-          
+
           // Remove the task from its current position
           const [removed] = newTasks.splice(sourceIndex, 1);
-          
+
           // Calculate the insertion index
           let insertIndex = destinationIndex;
           if (sourceIndex < destinationIndex) {
@@ -721,7 +721,7 @@ const taskManagementSlice = createSlice({
             // When dragging up, we insert before the destination
             insertIndex = destinationIndex;
           }
-          
+
           newTasks.splice(insertIndex, 0, removed);
           group.taskIds = newTasks;
 
@@ -1231,8 +1231,12 @@ export const selectSelectedPriorities = (state: RootState) =>
 export const selectSearch = (state: RootState) => state.taskManagement.search;
 export const selectSortField = (state: RootState) => state.taskManagement.sortField;
 export const selectSortOrder = (state: RootState) => state.taskManagement.sortOrder;
-export const selectSort = (state: RootState) => ({ field: state.taskManagement.sortField, order: state.taskManagement.sortOrder });
-export const selectSubtaskLoading = (state: RootState, taskId: string) => state.taskManagement.loadingSubtasks[taskId] || false;
+export const selectSort = (state: RootState) => ({
+  field: state.taskManagement.sortField,
+  order: state.taskManagement.sortOrder,
+});
+export const selectSubtaskLoading = (state: RootState, taskId: string) =>
+  state.taskManagement.loadingSubtasks[taskId] || false;
 
 // Memoized selectors to prevent unnecessary re-renders
 export const selectTasksByStatus = createSelector(

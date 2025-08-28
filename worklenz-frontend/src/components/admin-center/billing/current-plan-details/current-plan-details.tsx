@@ -147,7 +147,9 @@ const CurrentPlanDetails = () => {
         message.success(t('pricingModelSwitched', 'Pricing model updated successfully'));
         dispatch(fetchBillingInfo());
       } else {
-        message.error(res.message || t('errorSwitchingPricingModel', 'Failed to switch pricing model'));
+        message.error(
+          res.message || t('errorSwitchingPricingModel', 'Failed to switch pricing model')
+        );
       }
     } catch (error) {
       logger.error('Error switching pricing model', error);
@@ -310,21 +312,23 @@ const CurrentPlanDetails = () => {
       const expDate = new Date(expireDate);
       expDate.setHours(0, 0, 0, 0);
 
-    if (expDate.getTime() === today.getTime()) {
-      return t('expirestoday', 'today');
-    } else if (expDate.getTime() === tomorrow.getTime()) {
-      return t('expirestomorrow', 'tomorrow');
-    } else if (expDate < today) {
-      const diffTime = Math.abs(today.getTime() - expDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays === 1) {
-        return t('expiredDayAgo', '{{days}} day ago', { days: diffDays });
+      if (expDate.getTime() === today.getTime()) {
+        return t('expirestoday', 'today');
+      } else if (expDate.getTime() === tomorrow.getTime()) {
+        return t('expirestomorrow', 'tomorrow');
+      } else if (expDate < today) {
+        const diffTime = Math.abs(today.getTime() - expDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays === 1) {
+          return t('expiredDayAgo', '{{days}} day ago', { days: diffDays });
+        }
+        return t('expiredDaysAgo', '{{days}} days ago', { days: diffDays });
+      } else {
+        return calculateTimeGap(expireDate);
       }
-      return t('expiredDaysAgo', '{{days}} days ago', { days: diffDays });
-    } else {
-      return calculateTimeGap(expireDate);
-    }
-  }, [t]);
+    },
+    [t]
+  );
 
   const renderTrialDetails = useCallback(() => {
     const isExpired = checkIfTrialExpired();
@@ -370,9 +374,9 @@ const CurrentPlanDetails = () => {
 
   const renderPricingModelInfo = useCallback(() => {
     if (!billingInfo?.pricing_model) return null;
-    
+
     const isFlat = billingInfo.pricing_model === 'flat_rate';
-    
+
     return (
       <div className="pricing-model-info" style={{ marginTop: '12px', marginBottom: '12px' }}>
         <Row gutter={16}>
@@ -386,16 +390,17 @@ const CurrentPlanDetails = () => {
           <Col span={12}>
             <Statistic
               title={t('monthlyCost', 'Monthly Cost')}
-              value={isFlat 
-                ? billingInfo.flat_rate_price 
-                : (billingInfo.unit_price || 0) * (billingInfo.total_seats || 0)
+              value={
+                isFlat
+                  ? billingInfo.flat_rate_price
+                  : (billingInfo.unit_price || 0) * (billingInfo.total_seats || 0)
               }
               prefix="$"
               valueStyle={{ fontSize: '14px', fontWeight: 500 }}
             />
           </Col>
         </Row>
-        
+
         {isFlat && billingInfo.flat_rate_max_users && (
           <Alert
             message={`Flat rate pricing for up to ${billingInfo.flat_rate_max_users} users`}
@@ -413,7 +418,7 @@ const CurrentPlanDetails = () => {
     return (
       <Flex vertical>
         <Typography.Text strong>{billingInfo?.plan_name}</Typography.Text>
-        
+
         {billingInfo?.pricing_model === 'flat_rate' ? (
           <Typography.Text>
             {billingInfo?.default_currency} {billingInfo?.flat_rate_price} per month
@@ -435,49 +440,62 @@ const CurrentPlanDetails = () => {
 
         {renderPricingModelInfo()}
 
-        {shouldShowAddSeats && billingInfo?.total_seats && billingInfo?.pricing_model === 'per_user' && (
-          <div style={{ marginTop: '16px' }}>
-            <Row gutter={16} align="middle">
-              <Col span={6}>
-                <Statistic
-                  title={t('totalSeats') as string}
-                  value={billingInfo.total_seats}
-                  valueStyle={STATISTIC_VALUE_STYLE}
-                />
-              </Col>
-              <Col span={8}>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={handleAddMoreSeats}
-                  style={BUTTON_STYLE}
-                >
-                  {t('addMoreSeats')}
-                </Button>
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title={t('availableSeats') as string}
-                  value={calculateRemainingSeats}
-                  valueStyle={STATISTIC_VALUE_STYLE}
-                />
-              </Col>
-            </Row>
-          </div>
-        )}
+        {shouldShowAddSeats &&
+          billingInfo?.total_seats &&
+          billingInfo?.pricing_model === 'per_user' && (
+            <div style={{ marginTop: '16px' }}>
+              <Row gutter={16} align="middle">
+                <Col span={6}>
+                  <Statistic
+                    title={t('totalSeats') as string}
+                    value={billingInfo.total_seats}
+                    valueStyle={STATISTIC_VALUE_STYLE}
+                  />
+                </Col>
+                <Col span={8}>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleAddMoreSeats}
+                    style={BUTTON_STYLE}
+                  >
+                    {t('addMoreSeats')}
+                  </Button>
+                </Col>
+                <Col span={6}>
+                  <Statistic
+                    title={t('availableSeats') as string}
+                    value={calculateRemainingSeats}
+                    valueStyle={STATISTIC_VALUE_STYLE}
+                  />
+                </Col>
+              </Row>
+            </div>
+          )}
 
         {billingInfo?.pricing_model && billingInfo?.subscription_id && (
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             onClick={handleSwitchPricingModel}
             style={{ padding: 0, marginTop: 12, textAlign: 'left' }}
           >
-            {t('switchTo', 'Switch to')} {billingInfo.pricing_model === 'flat_rate' ? t('perUser', 'Per User') : t('flatRate', 'Flat Rate')} {t('pricing', 'pricing')}
+            {t('switchTo', 'Switch to')}{' '}
+            {billingInfo.pricing_model === 'flat_rate'
+              ? t('perUser', 'Per User')
+              : t('flatRate', 'Flat Rate')}{' '}
+            {t('pricing', 'pricing')}
           </Button>
         )}
       </Flex>
     );
-  }, [billingInfo, shouldShowAddSeats, handleAddMoreSeats, calculateRemainingSeats, renderPricingModelInfo, t]);
+  }, [
+    billingInfo,
+    shouldShowAddSeats,
+    handleAddMoreSeats,
+    calculateRemainingSeats,
+    renderPricingModelInfo,
+    t,
+  ]);
 
   const renderCreditSubscriptionInfo = useCallback(() => {
     return (

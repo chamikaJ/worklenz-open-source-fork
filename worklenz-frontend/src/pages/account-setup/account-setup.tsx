@@ -2,7 +2,15 @@ import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Space, Steps, Button, Typography, theme, Dropdown, MenuProps } from '@/shared/antd-imports';
+import {
+  Space,
+  Steps,
+  Button,
+  Typography,
+  theme,
+  Dropdown,
+  MenuProps,
+} from '@/shared/antd-imports';
 import { GlobalOutlined, MoonOutlined, SunOutlined } from '@/shared/antd-imports';
 
 import logger from '@/utils/errorLogger';
@@ -73,18 +81,28 @@ const AccountSetup: React.FC = () => {
   const { trackMixpanelEvent } = useMixpanelTracking();
   const { token } = theme.useToken();
 
-  const { currentStep, organizationName, projectName, templateId, tasks, teamMembers, surveyData, surveySubStep } =
-    useSelector((state: RootState) => state.accountSetupReducer);
+  const {
+    currentStep,
+    organizationName,
+    projectName,
+    templateId,
+    tasks,
+    teamMembers,
+    surveyData,
+    surveySubStep,
+  } = useSelector((state: RootState) => state.accountSetupReducer);
   const lng = useSelector((state: RootState) => state.localesReducer.lng);
   const userDetails = getUserSession();
   const themeMode = useSelector((state: RootState) => state.themeReducer.mode);
-  
+
   const [surveyId, setSurveyId] = React.useState<string | null>(null);
   const [isSkipping, setIsSkipping] = React.useState(false);
 
   const isDarkMode = themeMode === 'dark';
   // Helper to extract organization name from email or fallback to user name
-  function getOrganizationNamePlaceholder(userDetails: { email?: string; name?: string } | null): string {
+  function getOrganizationNamePlaceholder(
+    userDetails: { email?: string; name?: string } | null
+  ): string {
     if (!userDetails) return '';
     const email = userDetails.email || '';
     const name = userDetails.name || '';
@@ -94,7 +112,39 @@ const AccountSetup: React.FC = () => {
         const domain = match[2].toLowerCase();
         // List of common public email providers
         const publicProviders = [
-          'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'aol.com', 'protonmail.com', 'zoho.com', 'gmx.com', 'mail.com', 'yandex.com', 'msn.com', 'live.com', 'me.com', 'comcast.net', 'rediffmail.com', 'ymail.com', 'rocketmail.com', 'inbox.com', 'mail.ru', 'qq.com', 'naver.com', '163.com', '126.com', 'sina.com', 'yeah.net', 'googlemail.com', 'fastmail.com', 'hushmail.com', 'tutanota.com', 'pm.me', 'mailbox.org', 'proton.me'
+          'gmail.com',
+          'yahoo.com',
+          'outlook.com',
+          'hotmail.com',
+          'icloud.com',
+          'aol.com',
+          'protonmail.com',
+          'zoho.com',
+          'gmx.com',
+          'mail.com',
+          'yandex.com',
+          'msn.com',
+          'live.com',
+          'me.com',
+          'comcast.net',
+          'rediffmail.com',
+          'ymail.com',
+          'rocketmail.com',
+          'inbox.com',
+          'mail.ru',
+          'qq.com',
+          'naver.com',
+          '163.com',
+          '126.com',
+          'sina.com',
+          'yeah.net',
+          'googlemail.com',
+          'fastmail.com',
+          'hushmail.com',
+          'tutanota.com',
+          'pm.me',
+          'mailbox.org',
+          'proton.me',
         ];
         if (!publicProviders.includes(domain)) {
           // Use the first part of the domain (before the first dot)
@@ -112,7 +162,9 @@ const AccountSetup: React.FC = () => {
   const organizationNamePlaceholder = getOrganizationNamePlaceholder(userDetails);
 
   // Helper to extract organization name from email or fallback to user name
-  function getOrganizationNameInitialValue(userDetails: { email?: string; name?: string } | null): string {
+  function getOrganizationNameInitialValue(
+    userDetails: { email?: string; name?: string } | null
+  ): string {
     if (!userDetails) return '';
     const email = userDetails.email || '';
     const name = userDetails.name || '';
@@ -121,7 +173,39 @@ const AccountSetup: React.FC = () => {
       if (match) {
         const domain = match[2].toLowerCase();
         const publicProviders = [
-          'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'aol.com', 'protonmail.com', 'zoho.com', 'gmx.com', 'mail.com', 'yandex.com', 'msn.com', 'live.com', 'me.com', 'comcast.net', 'rediffmail.com', 'ymail.com', 'rocketmail.com', 'inbox.com', 'mail.ru', 'qq.com', 'naver.com', '163.com', '126.com', 'sina.com', 'yeah.net', 'googlemail.com', 'fastmail.com', 'hushmail.com', 'tutanota.com', 'pm.me', 'mailbox.org', 'proton.me'
+          'gmail.com',
+          'yahoo.com',
+          'outlook.com',
+          'hotmail.com',
+          'icloud.com',
+          'aol.com',
+          'protonmail.com',
+          'zoho.com',
+          'gmx.com',
+          'mail.com',
+          'yandex.com',
+          'msn.com',
+          'live.com',
+          'me.com',
+          'comcast.net',
+          'rediffmail.com',
+          'ymail.com',
+          'rocketmail.com',
+          'inbox.com',
+          'mail.ru',
+          'qq.com',
+          'naver.com',
+          '163.com',
+          '126.com',
+          'sina.com',
+          'yeah.net',
+          'googlemail.com',
+          'fastmail.com',
+          'hushmail.com',
+          'tutanota.com',
+          'pm.me',
+          'mailbox.org',
+          'proton.me',
         ];
         if (!publicProviders.includes(domain)) {
           const org = domain.split('.')[0];
@@ -154,7 +238,7 @@ const AccountSetup: React.FC = () => {
         logger.error('Failed to verify authentication status', error);
       }
     };
-    
+
     const loadSurvey = async () => {
       try {
         const response = await surveyApiService.getAccountSetupSurvey();
@@ -168,11 +252,10 @@ const AccountSetup: React.FC = () => {
         // Continue without survey - don't block account setup
       }
     };
-    
+
     void verifyAuthStatus();
     void loadSurvey();
   }, [dispatch, navigate, trackMixpanelEvent]);
-
 
   const completeAccountSetup = async (skip = false) => {
     try {
@@ -232,7 +315,7 @@ const AccountSetup: React.FC = () => {
   const completeAccountSetupWithTemplate = async () => {
     try {
       await saveSurveyData(); // Save survey data first
-      
+
       const model: IAccountSetupRequest = {
         team_name: sanitizeInput(organizationName),
         project_name: null, // No project name when using template
@@ -247,14 +330,16 @@ const AccountSetup: React.FC = () => {
           how_heard_about: surveyData.how_heard_about,
         },
       };
-      
+
       const res = await projectTemplatesApiService.setupAccount(model);
       if (res.done && res.body.id) {
         trackMixpanelEvent(evt_account_setup_complete);
-        
+
         // Refresh user session to update setup_completed status
         try {
-          const authResponse = await dispatch(verifyAuthentication()).unwrap() as IAuthorizeResponse;
+          const authResponse = (await dispatch(
+            verifyAuthentication()
+          ).unwrap()) as IAuthorizeResponse;
           if (authResponse?.authenticated && authResponse?.user) {
             setSession(authResponse.user);
             dispatch(setUser(authResponse.user));
@@ -262,7 +347,7 @@ const AccountSetup: React.FC = () => {
         } catch (error) {
           logger.error('Failed to refresh user session after template setup completion', error);
         }
-        
+
         navigate(`/worklenz/projects/${res.body.id}?tab=tasks-list&pinned_tab=tasks-list`);
       }
     } catch (error) {
@@ -359,11 +444,13 @@ const AccountSetup: React.FC = () => {
 
     try {
       const answers: ISurveyAnswer[] = [];
-      
+
       // Get the survey questions to map data properly
       const surveyResponse = await surveyApiService.getAccountSetupSurvey();
       if (!surveyResponse.done || !surveyResponse.body?.questions) {
-        logger.error('Could not retrieve survey questions for data mapping (warn replaced with error)');
+        logger.error(
+          'Could not retrieve survey questions for data mapping (warn replaced with error)'
+        );
         return;
       }
 
@@ -376,7 +463,7 @@ const AccountSetup: React.FC = () => {
             if (surveyData.organization_type) {
               answers.push({
                 question_id: question.id,
-                answer_text: surveyData.organization_type
+                answer_text: surveyData.organization_type,
               });
             }
             break;
@@ -384,7 +471,7 @@ const AccountSetup: React.FC = () => {
             if (surveyData.user_role) {
               answers.push({
                 question_id: question.id,
-                answer_text: surveyData.user_role
+                answer_text: surveyData.user_role,
               });
             }
             break;
@@ -392,7 +479,7 @@ const AccountSetup: React.FC = () => {
             if (surveyData.main_use_cases && surveyData.main_use_cases.length > 0) {
               answers.push({
                 question_id: question.id,
-                answer_json: surveyData.main_use_cases
+                answer_json: surveyData.main_use_cases,
               });
             }
             break;
@@ -400,7 +487,7 @@ const AccountSetup: React.FC = () => {
             if (surveyData.previous_tools) {
               answers.push({
                 question_id: question.id,
-                answer_text: surveyData.previous_tools
+                answer_text: surveyData.previous_tools,
               });
             }
             break;
@@ -408,7 +495,7 @@ const AccountSetup: React.FC = () => {
             if (surveyData.how_heard_about) {
               answers.push({
                 question_id: question.id,
-                answer_text: surveyData.how_heard_about
+                answer_text: surveyData.how_heard_about,
               });
             }
             break;
@@ -418,14 +505,16 @@ const AccountSetup: React.FC = () => {
       if (answers.length > 0) {
         const submissionData: ISurveySubmissionRequest = {
           survey_id: surveyId,
-          answers
+          answers,
         };
-        
+
         const result = await surveyApiService.submitSurveyResponse(submissionData);
         if (result.done) {
           logger.error('Survey data saved successfully (info replaced with error)');
         } else {
-          logger.error('Survey submission returned unsuccessful response (warn replaced with error)');
+          logger.error(
+            'Survey submission returned unsuccessful response (warn replaced with error)'
+          );
         }
       } else {
         logger.error('No survey answers to save (info replaced with error)');
@@ -472,7 +561,7 @@ const AccountSetup: React.FC = () => {
     { key: Language.PT, label: 'Português', flag: '🇵🇹' },
     { key: Language.DE, label: 'Deutsch', flag: '🇩🇪' },
     { key: Language.ALB, label: 'Shqip', flag: '🇦🇱' },
-    { key: Language.ZH_CN, label: '简体中文', flag: '🇨🇳' }
+    { key: Language.ZH_CN, label: '简体中文', flag: '🇨🇳' },
   ];
 
   const handleLanguageChange = (languageKey: ILanguageType) => {
@@ -492,13 +581,13 @@ const AccountSetup: React.FC = () => {
         <span>{lang.label}</span>
       </div>
     ),
-    onClick: () => handleLanguageChange(lang.key as ILanguageType)
+    onClick: () => handleLanguageChange(lang.key as ILanguageType),
   }));
 
   const currentLanguage = languages.find(lang => lang.key === lng) || languages[0];
 
   return (
-    <div 
+    <div
       className="account-setup-container min-h-screen w-full flex flex-col items-center py-8 px-4 relative"
       style={{ backgroundColor: token.colorBgLayout }}
     >
@@ -514,13 +603,9 @@ const AccountSetup: React.FC = () => {
           style={{ color: token?.colorTextTertiary }}
           title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         />
-        
+
         {/* Language Switcher */}
-        <Dropdown
-          menu={{ items: languageMenuItems }}
-          placement="bottomRight"
-          trigger={['click']}
-        >
+        <Dropdown menu={{ items: languageMenuItems }} placement="bottomRight" trigger={['click']}>
           <Button
             type="text"
             size="small"
@@ -538,24 +623,24 @@ const AccountSetup: React.FC = () => {
       <div className="mb-4">
         <img src={isDarkMode ? logoDark : logo} alt="Logo" width={235} height={50} />
       </div>
-      
+
       {/* Title */}
-      <Title 
-        level={3} 
+      <Title
+        level={3}
         className="text-center mb-6 font-semibold"
         style={{ color: token.colorText }}
       >
         {t('setupYourAccount')}
       </Title>
-      
+
       {/* Content Container */}
-      <div 
+      <div
         className="w-full max-w-4xl rounded-lg shadow-lg mt-6 p-8"
         style={{
           backgroundColor: token.colorBgContainer,
           borderColor: token.colorBorder,
           border: `1px solid ${token.colorBorder}`,
-          boxShadow: token.boxShadowTertiary
+          boxShadow: token.boxShadowTertiary,
         }}
       >
         <div className="flex flex-col items-center space-y-6 w-full">
@@ -567,19 +652,19 @@ const AccountSetup: React.FC = () => {
               items={steps}
             />
           </div>
-          
+
           {/* Step Content */}
           <div className="w-full max-w-2xl flex flex-col items-center min-h-fit">
-            <div className="step-content w-full">
-              {steps[currentStep].content}
-            </div>
+            <div className="step-content w-full">{steps[currentStep].content}</div>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="w-full max-w-2xl mt-8">
-            <div className={`flex ${
-              currentStep !== 0 ? 'justify-between' : 'justify-end'
-            } items-center`}>
+            <div
+              className={`flex ${
+                currentStep !== 0 ? 'justify-between' : 'justify-end'
+              } items-center`}
+            >
               {currentStep !== 0 && (
                 <div className="flex flex-col space-y-2">
                   <Button

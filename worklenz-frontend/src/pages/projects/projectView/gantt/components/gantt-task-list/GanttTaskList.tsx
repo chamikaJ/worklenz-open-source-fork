@@ -292,19 +292,25 @@ const TaskRow: React.FC<TaskRowProps & { dragAttributes?: any; dragListeners?: a
       }
     }, [isPhase, onPhaseClick, task]);
 
-    const handleTaskNameClick = useCallback((e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (!isPhase && onTaskNameClick) {
-        onTaskNameClick(task);
-      }
-    }, [isPhase, onTaskNameClick, task]);
+    const handleTaskNameClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!isPhase && onTaskNameClick) {
+          onTaskNameClick(task);
+        }
+      },
+      [isPhase, onTaskNameClick, task]
+    );
 
-    const handleOpenButtonClick = useCallback((e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (!isPhase && onTaskClick) {
-        onTaskClick(task.id);
-      }
-    }, [isPhase, onTaskClick, task.id]);
+    const handleOpenButtonClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!isPhase && onTaskClick) {
+          onTaskClick(task.id);
+        }
+      },
+      [isPhase, onTaskClick, task.id]
+    );
 
     // Handle click outside to close date picker
     useEffect(() => {
@@ -369,21 +375,25 @@ const TaskRow: React.FC<TaskRowProps & { dragAttributes?: any; dragListeners?: a
 
               <div className="flex items-center gap-2 ml-1 truncate flex-1">
                 {getTaskIcon()}
-                
+
                 <div className="flex flex-col flex-1">
                   <div className="flex items-center gap-2">
-                    <span 
+                    <span
                       className={`truncate flex-1 ${
-                        task.type === 'milestone' 
-                          ? 'font-semibold cursor-pointer hover:opacity-80' 
+                        task.type === 'milestone'
+                          ? 'font-semibold cursor-pointer hover:opacity-80'
                           : 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
                       }`}
                       onClick={isPhase ? handlePhaseClick : handleTaskNameClick}
-                      title={isPhase ? t('task.clickViewPhaseDetails', 'Click to view phase details') : t('task.clickNavigateTimeline', 'Click to navigate to task in timeline')}
+                      title={
+                        isPhase
+                          ? t('task.clickViewPhaseDetails', 'Click to view phase details')
+                          : t('task.clickNavigateTimeline', 'Click to navigate to task in timeline')
+                      }
                     >
                       {task.name}
                     </span>
-                    
+
                     {/* Open button - only visible on hover for tasks, positioned at the right */}
                     {!isPhase && (
                       <Button
@@ -596,9 +606,7 @@ const AddPhaseRow: React.FC<AddPhaseRowProps> = memo(({ projectId, onCreatePhase
             <PlusOutlined className="text-xs" />
           </div>
           <div className="flex flex-col">
-            <span className="font-semibold text-blue-600 dark:text-blue-400">
-              Add New Phase
-            </span>
+            <span className="font-semibold text-blue-600 dark:text-blue-400">Add New Phase</span>
             <span className="text-xs text-blue-500 dark:text-blue-300 opacity-80">
               Click to create a new project phase
             </span>
@@ -655,7 +663,6 @@ const GanttTaskList = forwardRef<HTMLDivElement, GanttTaskListProps>(
         },
       })
     );
-
 
     const handleTaskToggle = useCallback(
       (taskId: string) => {
@@ -885,25 +892,28 @@ const GanttTaskList = forwardRef<HTMLDivElement, GanttTaskListProps>(
                 const isPhase = task.type === 'milestone' || task.is_milestone;
                 const isUnmappedPhase = task.id === 'phase-unmapped';
                 const isAddTaskButton = task.type === 'add-task-button';
-                
+
                 // Determine if this task should have animation classes
                 let parentPhaseId = '';
                 if (isPhase) {
-                  parentPhaseId = task.id === 'phase-unmapped' ? 'unmapped' : task.phase_id || task.id.replace('phase-', '');
+                  parentPhaseId =
+                    task.id === 'phase-unmapped'
+                      ? 'unmapped'
+                      : task.phase_id || task.id.replace('phase-', '');
                 } else if (isAddTaskButton) {
                   parentPhaseId = task.parent_phase_id || '';
                 } else {
                   parentPhaseId = task.phase_id || '';
                 }
-                
+
                 const shouldAnimate = !isPhase && animatingTasks.has(parentPhaseId);
                 const staggerIndex = Math.min((index - 1) % 5, 4); // Subtract 1 to account for phase row, limit stagger to 5 levels
 
                 if (isAddTaskButton) {
-                  const animationClass = shouldAnimate 
-                    ? `gantt-task-slide-in gantt-task-stagger-${staggerIndex + 1}` 
+                  const animationClass = shouldAnimate
+                    ? `gantt-task-slide-in gantt-task-stagger-${staggerIndex + 1}`
                     : '';
-                  
+
                   return (
                     <div key={task.id} className={animationClass}>
                       <AddTaskRow
@@ -953,10 +963,10 @@ const GanttTaskList = forwardRef<HTMLDivElement, GanttTaskListProps>(
                   );
                 } else {
                   // Regular tasks - make them draggable too with animation
-                  const animationClass = shouldAnimate 
-                    ? `gantt-task-slide-in gantt-task-stagger-${staggerIndex + 1}` 
+                  const animationClass = shouldAnimate
+                    ? `gantt-task-slide-in gantt-task-stagger-${staggerIndex + 1}`
                     : '';
-                  
+
                   return (
                     <SortableTaskRow
                       key={task.id}
@@ -982,10 +992,7 @@ const GanttTaskList = forwardRef<HTMLDivElement, GanttTaskListProps>(
           </DndContext>
 
           {/* Add Phase Row - always at the bottom */}
-          <AddPhaseRow
-            projectId={projectId}
-            onCreatePhase={onCreatePhase}
-          />
+          <AddPhaseRow projectId={projectId} onCreatePhase={onCreatePhase} />
         </div>
       </div>
     );

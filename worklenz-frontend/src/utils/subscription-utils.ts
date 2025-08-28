@@ -8,12 +8,12 @@ import { ILocalSession } from '@/types/auth/local-session.types';
  */
 export const hasBusinessFeatureAccess = (session: ILocalSession | null): boolean => {
   if (!session) return false;
-  
+
   // Only PADDLE subscription type qualifies
   if (session.subscription_type !== ISUBSCRIPTION_TYPE.PADDLE) {
     return false;
   }
-  
+
   // Check if plan_name indicates business or enterprise plan
   const planName = session.plan_name?.toLowerCase() || '';
   return planName.includes('business') || planName.includes('enterprise');
@@ -24,11 +24,11 @@ export const hasBusinessFeatureAccess = (session: ILocalSession | null): boolean
  */
 export const isBusinessPlan = (session: ILocalSession | null): boolean => {
   if (!session) return false;
-  
+
   if (session.subscription_type !== ISUBSCRIPTION_TYPE.PADDLE) {
     return false;
   }
-  
+
   const planName = session.plan_name?.toLowerCase() || '';
   return planName.includes('business');
 };
@@ -38,11 +38,11 @@ export const isBusinessPlan = (session: ILocalSession | null): boolean => {
  */
 export const isEnterprisePlan = (session: ILocalSession | null): boolean => {
   if (!session) return false;
-  
+
   if (session.subscription_type !== ISUBSCRIPTION_TYPE.PADDLE) {
     return false;
   }
-  
+
   const planName = session.plan_name?.toLowerCase() || '';
   return planName.includes('enterprise');
 };
@@ -52,7 +52,7 @@ export const isEnterprisePlan = (session: ILocalSession | null): boolean => {
  */
 export const getSubscriptionPlanType = (session: ILocalSession | null): string => {
   if (!session) return 'Unknown';
-  
+
   switch (session.subscription_type) {
     case ISUBSCRIPTION_TYPE.FREE:
       return 'Free';

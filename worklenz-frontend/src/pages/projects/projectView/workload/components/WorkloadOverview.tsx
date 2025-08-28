@@ -1,5 +1,23 @@
-import { Row, Col, Card, Statistic, Progress, Badge, Flex, Skeleton, Typography, theme, Tooltip } from '@/shared/antd-imports';
-import { TeamOutlined, ClockCircleOutlined, AlertOutlined, CheckCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import {
+  Row,
+  Col,
+  Card,
+  Statistic,
+  Progress,
+  Badge,
+  Flex,
+  Skeleton,
+  Typography,
+  theme,
+  Tooltip,
+} from '@/shared/antd-imports';
+import {
+  TeamOutlined,
+  ClockCircleOutlined,
+  AlertOutlined,
+  CheckCircleOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { IWorkloadData } from '@/types/workload/workload.types';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -34,9 +52,7 @@ const WorkloadOverview = ({ data, isLoading }: WorkloadOverviewProps) => {
         <Col span={24}>
           <Card style={{ height: '100%' }}>
             <div style={{ textAlign: 'center', padding: '20px' }}>
-              <Typography.Text type="secondary">
-                {t('noWorkloadData')}
-              </Typography.Text>
+              <Typography.Text type="secondary">{t('noWorkloadData')}</Typography.Text>
             </div>
           </Card>
         </Col>
@@ -45,10 +61,12 @@ const WorkloadOverview = ({ data, isLoading }: WorkloadOverviewProps) => {
   }
 
   const { summary } = data;
-  const utilizationColor = 
-    summary.averageUtilization > 100 ? token.colorError :
-    summary.averageUtilization > 80 ? token.colorWarning :
-    token.colorSuccess;
+  const utilizationColor =
+    summary.averageUtilization > 100
+      ? token.colorError
+      : summary.averageUtilization > 80
+        ? token.colorWarning
+        : token.colorSuccess;
 
   return (
     <Row gutter={[16, 16]}>
@@ -76,10 +94,16 @@ Member Status:
               suffix={
                 <Flex gap={8}>
                   {summary.overallocatedMembers > 0 && (
-                    <Badge count={summary.overallocatedMembers} style={{ backgroundColor: token.colorError }} />
+                    <Badge
+                      count={summary.overallocatedMembers}
+                      style={{ backgroundColor: token.colorError }}
+                    />
                   )}
                   {summary.underutilizedMembers > 0 && (
-                    <Badge count={summary.underutilizedMembers} style={{ backgroundColor: token.colorWarning }} />
+                    <Badge
+                      count={summary.underutilizedMembers}
+                      style={{ backgroundColor: token.colorWarning }}
+                    />
                   )}
                 </Flex>
               }
@@ -112,7 +136,7 @@ Includes:
               prefix={<ClockCircleOutlined />}
             />
           </Tooltip>
-          <Progress 
+          <Progress
             percent={Math.round((summary.totalActualHours / summary.totalEstimatedHours) * 100)}
             size="small"
             status={summary.totalActualHours > summary.totalEstimatedHours ? 'exception' : 'active'}
@@ -127,7 +151,10 @@ Includes:
               average: summary.averageUtilization.toFixed(1),
               memberCount: summary.totalMembers,
               totalAssigned: summary.totalEstimatedHours,
-              totalCapacity: summary.totalMembers > 0 ? Math.round(summary.totalEstimatedHours * 100 / summary.averageUtilization) : 0
+              totalCapacity:
+                summary.totalMembers > 0
+                  ? Math.round((summary.totalEstimatedHours * 100) / summary.averageUtilization)
+                  : 0,
             })}
             placement="top"
           >
@@ -145,7 +172,7 @@ Includes:
               prefix={<CheckCircleOutlined />}
             />
           </Tooltip>
-          <Progress 
+          <Progress
             percent={summary.averageUtilization}
             strokeColor={utilizationColor}
             size="small"
@@ -173,7 +200,9 @@ Task Breakdown:
                 </Flex>
               }
               value={summary.criticalTasks}
-              valueStyle={{ color: summary.criticalTasks > 0 ? token.colorError : token.colorSuccess }}
+              valueStyle={{
+                color: summary.criticalTasks > 0 ? token.colorError : token.colorSuccess,
+              }}
               prefix={<AlertOutlined />}
             />
           </Tooltip>

@@ -20,8 +20,9 @@ const MainLayout = memo(() => {
   // Get browser timezone for upgrade plans
   const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const isProjectView = location.pathname.includes('/projects/') &&
-                       !location.pathname.endsWith('/projects') || location.pathname.includes('/worklenz/schedule');
+  const isProjectView =
+    (location.pathname.includes('/projects/') && !location.pathname.endsWith('/projects')) ||
+    location.pathname.includes('/worklenz/schedule');
 
   const themeConfig = useMemo(
     () => ({
@@ -41,7 +42,7 @@ const MainLayout = memo(() => {
         {/* Trial expiration alert banner */}
         <TrialExpirationAlert />
 
-        <Layout.Header 
+        <Layout.Header
           className={`sticky top-0 z-[999] flex items-center p-0 shadow-md ${
             themeMode === 'dark' ? 'border-b border-[#303030]' : 'shadow-[#18181811]'
           }`}
@@ -49,12 +50,12 @@ const MainLayout = memo(() => {
           <Navbar />
         </Layout.Header>
 
-        <Layout.Content className={`px-4 sm:px-8 lg:px-12 xl:px-16 ${!isProjectView ? 'overflow-x-hidden max-w-[1400px]' : ''} mx-auto w-full`}>
+        <Layout.Content
+          className={`px-4 sm:px-8 lg:px-12 xl:px-16 ${!isProjectView ? 'overflow-x-hidden max-w-[1400px]' : ''} mx-auto w-full`}
+        >
           <Outlet />
         </Layout.Content>
       </Layout>
-
-
 
       {/* Global Upgrade Modal */}
       <Modal

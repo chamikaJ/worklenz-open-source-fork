@@ -1,12 +1,12 @@
 import { ILocalSession } from '@/types/auth/local-session.types';
 import { IBillingAccountInfo } from '@/types/admin-center/admin-center.types';
 import { ISUBSCRIPTION_TYPE } from '@/shared/constants';
-import { 
-  UserCategory, 
-  SubscriptionStatus, 
+import {
+  UserCategory,
+  SubscriptionStatus,
   PlanTier,
   UserSubscriptionInfo,
-  PricingModel 
+  PricingModel,
 } from './types';
 
 /**
@@ -18,11 +18,13 @@ export const isAppSumoUser = (
 ): boolean => {
   const planName = billingInfo?.plan_name?.toLowerCase() || '';
   const subscriptionType = session?.subscription_type?.toLowerCase() || '';
-  
-  return planName.includes('appsumo') || 
-         subscriptionType.includes('appsumo') ||
-         planName.includes('lifetime') ||
-         subscriptionType.includes('lifetime');
+
+  return (
+    planName.includes('appsumo') ||
+    subscriptionType.includes('appsumo') ||
+    planName.includes('lifetime') ||
+    subscriptionType.includes('lifetime')
+  );
 };
 
 /**
@@ -33,14 +35,14 @@ export const calculateDaysRemaining = (
   trialExpireDate?: string | null
 ): number | null => {
   const expireDateStr = validTillDate || trialExpireDate;
-  
+
   if (!expireDateStr) return null;
-  
+
   const today = new Date();
   const expiryDate = new Date(expireDateStr);
   const diffTime = expiryDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
+
   return diffDays >= 0 ? diffDays : null;
 };
 
@@ -54,9 +56,9 @@ export const getUserCategory = (
   if (isAppSumoUser(session, billingInfo)) {
     return UserCategory.APPSUMO;
   }
-  
+
   const subscriptionType = session?.subscription_type;
-  
+
   switch (subscriptionType) {
     case ISUBSCRIPTION_TYPE.TRIAL:
       return UserCategory.TRIAL;
@@ -74,11 +76,9 @@ export const getUserCategory = (
 /**
  * Maps subscription status string to enum
  */
-export const getSubscriptionStatus = (
-  status?: string | null
-): SubscriptionStatus => {
+export const getSubscriptionStatus = (status?: string | null): SubscriptionStatus => {
   const statusLower = status?.toLowerCase();
-  
+
   switch (statusLower) {
     case 'active':
       return SubscriptionStatus.ACTIVE;
@@ -102,7 +102,7 @@ export const getSubscriptionStatus = (
  */
 export const getPlanTier = (planName?: string | null): PlanTier => {
   const name = planName?.toLowerCase() || '';
-  
+
   if (name.includes('enterprise')) {
     return PlanTier.ENTERPRISE;
   } else if (name.includes('business') && name.includes('small')) {
@@ -121,25 +121,22 @@ export const getPlanTier = (planName?: string | null): PlanTier => {
 /**
  * Determines the pricing model based on plan and team size
  */
-export const getPricingModel = (
-  planTier: PlanTier,
-  teamSize?: number
-): PricingModel => {
+export const getPricingModel = (planTier: PlanTier, teamSize?: number): PricingModel => {
   // Enterprise is always enterprise pricing
   if (planTier === PlanTier.ENTERPRISE) {
     return PricingModel.ENTERPRISE;
   }
-  
+
   // Small team plans are per-user
   if (planTier === PlanTier.PRO_SMALL || planTier === PlanTier.BUSINESS_SMALL) {
     return PricingModel.PER_USER;
   }
-  
+
   // For regular Pro and Business, decide based on team size
   if (teamSize && teamSize <= 5) {
     return PricingModel.PER_USER;
   }
-  
+
   return PricingModel.BASE_PLAN;
 };
 
@@ -159,7 +156,7 @@ export const getUserSubscriptionInfo = (
   );
   const teamSize = billingInfo?.total_used || 1;
   const pricingModel = getPricingModel(planTier, teamSize);
-  
+
   return {
     status,
     planTier,
@@ -186,29 +183,23 @@ export const formatPricing = (
 ): string => {
   if (pricingModel === PricingModel.PER_USER) {
     const totalPrice = price * (teamSize || 1);
-    return billingCycle === 'monthly' 
-      ? `$${totalPrice}/month`
-      : `$${totalPrice}/year`;
+    return billingCycle === 'monthly' ? `$${totalPrice}/month` : `$${totalPrice}/year`;
   }
-  
-  return billingCycle === 'monthly'
-    ? `$${price}/month`
-    : `$${price}/year`;
+
+  return billingCycle === 'monthly' ? `$${price}/month` : `$${price}/year`;
 };
 
 /**
  * Gets available upgrade plans for a user
  */
-export const getAvailableUpgradePlans = (
-  userInfo: UserSubscriptionInfo
-): PlanTier[] => {
+export const getAvailableUpgradePlans = (userInfo: UserSubscriptionInfo): PlanTier[] => {
   const { planTier, isAppSumoUser } = userInfo;
-  
+
   // AppSumo users can only upgrade to Business or Enterprise
   if (isAppSumoUser) {
     return [PlanTier.BUSINESS, PlanTier.ENTERPRISE];
   }
-  
+
   // Regular users can upgrade to any plan higher than their current
   const allPlans = [
     PlanTier.FREE,
@@ -218,7 +209,7 @@ export const getAvailableUpgradePlans = (
     PlanTier.BUSINESS,
     PlanTier.ENTERPRISE,
   ];
-  
+
   const currentIndex = allPlans.indexOf(planTier);
   return allPlans.slice(currentIndex + 1);
 };
@@ -226,16 +217,14 @@ export const getAvailableUpgradePlans = (
 /**
  * Calculates urgency level for upgrade prompt
  */
-export const getUpgradeUrgency = (
-  daysRemaining?: number
-): 'normal' | 'warning' | 'urgent' => {
+export const getUpgradeUrgency = (daysRemaining?: number): 'normal' | 'warning' | 'urgent' => {
   if (daysRemaining === undefined || daysRemaining > 7) {
     return 'normal';
   }
-  
+
   if (daysRemaining <= 3) {
     return 'urgent';
   }
-  
+
   return 'warning';
 };

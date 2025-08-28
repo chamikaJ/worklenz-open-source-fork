@@ -17,12 +17,12 @@ export interface IRoleOption {
 
 export const ROLE_NAMES = {
   OWNER: 'Owner',
-  ADMIN: 'Admin', 
+  ADMIN: 'Admin',
   TEAM_LEAD: 'Team Lead',
   MEMBER: 'Member',
 } as const;
 
-export type RoleName = typeof ROLE_NAMES[keyof typeof ROLE_NAMES];
+export type RoleName = (typeof ROLE_NAMES)[keyof typeof ROLE_NAMES];
 
 export const ROLE_DESCRIPTIONS = {
   [ROLE_NAMES.OWNER]: 'Full access to all team settings and billing',
@@ -102,4 +102,3 @@ export function getRoleColor(roleName: string): string {
       return colors.darkGray; // Dark gray fallback
   }
 }
-

@@ -12,14 +12,14 @@ export const TrialExpirationAlert = () => {
   const authService = useAuthService();
   const [visible, setVisible] = useState(true);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
-  
+
   const currentSession = authService.getCurrentSession();
 
   useEffect(() => {
     // Check if user has already dismissed this alert today
     const dismissedDate = localStorage.getItem('license-alert-dismissed');
     const today = new Date().toDateString();
-    
+
     if (dismissedDate === today) {
       setVisible(false);
       return;
@@ -30,7 +30,7 @@ export const TrialExpirationAlert = () => {
       ISUBSCRIPTION_TYPE.TRIAL,
       ISUBSCRIPTION_TYPE.LIFE_TIME_DEAL,
       ISUBSCRIPTION_TYPE.PADDLE,
-      ISUBSCRIPTION_TYPE.CUSTOM
+      ISUBSCRIPTION_TYPE.CUSTOM,
     ];
 
     if (
@@ -42,7 +42,7 @@ export const TrialExpirationAlert = () => {
       const expiryDate = new Date(expireDateStr);
       const diffTime = expiryDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       // Show alert if:
       // 1. 3 days or less remaining before expiry (diffDays <= 3 && diffDays >= 0)
       // 2. Within 7 days grace period after expiry (diffDays < 0 && diffDays >= -7)
@@ -82,9 +82,9 @@ export const TrialExpirationAlert = () => {
     if (daysRemaining !== null && daysRemaining < 0) {
       const daysExpired = Math.abs(daysRemaining);
       const remainingGraceDays = 7 - daysExpired;
-      return t('license-expired-grace-period', { 
-        days: remainingGraceDays, 
-        count: remainingGraceDays 
+      return t('license-expired-grace-period', {
+        days: remainingGraceDays,
+        count: remainingGraceDays,
       });
     }
     if (daysRemaining === 0) {
@@ -94,33 +94,34 @@ export const TrialExpirationAlert = () => {
   };
 
   return (
-    <div style={{ 
-      width: '100%',
-      padding: '8px 48px',
-      background: 'linear-gradient(90deg, rgba(250,173,20,0.1) 0%, rgba(245,34,45,0.1) 100%)',
-      borderBottom: '1px solid rgba(250,173,20,0.3)',
-      backdropFilter: 'blur(10px)'
-    }}>
+    <div
+      style={{
+        width: '100%',
+        padding: '8px 48px',
+        background: 'linear-gradient(90deg, rgba(250,173,20,0.1) 0%, rgba(245,34,45,0.1) 100%)',
+        borderBottom: '1px solid rgba(250,173,20,0.3)',
+        backdropFilter: 'blur(10px)',
+      }}
+    >
       <Alert
         message={
           <Space size="large" style={{ width: '100%', justifyContent: 'space-between' }}>
             <Space>
               <ExclamationCircleOutlined />
               <span style={{ fontWeight: 500 }}>{getMessage()}</span>
-              <span style={{ opacity: 0.8, fontSize: 13 }}>
-                {t('license-expiring-upgrade')}
-              </span>
+              <span style={{ opacity: 0.8, fontSize: 13 }}>{t('license-expiring-upgrade')}</span>
             </Space>
             <Space>
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 size="small"
                 onClick={handleUpgrade}
                 style={{
-                  background: daysRemaining === 0 
-                    ? 'linear-gradient(135deg, #f5222d 0%, #ff4d4f 100%)'
-                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  border: 'none'
+                  background:
+                    daysRemaining === 0
+                      ? 'linear-gradient(135deg, #f5222d 0%, #ff4d4f 100%)'
+                      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none',
                 }}
               >
                 {t('license-expired-upgrade')}
@@ -139,10 +140,10 @@ export const TrialExpirationAlert = () => {
         type={getAlertType()}
         showIcon={false}
         closable={false}
-        style={{ 
+        style={{
           border: 'none',
           background: 'transparent',
-          padding: '4px 0'
+          padding: '4px 0',
         }}
       />
     </div>

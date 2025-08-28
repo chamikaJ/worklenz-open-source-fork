@@ -2,7 +2,12 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { message } from '@/shared/antd-imports';
 import { IPricingOption, IBillingAccountInfo } from '@/types/admin-center/admin-center.types';
-import { UserPersonalization, PricingCalculation, PricingModel, BillingCycle } from '../PricingModal';
+import {
+  UserPersonalization,
+  PricingCalculation,
+  PricingModel,
+  BillingCycle,
+} from '../PricingModal';
 
 interface UsePricingDataProps {
   organizationId?: string;
@@ -16,17 +21,22 @@ interface UsePricingDataReturn {
   currentUser: UserPersonalization | null;
   availablePlans: IPricingOption[];
   recommendations: any[];
-  
+
   // Loading states
   loading: boolean;
   calculating: boolean;
-  
+
   // Actions
-  calculatePricing: (planId: string, teamSize: number, model: PricingModel, cycle: BillingCycle) => Promise<PricingCalculation | null>;
+  calculatePricing: (
+    planId: string,
+    teamSize: number,
+    model: PricingModel,
+    cycle: BillingCycle
+  ) => Promise<PricingCalculation | null>;
   getMigrationEligibility: () => Promise<any>;
   getAppSumoStatus: () => Promise<any>;
   getUserTypeInfo: () => Promise<any>;
-  
+
   // Error handling
   error: string | null;
   clearError: () => void;
@@ -75,7 +85,12 @@ const apiService = {
     return response.json();
   },
 
-  async calculatePlanPricing(planId: string, userCount: number, billingCycle: string, discountCodes: string[] = []) {
+  async calculatePlanPricing(
+    planId: string,
+    userCount: number,
+    billingCycle: string,
+    discountCodes: string[] = []
+  ) {
     const response = await fetch('/api/plans/calculate-pricing', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -107,13 +122,17 @@ const apiService = {
 
   // AppSumo APIs
   async getAppSumoStatus(organizationId: string) {
-    const response = await fetch(`/api/plan-recommendations/organizations/${organizationId}/appsumo`);
+    const response = await fetch(
+      `/api/plan-recommendations/organizations/${organizationId}/appsumo`
+    );
     if (!response.ok) throw new Error('Failed to fetch AppSumo status');
     return response.json();
   },
 
   async getAppSumoCountdown(organizationId: string) {
-    const response = await fetch(`/api/plan-recommendations/organizations/${organizationId}/appsumo-countdown`);
+    const response = await fetch(
+      `/api/plan-recommendations/organizations/${organizationId}/appsumo-countdown`
+    );
     if (!response.ok) throw new Error('Failed to fetch AppSumo countdown');
     return response.json();
   },
@@ -147,7 +166,7 @@ export const usePricingData = ({
   initialBillingCycle = 'YEARLY',
 }: UsePricingDataProps = {}): UsePricingDataReturn => {
   const { t } = useTranslation(['pricing', 'common']);
-  
+
   // State
   const [currentUser, setCurrentUser] = useState<UserPersonalization | null>(null);
   const [availablePlans, setAvailablePlans] = useState<IPricingOption[]>([]);
@@ -252,63 +271,66 @@ export const usePricingData = ({
   }, [organizationId]);
 
   // Calculate pricing for a specific plan
-  const calculatePricing = useCallback(async (
-    planId: string,
-    teamSize: number,
-    model: PricingModel,
-    cycle: BillingCycle
-  ): Promise<PricingCalculation | null> => {
-    setCalculating(true);
-    clearError();
+  const calculatePricing = useCallback(
+    async (
+      planId: string,
+      teamSize: number,
+      model: PricingModel,
+      cycle: BillingCycle
+    ): Promise<PricingCalculation | null> => {
+      setCalculating(true);
+      clearError();
 
-    try {
-      const billingCycle = cycle.toLowerCase();
-      const discountCodes: string[] = [];
+      try {
+        const billingCycle = cycle.toLowerCase();
+        const discountCodes: string[] = [];
 
-      // Add discount codes based on user type
-      if (currentUser?.userType === 'appsumo') {
-        discountCodes.push('APPSUMO50');
-      }
+        // Add discount codes based on user type
+        if (currentUser?.userType === 'appsumo') {
+          discountCodes.push('APPSUMO50');
+        }
 
-      const pricingResult = await apiService.calculatePlanPricing(
-        planId,
-        teamSize,
-        billingCycle,
-        discountCodes
-      );
+        const pricingResult = await apiService.calculatePlanPricing(
+          planId,
+          teamSize,
+          billingCycle,
+          discountCodes
+        );
 
-      const calculation: PricingCalculation = {
-        model,
-        cycle,
-        teamSize,
-        planId,
-        basePrice: pricingResult.basePrice || 0,
-        additionalUsersCost: pricingResult.additionalUsersCost || 0,
-        totalCost: pricingResult.totalCost || 0,
-      };
-
-      // Add annual savings if applicable
-      if (cycle === 'YEARLY' && pricingResult.annualSavings) {
-        calculation.annualSavings = pricingResult.annualSavings;
-      }
-
-      // Add discount information if applicable
-      if (pricingResult.discountApplied) {
-        calculation.discountApplied = {
-          type: pricingResult.discountApplied.type,
-          percentage: pricingResult.discountApplied.percentage,
-          amount: pricingResult.discountApplied.amount,
+        const calculation: PricingCalculation = {
+          model,
+          cycle,
+          teamSize,
+          planId,
+          basePrice: pricingResult.basePrice || 0,
+          additionalUsersCost: pricingResult.additionalUsersCost || 0,
+          totalCost: pricingResult.totalCost || 0,
         };
-      }
 
-      return calculation;
-    } catch (error) {
-      handleError(error as Error, 'Failed to calculate pricing');
-      return null;
-    } finally {
-      setCalculating(false);
-    }
-  }, [currentUser, handleError, clearError]);
+        // Add annual savings if applicable
+        if (cycle === 'YEARLY' && pricingResult.annualSavings) {
+          calculation.annualSavings = pricingResult.annualSavings;
+        }
+
+        // Add discount information if applicable
+        if (pricingResult.discountApplied) {
+          calculation.discountApplied = {
+            type: pricingResult.discountApplied.type,
+            percentage: pricingResult.discountApplied.percentage,
+            amount: pricingResult.discountApplied.amount,
+          };
+        }
+
+        return calculation;
+      } catch (error) {
+        handleError(error as Error, 'Failed to calculate pricing');
+        return null;
+      } finally {
+        setCalculating(false);
+      }
+    },
+    [currentUser, handleError, clearError]
+  );
 
   // Migration eligibility
   const getMigrationEligibility = useCallback(async () => {
@@ -354,17 +376,17 @@ export const usePricingData = ({
     currentUser,
     availablePlans,
     recommendations,
-    
+
     // Loading states
     loading,
     calculating,
-    
+
     // Actions
     calculatePricing,
     getMigrationEligibility,
     getAppSumoStatus,
     getUserTypeInfo,
-    
+
     // Error handling
     error,
     clearError,

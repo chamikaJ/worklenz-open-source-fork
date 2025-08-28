@@ -21,7 +21,7 @@ export const taskTimeLogsApiService = {
     const session = getUserSession();
     const timezone = session?.timezone_name || 'UTC';
     const response = await apiClient.get(`${rootUrl}/task/${id}`, {
-      params: { time_zone_name: timezone }
+      params: { time_zone_name: timezone },
     });
     return response.data;
   },

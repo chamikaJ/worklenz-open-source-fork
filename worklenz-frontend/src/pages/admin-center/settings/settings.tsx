@@ -35,12 +35,9 @@ import {
 
 const SettingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const {
-    organization,
-    holidaySettings,
-    countriesWithStates,
-    loadingCountries,
-  } = useAppSelector((state: RootState) => state.adminCenterReducer);
+  const { organization, holidaySettings, countriesWithStates, loadingCountries } = useAppSelector(
+    (state: RootState) => state.adminCenterReducer
+  );
   const themeMode = useAppSelector((state: RootState) => state.themeReducer.mode);
   const [workingDays, setWorkingDays] = useState<Settings['workingDays']>([]);
   const [workingHours, setWorkingHours] = useState<Settings['workingHours']>(8);
@@ -239,13 +236,15 @@ const SettingsPage: React.FC = () => {
                   <Select
                     placeholder={t('selectCountry') || 'Select country'}
                     loading={loadingCountries}
-                    onChange={(value) => {
+                    onChange={value => {
                       holidayForm.setFieldValue('state_code', undefined);
                       setSelectedCountryCode(value);
                     }}
                     showSearch
                     filterOption={(input, option) =>
-                      (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                      (option?.children as unknown as string)
+                        ?.toLowerCase()
+                        .includes(input.toLowerCase())
                     }
                   >
                     {countriesWithStates.map(country => (
@@ -265,7 +264,9 @@ const SettingsPage: React.FC = () => {
                       disabled={!holidayForm.getFieldValue('country_code')}
                       showSearch
                       filterOption={(input, option) =>
-                        (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                        (option?.children as unknown as string)
+                          ?.toLowerCase()
+                          .includes(input.toLowerCase())
                       }
                     >
                       {selectedCountryStates.map(state => (

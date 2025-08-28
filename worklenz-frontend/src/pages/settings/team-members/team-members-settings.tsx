@@ -167,13 +167,12 @@ const TeamMembersSettings = () => {
   }, []);
 
   const currentUser = auth.getCurrentSession();
-  const canManageUser = useCallback((targetRole: string | undefined) => {
-    return canManageUserRole(
-      currentUser?.role_name,
-      targetRole,
-      currentUser?.owner
-    );
-  }, [currentUser?.role_name, currentUser?.owner]);
+  const canManageUser = useCallback(
+    (targetRole: string | undefined) => {
+      return canManageUserRole(currentUser?.role_name, targetRole, currentUser?.owner);
+    },
+    [currentUser?.role_name, currentUser?.owner]
+  );
 
   const columns: TableProps['columns'] = [
     {
@@ -268,38 +267,41 @@ const TeamMembersSettings = () => {
       width: 120,
       render: (record: ITeamMemberViewModel) => {
         const canManage = canManageUser(record.role_name);
-        return record.role_name !== 'owner' && canManage && (
-          <Flex gap={8} style={{ padding: 0 }}>
-            <Tooltip title={t('editTooltip')}>
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => record.id && handleMemberClick(record.id)}
-              />
-            </Tooltip>
-            <Tooltip title={record.active ? t('deactivateTooltip') : t('activateTooltip')}>
-              <Popconfirm
-                title={t('confirmActivateTitle')}
-                icon={<ExclamationCircleFilled style={{ color: colors.vibrantOrange }} />}
-                okText={t('okText')}
-                cancelText={t('cancelText')}
-                onConfirm={() => handleStatusChange(record)}
-              >
-                <Button size="small" icon={<UserSwitchOutlined />} />
-              </Popconfirm>
-            </Tooltip>
-            <Tooltip title={t('deleteTooltip')}>
-              <Popconfirm
-                title={t('confirmDeleteTitle')}
-                icon={<ExclamationCircleFilled style={{ color: colors.vibrantOrange }} />}
-                okText={t('okText')}
-                cancelText={t('cancelText')}
-                onConfirm={() => record.id && handleDeleteMember(record)}
-              >
-                <Button size="small" icon={<DeleteOutlined />} />
-              </Popconfirm>
-            </Tooltip>
-          </Flex>
+        return (
+          record.role_name !== 'owner' &&
+          canManage && (
+            <Flex gap={8} style={{ padding: 0 }}>
+              <Tooltip title={t('editTooltip')}>
+                <Button
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => record.id && handleMemberClick(record.id)}
+                />
+              </Tooltip>
+              <Tooltip title={record.active ? t('deactivateTooltip') : t('activateTooltip')}>
+                <Popconfirm
+                  title={t('confirmActivateTitle')}
+                  icon={<ExclamationCircleFilled style={{ color: colors.vibrantOrange }} />}
+                  okText={t('okText')}
+                  cancelText={t('cancelText')}
+                  onConfirm={() => handleStatusChange(record)}
+                >
+                  <Button size="small" icon={<UserSwitchOutlined />} />
+                </Popconfirm>
+              </Tooltip>
+              <Tooltip title={t('deleteTooltip')}>
+                <Popconfirm
+                  title={t('confirmDeleteTitle')}
+                  icon={<ExclamationCircleFilled style={{ color: colors.vibrantOrange }} />}
+                  okText={t('okText')}
+                  cancelText={t('cancelText')}
+                  onConfirm={() => record.id && handleDeleteMember(record)}
+                >
+                  <Button size="small" icon={<DeleteOutlined />} />
+                </Popconfirm>
+              </Tooltip>
+            </Flex>
+          )
         );
       },
     },

@@ -223,13 +223,13 @@ export class ServiceWorkerManager {
     try {
       // Clear all caches first
       await this.clearCache();
-      
+
       // Force update the service worker
       if (this.registration) {
         await this.registration.update();
         await this.sendMessage('SKIP_WAITING');
       }
-      
+
       // Perform hard reload by clearing browser cache
       window.location.reload();
     } catch (error) {

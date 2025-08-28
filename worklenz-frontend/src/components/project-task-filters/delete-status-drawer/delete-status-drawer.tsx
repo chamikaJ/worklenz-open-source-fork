@@ -1,5 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Drawer, Alert, Card, Select, Button, Typography, Badge, Form } from '@/shared/antd-imports';
+import {
+  Drawer,
+  Alert,
+  Card,
+  Select,
+  Button,
+  Typography,
+  Badge,
+  Form,
+} from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAppDispatch } from '@/hooks/useAppDispatch';

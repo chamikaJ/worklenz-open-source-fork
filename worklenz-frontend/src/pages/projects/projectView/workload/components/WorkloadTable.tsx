@@ -1,5 +1,18 @@
 import { useState, useMemo } from 'react';
-import { Table, Avatar, Progress, Tag, Button, Flex, Tooltip, Typography, Space, Dropdown, Modal, theme } from '@/shared/antd-imports';
+import {
+  Table,
+  Avatar,
+  Progress,
+  Tag,
+  Button,
+  Flex,
+  Tooltip,
+  Typography,
+  Space,
+  Dropdown,
+  Modal,
+  theme,
+} from '@/shared/antd-imports';
 import { MoreOutlined, SwapOutlined, EditOutlined, ExportOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { IWorkloadData, IWorkloadMember, ITaskAllocation } from '@/types/workload/workload.types';
@@ -36,7 +49,10 @@ const WorkloadTable = ({ data }: WorkloadTableProps) => {
           </Avatar>
           <Flex vertical>
             <Typography.Text strong>{name}</Typography.Text>
-            <Typography.Text type="secondary" style={{ fontSize: 12, color: token.colorTextSecondary }}>
+            <Typography.Text
+              type="secondary"
+              style={{ fontSize: 12, color: token.colorTextSecondary }}
+            >
               {record.role || record.email}
             </Typography.Text>
           </Flex>
@@ -49,13 +65,14 @@ const WorkloadTable = ({ data }: WorkloadTableProps) => {
       key: 'capacity',
       width: 120,
       render: (capacity, record) => {
-        const workingDays = record.dailyCapacity > 0 ? Math.round(record.weeklyCapacity / record.dailyCapacity) : 5;
+        const workingDays =
+          record.dailyCapacity > 0 ? Math.round(record.weeklyCapacity / record.dailyCapacity) : 5;
         return (
-          <Tooltip 
+          <Tooltip
             title={t('calculations.capacityTooltip', {
               weeklyCapacity: capacity,
               dailyHours: record.dailyCapacity,
-              workingDays: workingDays
+              workingDays: workingDays,
             })}
             placement="top"
           >
@@ -77,7 +94,14 @@ const WorkloadTable = ({ data }: WorkloadTableProps) => {
             {workload} {capacityUnit === 'hours' ? t('overview.hours') : t('overview.points')}
           </Typography.Text>
           {record.isOverallocated && (
-            <Tag color="red" style={{ fontSize: 10, backgroundColor: token.colorErrorBg, borderColor: token.colorError }}>
+            <Tag
+              color="red"
+              style={{
+                fontSize: 10,
+                backgroundColor: token.colorErrorBg,
+                borderColor: token.colorError,
+              }}
+            >
               +{workload - record.weeklyCapacity}
             </Tag>
           )}
@@ -91,28 +115,31 @@ const WorkloadTable = ({ data }: WorkloadTableProps) => {
       width: 180,
       sorter: (a, b) => a.utilizationPercentage - b.utilizationPercentage,
       render: (utilization, record) => {
-        const status = 
-          utilization > alertThresholds.overallocation ? 'exception' :
-          utilization < alertThresholds.underutilization ? 'normal' :
-          'success';
+        const status =
+          utilization > alertThresholds.overallocation
+            ? 'exception'
+            : utilization < alertThresholds.underutilization
+              ? 'normal'
+              : 'success';
 
-        const workingDays = record.dailyCapacity > 0 ? Math.round(record.weeklyCapacity / record.dailyCapacity) : 5;
-        
+        const workingDays =
+          record.dailyCapacity > 0 ? Math.round(record.weeklyCapacity / record.dailyCapacity) : 5;
+
         return (
-          <Tooltip 
+          <Tooltip
             title={t('calculations.utilizationTooltip', {
               utilization: utilization,
               assignedHours: record.currentWorkload,
               weeklyCapacity: record.weeklyCapacity,
               dailyHours: record.dailyCapacity,
-              workingDays: workingDays
+              workingDays: workingDays,
             })}
             placement="top"
           >
             <Flex vertical gap={4}>
-              <Progress 
-                percent={utilization} 
-                size="small" 
+              <Progress
+                percent={utilization}
+                size="small"
                 status={status}
                 format={percent => `${percent}%`}
               />
@@ -131,15 +158,25 @@ const WorkloadTable = ({ data }: WorkloadTableProps) => {
             return t('calculations.statusTooltip.overallocated');
           }
           if (record.isUnderutilized) {
-            return t('calculations.statusTooltip.underutilized', { threshold: alertThresholds.underutilization });
+            return t('calculations.statusTooltip.underutilized', {
+              threshold: alertThresholds.underutilization,
+            });
           }
-          return t('calculations.statusTooltip.optimal', { threshold: alertThresholds.underutilization });
+          return t('calculations.statusTooltip.optimal', {
+            threshold: alertThresholds.underutilization,
+          });
         };
-        
+
         if (record.isOverallocated) {
           return (
             <Tooltip title={getStatusTooltip()} placement="top">
-              <Tag style={{ backgroundColor: token.colorErrorBg, borderColor: token.colorError, color: token.colorError }}>
+              <Tag
+                style={{
+                  backgroundColor: token.colorErrorBg,
+                  borderColor: token.colorError,
+                  color: token.colorError,
+                }}
+              >
                 {t('status.overallocated')}
               </Tag>
             </Tooltip>
@@ -148,7 +185,13 @@ const WorkloadTable = ({ data }: WorkloadTableProps) => {
         if (record.isUnderutilized) {
           return (
             <Tooltip title={getStatusTooltip()} placement="top">
-              <Tag style={{ backgroundColor: token.colorWarningBg, borderColor: token.colorWarning, color: token.colorWarning }}>
+              <Tag
+                style={{
+                  backgroundColor: token.colorWarningBg,
+                  borderColor: token.colorWarning,
+                  color: token.colorWarning,
+                }}
+              >
                 {t('status.underutilized')}
               </Tag>
             </Tooltip>
@@ -156,7 +199,13 @@ const WorkloadTable = ({ data }: WorkloadTableProps) => {
         }
         return (
           <Tooltip title={getStatusTooltip()} placement="top">
-            <Tag style={{ backgroundColor: token.colorSuccessBg, borderColor: token.colorSuccess, color: token.colorSuccess }}>
+            <Tag
+              style={{
+                backgroundColor: token.colorSuccessBg,
+                borderColor: token.colorSuccess,
+                color: token.colorSuccess,
+              }}
+            >
               {t('status.optimal')}
             </Tag>
           </Tooltip>
@@ -228,7 +277,7 @@ const WorkloadTable = ({ data }: WorkloadTableProps) => {
         title: t('table.taskName'),
         dataIndex: 'taskName',
         key: 'taskName',
-        render: (name) => (
+        render: name => (
           <Typography.Text ellipsis style={{ maxWidth: 300 }}>
             {name}
           </Typography.Text>
@@ -252,35 +301,25 @@ const WorkloadTable = ({ data }: WorkloadTableProps) => {
         title: t('table.estimatedHours'),
         dataIndex: 'estimatedHours',
         key: 'estimatedHours',
-        render: (hours) => `${hours}h`,
+        render: hours => `${hours}h`,
       },
       {
         title: t('table.priority'),
         dataIndex: 'priority',
         key: 'priority',
-        render: (priority, task) => (
-          <Tag color={task.priorityColor || 'default'}>
-            {priority}
-          </Tag>
-        ),
+        render: (priority, task) => <Tag color={task.priorityColor || 'default'}>{priority}</Tag>,
       },
       {
         title: t('table.status'),
         dataIndex: 'status',
         key: 'status',
-        render: (status, task) => (
-          <Tag color={task.statusColor || 'default'}>
-            {status}
-          </Tag>
-        ),
+        render: (status, task) => <Tag color={task.statusColor || 'default'}>{status}</Tag>,
       },
       {
         title: t('table.progress'),
         dataIndex: 'completionPercentage',
         key: 'progress',
-        render: (progress) => (
-          <Progress percent={progress} size="small" style={{ width: 60 }} />
-        ),
+        render: progress => <Progress percent={progress} size="small" style={{ width: 60 }} />,
       },
       {
         title: '',
@@ -335,7 +374,7 @@ const WorkloadTable = ({ data }: WorkloadTableProps) => {
         pagination={{
           pageSize: 10,
           showSizeChanger: true,
-          showTotal: (total) => t('table.totalMembers', { total }),
+          showTotal: total => t('table.totalMembers', { total }),
         }}
         scroll={{ x: 1200 }}
       />

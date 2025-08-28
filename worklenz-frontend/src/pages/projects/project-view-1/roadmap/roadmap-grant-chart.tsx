@@ -2,7 +2,10 @@ import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import React from 'react';
 import { colors } from '../../../../styles/colors';
 import { useMixpanelTracking } from '../../../../hooks/useMixpanelTracking';
-import { evt_roadmap_drag_change_date, evt_roadmap_drag_move } from '../../../../shared/worklenz-analytics-events';
+import {
+  evt_roadmap_drag_change_date,
+  evt_roadmap_drag_move,
+} from '../../../../shared/worklenz-analytics-events';
 import {
   NewTaskType,
   updateTaskDate,

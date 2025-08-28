@@ -60,11 +60,13 @@ const SendChatItem = ({ chatData }: SendChatItemProps) => {
           </Typography.Text>
         </Flex>
 
-        <div style={{ 
-          wordBreak: 'break-word',
-          whiteSpace: 'pre-wrap',
-          lineHeight: '1.4'
-        }}>
+        <div
+          style={{
+            wordBreak: 'break-word',
+            whiteSpace: 'pre-wrap',
+            lineHeight: '1.4',
+          }}
+        >
           {chatData.content}
         </div>
       </Flex>

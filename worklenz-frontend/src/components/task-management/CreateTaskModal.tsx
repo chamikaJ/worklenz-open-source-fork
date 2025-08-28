@@ -371,7 +371,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ open, onClose, projec
   const [activeTab, setActiveTab] = useState('task-info');
   const dispatch = useAppDispatch();
   const { trackMixpanelEvent } = useMixpanelTracking();
-  
+
   // Redux state
   const isDarkMode = useAppSelector(state => state.themeReducer?.mode === 'dark');
   const currentProjectId = useAppSelector(state => state.projectReducer.projectId);
@@ -403,7 +403,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ open, onClose, projec
 
       // Track analytics event
       trackMixpanelEvent(evt_project_task_create);
-      
+
       // Create task via socket
       socket.emit(SocketEvents.QUICK_TASK.toString(), taskData);
 

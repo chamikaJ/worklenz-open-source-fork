@@ -252,7 +252,7 @@
     "recommended": "Recommended",
     "currentPlan": "Current Plan",
     "upgrade": "Upgrade",
-    "downgrade": "Downgrade", 
+    "downgrade": "Downgrade",
     "change": "Change Plan",
     "specialOffer": "Special Offer",
     "limitedTime": "Limited Time",
@@ -265,7 +265,7 @@
   "features": {
     "common": {
       "taskManagement": "Task Management",
-      "projectTracking": "Project Tracking", 
+      "projectTracking": "Project Tracking",
       "teamCollaboration": "Team Collaboration",
       "fileSharing": "File Sharing",
       "basicReporting": "Basic Reporting",

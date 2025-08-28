@@ -424,13 +424,13 @@ const ProjectViewFinance = () => {
           style={{ marginBottom: 16 }}
         />
       )}
-      
+
       {/* Finance Header */}
       <ConfigProvider wave={{ disabled: true }}>
         <Flex gap={16} align="center" justify="space-between">
           <Flex gap={16} align="center">
             <Flex>
-              <Tooltip title={!hasBusinessAccess ? "Available only on Business plan" : ""}>
+              <Tooltip title={!hasBusinessAccess ? 'Available only on Business plan' : ''}>
                 <Button
                   className={`${activeTab === 'finance' && 'border-[#1890ff] text-[#1890ff]'} rounded-r-none`}
                   onClick={() => hasBusinessAccess && dispatch(setActiveTab('finance'))}
@@ -439,7 +439,7 @@ const ProjectViewFinance = () => {
                   {t('financeText')}
                 </Button>
               </Tooltip>
-              <Tooltip title={!hasBusinessAccess ? "Available only on Business plan" : ""}>
+              <Tooltip title={!hasBusinessAccess ? 'Available only on Business plan' : ''}>
                 <Button
                   className={`${activeTab === 'ratecard' && 'border-[#1890ff] text-[#1890ff]'} rounded-l-none`}
                   onClick={() => hasBusinessAccess && dispatch(setActiveTab('ratecard'))}
@@ -480,7 +480,7 @@ const ProjectViewFinance = () => {
           </Flex>
 
           {activeTab === 'finance' ? (
-            <Tooltip title={!hasBusinessAccess ? "Available only on Business plan" : ""}>
+            <Tooltip title={!hasBusinessAccess ? 'Available only on Business plan' : ''}>
               <Button
                 type="primary"
                 icon={<DownOutlined />}
@@ -504,9 +504,9 @@ const ProjectViewFinance = () => {
                   onChange={handleCurrencyChange}
                 />
               </Flex>
-              <Tooltip title={!hasBusinessAccess ? "Available only on Business plan" : ""}>
-                <Button 
-                  type="primary" 
+              <Tooltip title={!hasBusinessAccess ? 'Available only on Business plan' : ''}>
+                <Button
+                  type="primary"
                   onClick={() => dispatch(toggleImportRatecardsDrawer())}
                   disabled={!hasBusinessAccess}
                 >
@@ -519,7 +519,12 @@ const ProjectViewFinance = () => {
       </ConfigProvider>
 
       {/* Tab Content */}
-      <div style={{ opacity: hasBusinessAccess ? 1 : 0.6, pointerEvents: hasBusinessAccess ? 'auto' : 'none' }}>
+      <div
+        style={{
+          opacity: hasBusinessAccess ? 1 : 0.6,
+          pointerEvents: hasBusinessAccess ? 'auto' : 'none',
+        }}
+      >
         {activeTab === 'finance' ? (
           <div>
             {!hasEditPermission && hasBusinessAccess && (
@@ -534,199 +539,199 @@ const ProjectViewFinance = () => {
 
             {/* Budget Statistics */}
             <Card
-            title={
-              <Flex align="center" justify="space-between">
-                <Flex align="center" gap={8}>
-                  <CalculatorOutlined />
-                  <Typography.Text strong>{t('projectBudgetOverviewText')}</Typography.Text>
-                  {!budgetStatistics.hasManualBudget && (
-                    <Typography.Text type="warning" style={{ fontSize: '12px' }}>
-                      {t('budgetStatistics.noManualBudgetSet')}
-                    </Typography.Text>
+              title={
+                <Flex align="center" justify="space-between">
+                  <Flex align="center" gap={8}>
+                    <CalculatorOutlined />
+                    <Typography.Text strong>{t('projectBudgetOverviewText')}</Typography.Text>
+                    {!budgetStatistics.hasManualBudget && (
+                      <Typography.Text type="warning" style={{ fontSize: '12px' }}>
+                        {t('budgetStatistics.noManualBudgetSet')}
+                      </Typography.Text>
+                    )}
+                  </Flex>
+                  {hasEditPermission && (
+                    <Tooltip title="Budget & Calculation Settings">
+                      <Button
+                        type="text"
+                        icon={<SettingOutlined />}
+                        size="small"
+                        onClick={() => setBudgetSettingsDrawerVisible(true)}
+                        style={{ color: '#666' }}
+                      />
+                    </Tooltip>
                   )}
                 </Flex>
-                {hasEditPermission && (
-                  <Tooltip title="Budget & Calculation Settings">
-                    <Button
-                      type="text"
-                      icon={<SettingOutlined />}
-                      size="small"
-                      onClick={() => setBudgetSettingsDrawerVisible(true)}
-                      style={{ color: '#666' }}
-                    />
+              }
+              style={{ marginBottom: 16 }}
+              loading={loading}
+              size="small"
+            >
+              <Row gutter={[12, 8]}>
+                <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+                  <Tooltip title={t('budgetOverviewTooltips.manualBudget')}>
+                    <div style={{ textAlign: 'center', position: 'relative' }}>
+                      <Statistic
+                        title={
+                          <Flex align="center" justify="center" gap={4}>
+                            <span>{t('budgetStatistics.manualBudget')}</span>
+                            {hasEditPermission && (
+                              <Button
+                                type="text"
+                                size="small"
+                                icon={<EditOutlined />}
+                                onClick={handleBudgetEdit}
+                                style={{
+                                  padding: '0 4px',
+                                  height: '16px',
+                                  fontSize: '12px',
+                                  color: '#666',
+                                }}
+                              />
+                            )}
+                          </Flex>
+                        }
+                        value={budgetStatistics.totalBudget}
+                        precision={2}
+                        prefix={projectCurrency.toUpperCase()}
+                        valueStyle={{
+                          color: budgetStatistics.hasManualBudget ? '#1890ff' : '#d9d9d9',
+                          fontSize: '16px',
+                        }}
+                      />
+                    </div>
                   </Tooltip>
-                )}
-              </Flex>
-            }
-            style={{ marginBottom: 16 }}
-            loading={loading}
-            size="small"
-          >
-            <Row gutter={[12, 8]}>
-              <Col xs={12} sm={8} md={6} lg={4} xl={3}>
-                <Tooltip title={t('budgetOverviewTooltips.manualBudget')}>
-                  <div style={{ textAlign: 'center', position: 'relative' }}>
+                </Col>
+                <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+                  <Tooltip title={t('budgetOverviewTooltips.totalActualCost')}>
                     <Statistic
-                      title={
-                        <Flex align="center" justify="center" gap={4}>
-                          <span>{t('budgetStatistics.manualBudget')}</span>
-                          {hasEditPermission && (
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<EditOutlined />}
-                              onClick={handleBudgetEdit}
-                              style={{
-                                padding: '0 4px',
-                                height: '16px',
-                                fontSize: '12px',
-                                color: '#666',
-                              }}
-                            />
-                          )}
-                        </Flex>
-                      }
-                      value={budgetStatistics.totalBudget}
+                      title={t('budgetStatistics.totalActualCost')}
+                      value={budgetStatistics.totalActualCost}
                       precision={2}
                       prefix={projectCurrency.toUpperCase()}
+                      valueStyle={{ color: '#52c41a', fontSize: '16px' }}
+                      style={{ textAlign: 'center' }}
+                    />
+                  </Tooltip>
+                </Col>
+                <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+                  <Tooltip title={t('budgetOverviewTooltips.variance')}>
+                    <Statistic
+                      title={t('budgetStatistics.variance')}
+                      value={Math.abs(budgetStatistics.totalVariance)}
+                      precision={2}
+                      prefix={budgetStatistics.totalVariance >= 0 ? '+' : '-'}
+                      suffix={` ${projectCurrency.toUpperCase()}`}
                       valueStyle={{
-                        color: budgetStatistics.hasManualBudget ? '#1890ff' : '#d9d9d9',
+                        color:
+                          budgetStatistics.totalVariance < 0
+                            ? '#ff4d4f'
+                            : budgetStatistics.totalVariance > 0
+                              ? '#52c41a'
+                              : '#666666',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                      }}
+                      style={{ textAlign: 'center' }}
+                    />
+                  </Tooltip>
+                </Col>
+                <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+                  <Tooltip title={t('budgetOverviewTooltips.utilization')}>
+                    <Statistic
+                      title={t('budgetStatistics.budgetUtilization')}
+                      value={budgetStatistics.budgetUtilization}
+                      precision={1}
+                      suffix="%"
+                      valueStyle={{
+                        color:
+                          budgetStatistics.budgetUtilization > 100
+                            ? '#ff4d4f'
+                            : budgetStatistics.budgetUtilization > 80
+                              ? '#faad14'
+                              : '#52c41a',
                         fontSize: '16px',
                       }}
+                      style={{ textAlign: 'center' }}
                     />
-                  </div>
-                </Tooltip>
-              </Col>
-              <Col xs={12} sm={8} md={6} lg={4} xl={3}>
-                <Tooltip title={t('budgetOverviewTooltips.totalActualCost')}>
-                  <Statistic
-                    title={t('budgetStatistics.totalActualCost')}
-                    value={budgetStatistics.totalActualCost}
-                    precision={2}
-                    prefix={projectCurrency.toUpperCase()}
-                    valueStyle={{ color: '#52c41a', fontSize: '16px' }}
-                    style={{ textAlign: 'center' }}
-                  />
-                </Tooltip>
-              </Col>
-              <Col xs={12} sm={8} md={6} lg={4} xl={3}>
-                <Tooltip title={t('budgetOverviewTooltips.variance')}>
-                  <Statistic
-                    title={t('budgetStatistics.variance')}
-                    value={Math.abs(budgetStatistics.totalVariance)}
-                    precision={2}
-                    prefix={budgetStatistics.totalVariance >= 0 ? '+' : '-'}
-                    suffix={` ${projectCurrency.toUpperCase()}`}
-                    valueStyle={{
-                      color:
-                        budgetStatistics.totalVariance < 0
-                          ? '#ff4d4f'
-                          : budgetStatistics.totalVariance > 0
-                            ? '#52c41a'
-                            : '#666666',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                    }}
-                    style={{ textAlign: 'center' }}
-                  />
-                </Tooltip>
-              </Col>
-              <Col xs={12} sm={8} md={6} lg={4} xl={3}>
-                <Tooltip title={t('budgetOverviewTooltips.utilization')}>
-                  <Statistic
-                    title={t('budgetStatistics.budgetUtilization')}
-                    value={budgetStatistics.budgetUtilization}
-                    precision={1}
-                    suffix="%"
-                    valueStyle={{
-                      color:
-                        budgetStatistics.budgetUtilization > 100
-                          ? '#ff4d4f'
-                          : budgetStatistics.budgetUtilization > 80
-                            ? '#faad14'
-                            : '#52c41a',
-                      fontSize: '16px',
-                    }}
-                    style={{ textAlign: 'center' }}
-                  />
-                </Tooltip>
-              </Col>
-              <Col xs={12} sm={8} md={6} lg={4} xl={3}>
-                <Tooltip title={t('budgetOverviewTooltips.estimatedHours')}>
-                  <Statistic
-                    title={t('budgetStatistics.estimatedHours')}
-                    value={budgetStatistics.totalEstimatedHours}
-                    precision={1}
-                    suffix="h"
-                    valueStyle={{ color: '#722ed1', fontSize: '16px' }}
-                    style={{ textAlign: 'center' }}
-                  />
-                </Tooltip>
-              </Col>
-              <Col xs={12} sm={8} md={6} lg={4} xl={3}>
-                <Tooltip title={t('budgetOverviewTooltips.fixedCosts')}>
-                  <Statistic
-                    title={t('budgetStatistics.fixedCosts')}
-                    value={budgetStatistics.totalFixedCost}
-                    precision={2}
-                    prefix={projectCurrency.toUpperCase()}
-                    valueStyle={{ color: '#fa8c16', fontSize: '16px' }}
-                    style={{ textAlign: 'center' }}
-                  />
-                </Tooltip>
-              </Col>
-              <Col xs={12} sm={8} md={6} lg={4} xl={3}>
-                <Tooltip title={t('budgetOverviewTooltips.timeBasedCost')}>
-                  <Statistic
-                    title={t('budgetStatistics.timeBasedCost')}
-                    value={budgetStatistics.totalTimeBasedCost}
-                    precision={2}
-                    prefix={projectCurrency.toUpperCase()}
-                    valueStyle={{ color: '#13c2c2', fontSize: '16px' }}
-                    style={{ textAlign: 'center' }}
-                  />
-                </Tooltip>
-              </Col>
-              <Col xs={12} sm={8} md={6} lg={4} xl={3}>
-                <Tooltip title={t('budgetOverviewTooltips.remainingBudget')}>
-                  <Statistic
-                    title={t('budgetStatistics.remainingBudget')}
-                    value={Math.abs(budgetStatistics.totalVariance)}
-                    precision={2}
-                    prefix={budgetStatistics.totalVariance >= 0 ? '+' : '-'}
-                    suffix={` ${projectCurrency.toUpperCase()}`}
-                    valueStyle={{
-                      color: budgetStatistics.totalVariance >= 0 ? '#52c41a' : '#ff4d4f',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                    }}
-                    style={{ textAlign: 'center' }}
-                  />
-                </Tooltip>
-              </Col>
-            </Row>
-          </Card>
+                  </Tooltip>
+                </Col>
+                <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+                  <Tooltip title={t('budgetOverviewTooltips.estimatedHours')}>
+                    <Statistic
+                      title={t('budgetStatistics.estimatedHours')}
+                      value={budgetStatistics.totalEstimatedHours}
+                      precision={1}
+                      suffix="h"
+                      valueStyle={{ color: '#722ed1', fontSize: '16px' }}
+                      style={{ textAlign: 'center' }}
+                    />
+                  </Tooltip>
+                </Col>
+                <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+                  <Tooltip title={t('budgetOverviewTooltips.fixedCosts')}>
+                    <Statistic
+                      title={t('budgetStatistics.fixedCosts')}
+                      value={budgetStatistics.totalFixedCost}
+                      precision={2}
+                      prefix={projectCurrency.toUpperCase()}
+                      valueStyle={{ color: '#fa8c16', fontSize: '16px' }}
+                      style={{ textAlign: 'center' }}
+                    />
+                  </Tooltip>
+                </Col>
+                <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+                  <Tooltip title={t('budgetOverviewTooltips.timeBasedCost')}>
+                    <Statistic
+                      title={t('budgetStatistics.timeBasedCost')}
+                      value={budgetStatistics.totalTimeBasedCost}
+                      precision={2}
+                      prefix={projectCurrency.toUpperCase()}
+                      valueStyle={{ color: '#13c2c2', fontSize: '16px' }}
+                      style={{ textAlign: 'center' }}
+                    />
+                  </Tooltip>
+                </Col>
+                <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+                  <Tooltip title={t('budgetOverviewTooltips.remainingBudget')}>
+                    <Statistic
+                      title={t('budgetStatistics.remainingBudget')}
+                      value={Math.abs(budgetStatistics.totalVariance)}
+                      precision={2}
+                      prefix={budgetStatistics.totalVariance >= 0 ? '+' : '-'}
+                      suffix={` ${projectCurrency.toUpperCase()}`}
+                      valueStyle={{
+                        color: budgetStatistics.totalVariance >= 0 ? '#52c41a' : '#ff4d4f',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                      }}
+                      style={{ textAlign: 'center' }}
+                    />
+                  </Tooltip>
+                </Col>
+              </Row>
+            </Card>
 
-          <FinanceTableWrapper activeTablesList={taskGroups} loading={loading} />
-        </div>
-      ) : (
-        <Flex vertical gap={8}>
-          {!hasEditPermission && hasBusinessAccess && (
-            <Alert
-              message="Limited Access"
-              description="You can view rate card data but cannot edit rates or manage member assignments. Only project managers, team admins, and team owners can make changes."
-              type="info"
-              showIcon
-              style={{ marginBottom: 16 }}
-            />
-          )}
-          <RateCardTable />
-          <Typography.Text type="danger" style={{ display: 'block', marginTop: '10px' }}>
-            {t('ratecardImportantNotice')}
-          </Typography.Text>
-          <ImportRatecardsDrawer />
-        </Flex>
-      )}
+            <FinanceTableWrapper activeTablesList={taskGroups} loading={loading} />
+          </div>
+        ) : (
+          <Flex vertical gap={8}>
+            {!hasEditPermission && hasBusinessAccess && (
+              <Alert
+                message="Limited Access"
+                description="You can view rate card data but cannot edit rates or manage member assignments. Only project managers, team admins, and team owners can make changes."
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+            )}
+            <RateCardTable />
+            <Typography.Text type="danger" style={{ display: 'block', marginTop: '10px' }}>
+              {t('ratecardImportantNotice')}
+            </Typography.Text>
+            <ImportRatecardsDrawer />
+          </Flex>
+        )}
       </div>
 
       {/* Budget Edit Modal */}

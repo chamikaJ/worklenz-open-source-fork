@@ -15,10 +15,10 @@ const ClientPortalLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { isMobile, isTablet, isDesktop } = useResponsive();
   const navigate = useNavigate();
-  
+
   // theme details from theme slice
-  const themeMode = useAppSelector((state) => state.themeReducer.mode);
-  
+  const themeMode = useAppSelector(state => state.themeReducer.mode);
+
   // Auth and business access check
   const auth = useAuthService();
   const currentSession = auth.getCurrentSession();
@@ -39,8 +39,7 @@ const ClientPortalLayout = () => {
       theme={{
         components: {
           Layout: {
-            colorBgLayout:
-              themeMode === 'dark' ? colors.darkGray : colors.white,
+            colorBgLayout: themeMode === 'dark' ? colors.darkGray : colors.white,
             headerBg: themeMode === 'dark' ? colors.darkGray : colors.white,
           },
         },
@@ -89,8 +88,8 @@ const ClientPortalLayout = () => {
                 pointerEvents: hasBusinessAccess ? 'auto' : 'none',
               }}
             >
-              <ClientPortalSidebar 
-                items={clientPortalItems} 
+              <ClientPortalSidebar
+                items={clientPortalItems}
                 collapsed={sidebarCollapsed}
                 onToggleCollapse={() => hasBusinessAccess && setSidebarCollapsed(!sidebarCollapsed)}
               />
@@ -120,8 +119,8 @@ const ClientPortalLayout = () => {
                   showIcon
                   style={{ marginBottom: 16 }}
                   action={
-                    <Button 
-                      size="small" 
+                    <Button
+                      size="small"
                       type="primary"
                       onClick={() => navigate('/worklenz/admin-center/billing')}
                     >
@@ -130,8 +129,13 @@ const ClientPortalLayout = () => {
                   }
                 />
               )}
-              
-              <div style={{ opacity: hasBusinessAccess ? 1 : 0.6, pointerEvents: hasBusinessAccess ? 'auto' : 'none' }}>
+
+              <div
+                style={{
+                  opacity: hasBusinessAccess ? 1 : 0.6,
+                  pointerEvents: hasBusinessAccess ? 'auto' : 'none',
+                }}
+              >
                 <Outlet />
               </div>
             </div>

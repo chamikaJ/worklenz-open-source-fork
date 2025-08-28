@@ -1,5 +1,15 @@
 import { DownOutlined, CalendarOutlined, CheckOutlined } from '@/shared/antd-imports';
-import { Button, Card, DatePicker, Divider, Dropdown, Flex, List, Typography, Space } from '@/shared/antd-imports';
+import {
+  Button,
+  Card,
+  DatePicker,
+  Divider,
+  Dropdown,
+  Flex,
+  List,
+  Typography,
+  Space,
+} from '@/shared/antd-imports';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -104,24 +114,25 @@ const TimeWiseFilter = () => {
       }}
       style={{
         borderRadius: 8,
-        boxShadow: '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)'
+        boxShadow:
+          '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
       }}
     >
       <div style={{ padding: '0 4px' }}>
-        <Typography.Text 
-          type="secondary" 
-          style={{ 
-            fontSize: 11, 
-            fontWeight: 500, 
-            textTransform: 'uppercase', 
+        <Typography.Text
+          type="secondary"
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            textTransform: 'uppercase',
             letterSpacing: '0.5px',
             padding: '8px 12px 4px',
-            display: 'block'
+            display: 'block',
           }}
         >
           Quick Ranges
         </Typography.Text>
-        
+
         {durations.map(item => (
           <div
             key={item.key}
@@ -139,18 +150,20 @@ const TimeWiseFilter = () => {
                     ? '#e6f4ff'
                     : 'transparent',
               borderRadius: 6,
-              border: selectedTimeFrame === item.label 
-                ? `1px solid ${colors.skyBlue}`
-                : '1px solid transparent',
+              border:
+                selectedTimeFrame === item.label
+                  ? `1px solid ${colors.skyBlue}`
+                  : '1px solid transparent',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
             }}
-            onMouseEnter={(e) => {
+            onMouseEnter={e => {
               if (selectedTimeFrame !== item.label) {
-                e.currentTarget.style.backgroundColor = themeMode === 'dark' ? '#2a2a2a' : '#f5f5f5';
+                e.currentTarget.style.backgroundColor =
+                  themeMode === 'dark' ? '#2a2a2a' : '#f5f5f5';
               }
             }}
-            onMouseLeave={(e) => {
+            onMouseLeave={e => {
               if (selectedTimeFrame !== item.label) {
                 e.currentTarget.style.backgroundColor = 'transparent';
               }
@@ -158,11 +171,11 @@ const TimeWiseFilter = () => {
             onClick={() => handleDurationSelect(item)}
           >
             <Space size={8}>
-              <CalendarOutlined 
-                style={{ 
+              <CalendarOutlined
+                style={{
                   color: selectedTimeFrame === item.label ? colors.skyBlue : '#8c8c8c',
-                  fontSize: 14
-                }} 
+                  fontSize: 14,
+                }}
               />
               <Typography.Text
                 style={{
@@ -173,27 +186,29 @@ const TimeWiseFilter = () => {
                 {t(item.label)}
               </Typography.Text>
             </Space>
-            
+
             <Flex align="center" gap={8}>
               {selectedTimeFrame === item.label && (
                 <CheckOutlined style={{ color: colors.skyBlue, fontSize: 12 }} />
               )}
-              <Typography.Text 
-                type="secondary" 
-                style={{ 
+              <Typography.Text
+                type="secondary"
+                style={{
                   fontSize: 11,
                   textAlign: 'right',
-                  lineHeight: '14px'
+                  lineHeight: '14px',
                 }}
               >
-                {item.dates
-                  ? (
-                    <>
-                      {dayjs(item.dates.split(' - ')[0]).format('MMM DD')}<br/>
-                      {item.dates.includes(' - ') && dayjs(item.dates.split(' - ')[1]).format('MMM DD, YYYY')}
-                    </>
-                  )
-                  : ''}
+                {item.dates ? (
+                  <>
+                    {dayjs(item.dates.split(' - ')[0]).format('MMM DD')}
+                    <br />
+                    {item.dates.includes(' - ') &&
+                      dayjs(item.dates.split(' - ')[1]).format('MMM DD, YYYY')}
+                  </>
+                ) : (
+                  ''
+                )}
               </Typography.Text>
             </Flex>
           </div>
@@ -203,15 +218,15 @@ const TimeWiseFilter = () => {
       <Divider style={{ margin: '12px 8px' }} />
 
       <div style={{ padding: '8px 16px 16px' }}>
-        <Typography.Text 
-          type="secondary" 
-          style={{ 
-            fontSize: 11, 
-            fontWeight: 500, 
-            textTransform: 'uppercase', 
+        <Typography.Text
+          type="secondary"
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            textTransform: 'uppercase',
             letterSpacing: '0.5px',
             marginBottom: 12,
-            display: 'block'
+            display: 'block',
           }}
         >
           {t('customRangeText')}
@@ -238,7 +253,7 @@ const TimeWiseFilter = () => {
               disabled={!customRange}
               style={{
                 borderRadius: 6,
-                fontWeight: 500
+                fontWeight: 500,
               }}
             >
               {t('filterButton')}

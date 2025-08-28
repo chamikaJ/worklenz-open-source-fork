@@ -67,10 +67,10 @@ export const scheduleAPIService = {
   },
 
   // Resource Management & Workload APIs
-  fetchMemberWorkload: async ({ 
-    memberId, 
-    startDate, 
-    endDate 
+  fetchMemberWorkload: async ({
+    memberId,
+    startDate,
+    endDate,
   }: {
     memberId?: string;
     startDate?: string;
@@ -80,7 +80,7 @@ export const scheduleAPIService = {
     if (memberId) params.append('memberId', memberId);
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
-    
+
     const response = await apiClient.get<IServerResponse<any>>(
       `${rootUrl}/workload?${params.toString()}`
     );
@@ -100,16 +100,13 @@ export const scheduleAPIService = {
     startDate?: string;
     endDate?: string;
   }): Promise<IServerResponse<any>> => {
-    const response = await apiClient.put<IServerResponse<any>>(
-      `${rootUrl}/allocation`,
-      {
-        memberId,
-        projectId,
-        allocatedHours,
-        startDate,
-        endDate,
-      }
-    );
+    const response = await apiClient.put<IServerResponse<any>>(`${rootUrl}/allocation`, {
+      memberId,
+      projectId,
+      allocatedHours,
+      startDate,
+      endDate,
+    });
     return response.data;
   },
 
@@ -122,14 +119,11 @@ export const scheduleAPIService = {
     strategy?: 'even' | 'skills' | 'priority';
     maxUtilization?: number;
   }): Promise<IServerResponse<any>> => {
-    const response = await apiClient.post<IServerResponse<any>>(
-      `${rootUrl}/rebalance`,
-      {
-        memberIds,
-        strategy,
-        maxUtilization,
-      }
-    );
+    const response = await apiClient.post<IServerResponse<any>>(`${rootUrl}/rebalance`, {
+      memberIds,
+      strategy,
+      maxUtilization,
+    });
     return response.data;
   },
 
@@ -147,7 +141,7 @@ export const scheduleAPIService = {
       endDate,
     });
     if (teamId) params.append('teamId', teamId);
-    
+
     const response = await apiClient.get<IServerResponse<any>>(
       `${rootUrl}/capacity-report?${params.toString()}`
     );
@@ -155,9 +149,7 @@ export const scheduleAPIService = {
   },
 
   fetchResourceConflicts: async (): Promise<IServerResponse<any>> => {
-    const response = await apiClient.get<IServerResponse<any>>(
-      `${rootUrl}/conflicts`
-    );
+    const response = await apiClient.get<IServerResponse<any>>(`${rootUrl}/conflicts`);
     return response.data;
   },
 };

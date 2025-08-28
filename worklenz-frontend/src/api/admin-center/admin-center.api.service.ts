@@ -309,16 +309,18 @@ export const adminCenterApiService = {
     return response.data;
   },
 
-  async getAppSumoCountdownWidget(): Promise<IServerResponse<{
-    isVisible: boolean;
-    remainingDays: number;
-    remainingHours: number;
-    remainingMinutes: number;
-    urgencyLevel: string;
-    message: string;
-    ctaText: string;
-    ctaUrl: string;
-  }>> {
+  async getAppSumoCountdownWidget(): Promise<
+    IServerResponse<{
+      isVisible: boolean;
+      remainingDays: number;
+      remainingHours: number;
+      remainingMinutes: number;
+      urgencyLevel: string;
+      message: string;
+      ctaText: string;
+      ctaUrl: string;
+    }>
+  > {
     const response = await apiClient.get(`${rootUrl}/appsumo/countdown-widget`);
     return response.data;
   },

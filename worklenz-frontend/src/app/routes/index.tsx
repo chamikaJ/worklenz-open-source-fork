@@ -253,7 +253,12 @@ const router = createBrowserRouter(
           </Suspense>
         </ErrorBoundary>
       ),
-      children: [...licenseCheckedMainRoutes, ...licenseCheckedAdminRoutes, ...adminclientPortalRoutes, ...setupRoutes],
+      children: [
+        ...licenseCheckedMainRoutes,
+        ...licenseCheckedAdminRoutes,
+        ...adminclientPortalRoutes,
+        ...setupRoutes,
+      ],
     },
     ...publicRoutes,
   ],

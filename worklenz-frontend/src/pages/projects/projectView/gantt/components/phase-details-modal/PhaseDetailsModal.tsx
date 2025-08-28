@@ -56,7 +56,7 @@ const PhaseDetailsModal: React.FC<PhaseDetailsModalProps> = ({
   // Inline editing state
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editedValues, setEditedValues] = useState<Partial<GanttTask>>({});
-  
+
   // Local phase state for immediate UI updates
   const [localPhase, setLocalPhase] = useState<GanttTask | null>(phase);
 
@@ -228,7 +228,8 @@ const PhaseDetailsModal: React.FC<PhaseDetailsModalProps> = ({
 
     // Get the actual phase_id from the localPhase object
     const phaseId =
-      localPhase.phase_id || (localPhase.id.startsWith('phase-') ? localPhase.id.replace('phase-', '') : localPhase.id);
+      localPhase.phase_id ||
+      (localPhase.id.startsWith('phase-') ? localPhase.id.replace('phase-', '') : localPhase.id);
 
     if (!phaseId || phaseId === 'unmapped') {
       message.error('Cannot edit unmapped phase');
@@ -277,7 +278,7 @@ const PhaseDetailsModal: React.FC<PhaseDetailsModalProps> = ({
     } catch (error: any) {
       console.error('Failed to update phase:', error);
       message.error(error?.data?.message || `Failed to update phase ${field.replace('_', ' ')}`);
-      
+
       // Revert the local state on error
       setLocalPhase(phase);
 
@@ -562,7 +563,9 @@ const PhaseDetailsModal: React.FC<PhaseDetailsModalProps> = ({
               }
               className="shadow-sm flex-1 flex flex-col"
               style={{ backgroundColor: token.colorBgContainer, borderColor: token.colorBorder }}
-              styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column', padding: '16px' } }}
+              styles={{
+                body: { flex: 1, display: 'flex', flexDirection: 'column', padding: '16px' },
+              }}
             >
               <div className="space-y-3 flex-1 overflow-y-auto max-h-96">
                 {localPhase.children.map(task => {
@@ -700,7 +703,7 @@ const PhaseDetailsModal: React.FC<PhaseDetailsModalProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                }
+                },
               }}
             >
               <div className="text-center py-8">

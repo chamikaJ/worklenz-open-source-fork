@@ -51,7 +51,7 @@ class HubSpotManager {
       if (existingStyle) {
         existingStyle.remove();
       }
-      
+
       // Apply dark mode CSS if dark theme is active
       if (isDark) {
         this.injectDarkModeCSS();
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Add this style to ensure the chat widget uses the light color scheme
-(function() {
+(function () {
   var style = document.createElement('style');
   style.innerHTML = '#hubspot-messages-iframe-container { color-scheme: light !important; }';
   document.head.appendChild(style);

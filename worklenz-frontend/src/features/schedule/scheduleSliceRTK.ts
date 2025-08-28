@@ -34,7 +34,7 @@ interface UIState {
 interface ScheduleState {
   // UI State
   ui: UIState;
-  
+
   // Core State
   isSettingsDrawerOpen: boolean;
   isScheduleDrawerOpen: boolean;
@@ -42,17 +42,17 @@ interface ScheduleState {
   workingHours: number;
   type: PickerType;
   date: Date;
-  
+
   // Resource Management State
   selectedMemberId: string | null;
   workloadData: WorkloadData[];
-  
+
   // Filters and Search
   searchTerm: string;
   selectedProjects: string[];
   selectedMembers: string[];
   statusFilter: string[];
-  
+
   // Cache and Performance
   lastRefresh: number;
   optimisticUpdates: Record<string, any>;
@@ -94,139 +94,133 @@ const scheduleSlice = createSlice({
   initialState,
   reducers: {
     // UI Actions
-    toggleFullscreen: (state) => {
+    toggleFullscreen: state => {
       state.ui.isFullscreen = !state.ui.isFullscreen;
     },
-    
+
     setShowWeekends: (state, action: PayloadAction<boolean>) => {
       state.ui.showWeekends = action.payload;
     },
-    
+
     setZoomLevel: (state, action: PayloadAction<number>) => {
       state.ui.zoomLevel = Math.max(0.5, Math.min(2, action.payload));
     },
-    
+
     setViewMode: (state, action: PayloadAction<'gantt' | 'list' | 'timeline'>) => {
       state.ui.viewMode = action.payload;
     },
-    
+
     setTimeRange: (state, action: PayloadAction<'day' | 'week' | 'month' | 'quarter'>) => {
       state.ui.selectedTimeRange = action.payload;
     },
-    
-    toggleCriticalPath: (state) => {
+
+    toggleCriticalPath: state => {
       state.ui.showCriticalPath = !state.ui.showCriticalPath;
     },
-    
-    toggleDependencies: (state) => {
+
+    toggleDependencies: state => {
       state.ui.showDependencies = !state.ui.showDependencies;
     },
-    
-    toggleMilestones: (state) => {
+
+    toggleMilestones: state => {
       state.ui.showMilestones = !state.ui.showMilestones;
     },
-    
-    toggleBaseline: (state) => {
+
+    toggleBaseline: state => {
       state.ui.showBaseline = !state.ui.showBaseline;
     },
-    
+
     setColorScheme: (state, action: PayloadAction<'default' | 'priority' | 'status' | 'team'>) => {
       state.ui.colorScheme = action.payload;
     },
-    
+
     // Core Actions
-    toggleSettingsDrawer: (state) => {
+    toggleSettingsDrawer: state => {
       state.isSettingsDrawerOpen = !state.isSettingsDrawerOpen;
     },
-    
-    toggleScheduleDrawer: (state) => {
+
+    toggleScheduleDrawer: state => {
       state.isScheduleDrawerOpen = !state.isScheduleDrawerOpen;
     },
-    
+
     setDate: (state, action: PayloadAction<Date>) => {
       state.date = action.payload;
     },
-    
+
     setType: (state, action: PayloadAction<PickerType>) => {
       state.type = action.payload;
     },
-    
+
     setSelectedMember: (state, action: PayloadAction<string | null>) => {
       state.selectedMemberId = action.payload;
     },
-    
+
     // Filter Actions
     setSearchTerm: (state, action: PayloadAction<string>) => {
       state.searchTerm = action.payload;
     },
-    
+
     setSelectedProjects: (state, action: PayloadAction<string[]>) => {
       state.selectedProjects = action.payload;
     },
-    
+
     setSelectedMembers: (state, action: PayloadAction<string[]>) => {
       state.selectedMembers = action.payload;
     },
-    
+
     setStatusFilter: (state, action: PayloadAction<string[]>) => {
       state.statusFilter = action.payload;
     },
-    
+
     // Optimistic Updates
     addOptimisticUpdate: (state, action: PayloadAction<{ id: string; data: any }>) => {
       state.optimisticUpdates[action.payload.id] = action.payload.data;
     },
-    
+
     removeOptimisticUpdate: (state, action: PayloadAction<string>) => {
       delete state.optimisticUpdates[action.payload];
     },
-    
-    clearOptimisticUpdates: (state) => {
+
+    clearOptimisticUpdates: state => {
       state.optimisticUpdates = {};
     },
-    
+
     // Bulk UI Updates
     updateUISettings: (state, action: PayloadAction<Partial<UIState>>) => {
       state.ui = { ...state.ui, ...action.payload };
     },
-    
-    resetUISettings: (state) => {
+
+    resetUISettings: state => {
       state.ui = initialUIState;
     },
-    
+
     // Performance
-    updateLastRefresh: (state) => {
+    updateLastRefresh: state => {
       state.lastRefresh = Date.now();
     },
   },
-  
-  extraReducers: (builder) => {
+
+  extraReducers: builder => {
     // Listen to RTK Query fulfillments for auto-refresh
     builder
-      .addMatcher(
-        scheduleApi.endpoints.fetchScheduleSettings.matchFulfilled,
-        (state, action) => {
-          if (action.payload?.body) {
-            const settings = action.payload.body;
-            state.workingDays = settings.workingDays || state.workingDays;
-            state.workingHours = settings.workingHours || state.workingHours;
-            state.lastRefresh = Date.now();
-          }
+      .addMatcher(scheduleApi.endpoints.fetchScheduleSettings.matchFulfilled, (state, action) => {
+        if (action.payload?.body) {
+          const settings = action.payload.body;
+          state.workingDays = settings.workingDays || state.workingDays;
+          state.workingHours = settings.workingHours || state.workingHours;
+          state.lastRefresh = Date.now();
         }
-      )
-      .addMatcher(
-        scheduleApi.endpoints.fetchMemberWorkload.matchFulfilled,
-        (state, action) => {
-          if (action.payload?.body) {
-            state.workloadData = action.payload.body || [];
-            state.lastRefresh = Date.now();
-            // Clear related optimistic updates
-            Object.keys(state.optimisticUpdates)
-              .filter(key => key.startsWith('workload_'))
-              .forEach(key => delete state.optimisticUpdates[key]);
-          }
+      })
+      .addMatcher(scheduleApi.endpoints.fetchMemberWorkload.matchFulfilled, (state, action) => {
+        if (action.payload?.body) {
+          state.workloadData = action.payload.body || [];
+          state.lastRefresh = Date.now();
+          // Clear related optimistic updates
+          Object.keys(state.optimisticUpdates)
+            .filter(key => key.startsWith('workload_'))
+            .forEach(key => delete state.optimisticUpdates[key]);
         }
-      )
+      })
       .addMatcher(
         scheduleApi.endpoints.updateResourceAllocation.matchPending,
         (state, action: any) => {
@@ -261,16 +255,13 @@ const scheduleSlice = createSlice({
           }
         }
       )
-      .addMatcher(
-        scheduleApi.endpoints.rebalanceWorkload.matchFulfilled,
-        (state, action) => {
-          // Clear all workload-related optimistic updates after rebalancing
-          Object.keys(state.optimisticUpdates)
-            .filter(key => key.startsWith('workload_') || key.startsWith('allocation_'))
-            .forEach(key => delete state.optimisticUpdates[key]);
-          state.lastRefresh = Date.now();
-        }
-      );
+      .addMatcher(scheduleApi.endpoints.rebalanceWorkload.matchFulfilled, (state, action) => {
+        // Clear all workload-related optimistic updates after rebalancing
+        Object.keys(state.optimisticUpdates)
+          .filter(key => key.startsWith('workload_') || key.startsWith('allocation_'))
+          .forEach(key => delete state.optimisticUpdates[key]);
+        state.lastRefresh = Date.now();
+      });
   },
 });
 
@@ -286,25 +277,25 @@ export const {
   toggleMilestones,
   toggleBaseline,
   setColorScheme,
-  
+
   // Core Actions
   toggleSettingsDrawer,
   toggleScheduleDrawer,
   setDate,
   setType,
   setSelectedMember,
-  
+
   // Filter Actions
   setSearchTerm,
   setSelectedProjects,
   setSelectedMembers,
   setStatusFilter,
-  
+
   // Optimistic Updates
   addOptimisticUpdate,
   removeOptimisticUpdate,
   clearOptimisticUpdates,
-  
+
   // Bulk Updates
   updateUISettings,
   resetUISettings,
@@ -315,13 +306,18 @@ export default scheduleSlice.reducer;
 
 // Selectors with proper typing
 export const selectUIState = (state: { schedule: ScheduleState }) => state.schedule.ui;
-export const selectIsFullscreen = (state: { schedule: ScheduleState }) => state.schedule.ui.isFullscreen;
+export const selectIsFullscreen = (state: { schedule: ScheduleState }) =>
+  state.schedule.ui.isFullscreen;
 export const selectZoomLevel = (state: { schedule: ScheduleState }) => state.schedule.ui.zoomLevel;
-export const selectShowWeekends = (state: { schedule: ScheduleState }) => state.schedule.ui.showWeekends;
+export const selectShowWeekends = (state: { schedule: ScheduleState }) =>
+  state.schedule.ui.showWeekends;
 export const selectViewMode = (state: { schedule: ScheduleState }) => state.schedule.ui.viewMode;
-export const selectOptimisticUpdates = (state: { schedule: ScheduleState }) => state.schedule.optimisticUpdates;
-export const selectWorkloadData = (state: { schedule: ScheduleState }) => state.schedule.workloadData;
-export const selectSelectedMemberId = (state: { schedule: ScheduleState }) => state.schedule.selectedMemberId;
+export const selectOptimisticUpdates = (state: { schedule: ScheduleState }) =>
+  state.schedule.optimisticUpdates;
+export const selectWorkloadData = (state: { schedule: ScheduleState }) =>
+  state.schedule.workloadData;
+export const selectSelectedMemberId = (state: { schedule: ScheduleState }) =>
+  state.schedule.selectedMemberId;
 export const selectFilters = (state: { schedule: ScheduleState }) => ({
   searchTerm: state.schedule.searchTerm,
   selectedProjects: state.schedule.selectedProjects,

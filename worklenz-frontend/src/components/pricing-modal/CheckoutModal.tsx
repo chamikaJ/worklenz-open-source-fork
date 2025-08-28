@@ -24,7 +24,10 @@ import {
 } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { PricingCalculation, UserPersonalization } from './PricingModal';
-import { IPaddleCheckoutParams, IUpgradeSubscriptionPlanResponse } from '@/types/admin-center/admin-center.types';
+import {
+  IPaddleCheckoutParams,
+  IUpgradeSubscriptionPlanResponse,
+} from '@/types/admin-center/admin-center.types';
 
 interface CheckoutModalProps {
   visible: boolean;
@@ -81,12 +84,12 @@ class PaddleService {
   private setupPaddle(): void {
     const vendorId = process.env.REACT_APP_PADDLE_VENDOR_ID;
     const environment = process.env.REACT_APP_PADDLE_ENVIRONMENT || 'sandbox';
-    
+
     if (!vendorId) {
       throw new Error('Paddle vendor ID not configured');
     }
 
-    (window as any).Paddle.Setup({ 
+    (window as any).Paddle.Setup({
       vendor: parseInt(vendorId),
       eventCallback: this.handlePaddleEvent.bind(this),
     });
@@ -101,7 +104,7 @@ class PaddleService {
 
   private handlePaddleEvent(data: any): void {
     console.log('Paddle event:', data);
-    
+
     // Handle events globally if needed
     switch (data.event) {
       case 'Checkout.Close':
@@ -116,11 +119,14 @@ class PaddleService {
     }
   }
 
-  async openCheckout(params: IPaddleCheckoutParams, callbacks: {
-    onSuccess?: (data: any) => void;
-    onError?: (error: any) => void;
-    onClose?: () => void;
-  }): Promise<void> {
+  async openCheckout(
+    params: IPaddleCheckoutParams,
+    callbacks: {
+      onSuccess?: (data: any) => void;
+      onError?: (error: any) => void;
+      onClose?: () => void;
+    }
+  ): Promise<void> {
     if (!this.initialized) {
       await this.initialize();
     }
@@ -160,7 +166,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   // Initialize Paddle when modal opens
   useEffect(() => {
     if (visible) {
-      paddleService.initialize().catch((error) => {
+      paddleService.initialize().catch(error => {
         console.error('Failed to initialize Paddle:', error);
         setCheckoutState(prev => ({
           ...prev,
@@ -210,9 +216,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
       // Step 2: Open Paddle checkout
       setCheckoutState(prev => ({ ...prev, progress: 60 }));
-      
+
       await paddleService.openCheckout(checkoutData.params, {
-        onSuccess: (data) => {
+        onSuccess: data => {
           console.log('Checkout successful:', data);
           setCheckoutState(prev => ({
             ...prev,
@@ -220,12 +226,12 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             subscriptionId: data.checkout?.id || data.order?.id,
             progress: 100,
           }));
-          
+
           if (onSuccess && data.checkout?.id) {
             onSuccess(data.checkout.id);
           }
         },
-        onError: (error) => {
+        onError: error => {
           console.error('Checkout error:', error);
           setCheckoutState(prev => ({
             ...prev,
@@ -233,7 +239,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             errorMessage: error.message || 'Payment failed. Please try again.',
             progress: 0,
           }));
-          
+
           if (onError) {
             onError(error.message || 'Payment failed');
           }
@@ -255,7 +261,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         errorMessage: (error as Error).message,
         progress: 0,
       }));
-      
+
       if (onError) {
         onError((error as Error).message);
       }
@@ -282,31 +288,24 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       <Card>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div style={{ textAlign: 'center' }}>
-            <Typography.Title level={3}>
-              Confirm Your Subscription
-            </Typography.Title>
+            <Typography.Title level={3}>Confirm Your Subscription</Typography.Title>
             <Typography.Text type="secondary">
               Review your plan details before proceeding
             </Typography.Text>
           </div>
 
-          <Descriptions
-            title="Subscription Summary"
-            bordered
-            column={1}
-            size="middle"
-          >
+          <Descriptions title="Subscription Summary" bordered column={1} size="middle">
             <Descriptions.Item label="Plan">
               <Space>
                 <Typography.Text strong>{planId.replace('_', ' ').toUpperCase()}</Typography.Text>
                 <Tag color="blue">{cycle}</Tag>
               </Space>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="Team Size">
               {teamSize} {teamSize === 1 ? 'user' : 'users'}
             </Descriptions.Item>
-            
+
             {discountApplied && (
               <Descriptions.Item label="Discount">
                 <Space>
@@ -317,7 +316,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </Space>
               </Descriptions.Item>
             )}
-            
+
             <Descriptions.Item label="Total">
               <Typography.Title level={4} style={{ margin: 0, color: '#1890ff' }}>
                 ${totalCost.toFixed(2)}/month
@@ -366,21 +365,15 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     <Card style={{ textAlign: 'center' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Spin size="large" indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-        
-        <Typography.Title level={3}>
-          Processing Your Subscription
-        </Typography.Title>
-        
-        <Progress 
-          percent={checkoutState.progress} 
-          strokeColor="#1890ff"
-          trailColor="#f0f0f0"
-        />
-        
+
+        <Typography.Title level={3}>Processing Your Subscription</Typography.Title>
+
+        <Progress percent={checkoutState.progress} strokeColor="#1890ff" trailColor="#f0f0f0" />
+
         <Typography.Text type="secondary">
           Please wait while we set up your subscription...
         </Typography.Text>
-        
+
         <Alert
           message="Do not close this window"
           description="Your payment is being processed. Closing this window may interrupt the process."
@@ -417,9 +410,15 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     <Result
       status="error"
       title="Subscription Failed"
-      subTitle={checkoutState.errorMessage || 'Something went wrong during the subscription process.'}
+      subTitle={
+        checkoutState.errorMessage || 'Something went wrong during the subscription process.'
+      }
       extra={[
-        <Button type="primary" key="retry" onClick={() => setCheckoutState(prev => ({ ...prev, step: 'confirmation' }))}>
+        <Button
+          type="primary"
+          key="retry"
+          onClick={() => setCheckoutState(prev => ({ ...prev, step: 'confirmation' }))}
+        >
           Try Again
         </Button>,
         <Button key="cancel" onClick={onClose}>
@@ -461,10 +460,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {/* Progress Steps */}
         <Steps
           current={
-            checkoutState.step === 'confirmation' ? 0 :
-            checkoutState.step === 'processing' ? 1 :
-            checkoutState.step === 'success' ? 2 :
-            1 // error state shows as processing step
+            checkoutState.step === 'confirmation'
+              ? 0
+              : checkoutState.step === 'processing'
+                ? 1
+                : checkoutState.step === 'success'
+                  ? 2
+                  : 1 // error state shows as processing step
           }
           status={checkoutState.step === 'error' ? 'error' : 'process'}
           style={{ marginBottom: 32 }}

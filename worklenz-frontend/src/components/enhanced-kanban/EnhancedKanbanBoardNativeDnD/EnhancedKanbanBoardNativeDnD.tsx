@@ -27,7 +27,10 @@ import {
 import { checkTaskDependencyStatus } from '@/utils/check-task-dependency-status';
 import { phasesApiService } from '@/api/taskAttributes/phases/phases.api.service';
 import { ITaskListGroup } from '@/types/tasks/taskList.types';
-import { fetchPhasesByProjectId, updatePhaseListOrder } from '@/features/projects/singleProject/phase/phases.slice';
+import {
+  fetchPhasesByProjectId,
+  updatePhaseListOrder,
+} from '@/features/projects/singleProject/phase/phases.slice';
 import { useTranslation } from 'react-i18next';
 import { ITaskListPriorityChangeResponse } from '@/types/tasks/task-list-priority.types';
 import { SocketEvents } from '@/shared/socket-events';
@@ -42,11 +45,9 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
   const project = useAppSelector((state: RootState) => state.projectReducer.project);
   const groupBy = useSelector((state: RootState) => state.enhancedKanbanReducer.groupBy);
   const teamId = authService.getCurrentSession()?.team_id;
-  const {
-    taskGroups,
-    loadingGroups,
-    error,
-  } = useSelector((state: RootState) => state.enhancedKanbanReducer);
+  const { taskGroups, loadingGroups, error } = useSelector(
+    (state: RootState) => state.enhancedKanbanReducer
+  );
   const { phaseList, loadingPhases } = useAppSelector(state => state.phaseReducer);
   const [draggedGroupId, setDraggedGroupId] = useState<string | null>(null);
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -111,7 +112,9 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
     const [moved] = reorderedGroups.splice(fromIdx, 1);
     reorderedGroups.splice(toIdx, 0, moved);
     dispatch(reorderGroups({ fromIndex: fromIdx, toIndex: toIdx, reorderedGroups }));
-    dispatch(reorderEnhancedKanbanGroups({ fromIndex: fromIdx, toIndex: toIdx, reorderedGroups }) as any);
+    dispatch(
+      reorderEnhancedKanbanGroups({ fromIndex: fromIdx, toIndex: toIdx, reorderedGroups }) as any
+    );
     // API call for group order
     try {
       if (groupBy === 'status') {
@@ -123,7 +126,9 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
           const revertedGroups = [...reorderedGroups];
           const [movedBackGroup] = revertedGroups.splice(toIdx, 1);
           revertedGroups.splice(fromIdx, 0, movedBackGroup);
-          dispatch(reorderGroups({ fromIndex: toIdx, toIndex: fromIdx, reorderedGroups: revertedGroups }));
+          dispatch(
+            reorderGroups({ fromIndex: toIdx, toIndex: fromIdx, reorderedGroups: revertedGroups })
+          );
           alertService.error(t('failedToUpdateColumnOrder'), t('pleaseTryAgain'));
         }
       } else if (groupBy === 'phase') {
@@ -147,7 +152,9 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
       const revertedGroups = [...reorderedGroups];
       const [movedBackGroup] = revertedGroups.splice(toIdx, 1);
       revertedGroups.splice(fromIdx, 0, movedBackGroup);
-      dispatch(reorderGroups({ fromIndex: toIdx, toIndex: fromIdx, reorderedGroups: revertedGroups }));
+      dispatch(
+        reorderGroups({ fromIndex: toIdx, toIndex: fromIdx, reorderedGroups: revertedGroups })
+      );
       alertService.error(t('failedToUpdateColumnOrder'), t('pleaseTryAgain'));
       logger.error('Failed to update column order', error);
     }
@@ -234,10 +241,7 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
       if (sourceGroup.id !== targetGroup.id) {
         const canContinue = await checkTaskDependencyStatus(movedTask.id, targetGroupId);
         if (!canContinue) {
-          alertService.error(
-            t('taskNotCompleted'),
-            t('completeTaskDependencies')
-          );
+          alertService.error(t('taskNotCompleted'), t('completeTaskDependencies'));
           return;
         }
         didStatusChange = true;
@@ -261,26 +265,32 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
       if (insertIdx > updatedTasks.length) insertIdx = updatedTasks.length;
 
       updatedTasks.splice(insertIdx, 0, movedTask); // Insert at new position
-      dispatch(reorderTasks({
-        activeGroupId: sourceGroup.id,
-        overGroupId: targetGroup.id,
-        fromIndex: taskIdx,
-        toIndex: insertIdx,
-        task: movedTask,
-        updatedSourceTasks: updatedTasks,
-        updatedTargetTasks: updatedTasks,
-      }));
-      dispatch(reorderEnhancedKanbanTasks({
-        activeGroupId: sourceGroup.id,
-        overGroupId: targetGroup.id,
-        fromIndex: taskIdx,
-        toIndex: insertIdx,
-        task: movedTask,
-        updatedSourceTasks: updatedTasks,
-        updatedTargetTasks: updatedTasks,
-      }) as any);
+      dispatch(
+        reorderTasks({
+          activeGroupId: sourceGroup.id,
+          overGroupId: targetGroup.id,
+          fromIndex: taskIdx,
+          toIndex: insertIdx,
+          task: movedTask,
+          updatedSourceTasks: updatedTasks,
+          updatedTargetTasks: updatedTasks,
+        })
+      );
+      dispatch(
+        reorderEnhancedKanbanTasks({
+          activeGroupId: sourceGroup.id,
+          overGroupId: targetGroup.id,
+          fromIndex: taskIdx,
+          toIndex: insertIdx,
+          task: movedTask,
+          updatedSourceTasks: updatedTasks,
+          updatedTargetTasks: updatedTasks,
+        }) as any
+      );
       // Update newTaskGroups for socket emit
-      newTaskGroups = newTaskGroups.map(g => g.id === sourceGroup.id ? { ...g, tasks: updatedTasks } : g);
+      newTaskGroups = newTaskGroups.map(g =>
+        g.id === sourceGroup.id ? { ...g, tasks: updatedTasks } : g
+      );
     } else {
       // Handle cross-group reordering
       const updatedSourceTasks = [...sourceGroup.tasks];
@@ -291,24 +301,28 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
       if (insertIdx > updatedTargetTasks.length) insertIdx = updatedTargetTasks.length;
       updatedTargetTasks.splice(insertIdx, 0, movedTask);
 
-      dispatch(reorderTasks({
-        activeGroupId: sourceGroup.id,
-        overGroupId: targetGroup.id,
-        fromIndex: taskIdx,
-        toIndex: insertIdx,
-        task: movedTask,
-        updatedSourceTasks,
-        updatedTargetTasks,
-      }));
-      dispatch(reorderEnhancedKanbanTasks({
-        activeGroupId: sourceGroup.id,
-        overGroupId: targetGroup.id,
-        fromIndex: taskIdx,
-        toIndex: insertIdx,
-        task: movedTask,
-        updatedSourceTasks,
-        updatedTargetTasks,
-      }) as any);
+      dispatch(
+        reorderTasks({
+          activeGroupId: sourceGroup.id,
+          overGroupId: targetGroup.id,
+          fromIndex: taskIdx,
+          toIndex: insertIdx,
+          task: movedTask,
+          updatedSourceTasks,
+          updatedTargetTasks,
+        })
+      );
+      dispatch(
+        reorderEnhancedKanbanTasks({
+          activeGroupId: sourceGroup.id,
+          overGroupId: targetGroup.id,
+          fromIndex: taskIdx,
+          toIndex: insertIdx,
+          task: movedTask,
+          updatedSourceTasks,
+          updatedTargetTasks,
+        }) as any
+      );
       // Update newTaskGroups for socket emit
       newTaskGroups = newTaskGroups.map(g => {
         if (g.id === sourceGroup.id) return { ...g, tasks: updatedSourceTasks };
@@ -329,13 +343,17 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
         team_id: teamId,
         from_index: taskIdx,
         to_index: insertIdx,
-        to_last_index: insertIdx === (targetGroup.id === sourceGroup.id ? (newTaskGroups.find(g => g.id === targetGroup.id)?.tasks.length || 0) - 1 : targetGroup.tasks.length),
+        to_last_index:
+          insertIdx ===
+          (targetGroup.id === sourceGroup.id
+            ? (newTaskGroups.find(g => g.id === targetGroup.id)?.tasks.length || 0) - 1
+            : targetGroup.tasks.length),
         task: {
           id: movedTask.id,
           project_id: movedTask.project_id || projectId,
           status: movedTask.status || '',
           priority: movedTask.priority || '',
-        }
+        },
       });
 
       // Emit progress update if status changed
@@ -386,7 +404,10 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
   if (error) {
     return (
       <Card>
-        <Empty description={`${t('errorLoadingTasks')}: ${error}`} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        <Empty
+          description={`${t('errorLoadingTasks')}: ${error}`}
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
       </Card>
     );
   }
@@ -401,10 +422,22 @@ const EnhancedKanbanBoardNativeDnD: React.FC<{ projectId: string }> = ({ project
       <div className="enhanced-kanban-board">
         {loadingGroups ? (
           <div className="flex flex-row gap-2 h-[600px]">
-            <div className="rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-1/4" style={{ height: '60%' }} />
-            <div className="rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-1/4" style={{ height: '100%' }} />
-            <div className="rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-1/4" style={{ height: '80%' }} />
-            <div className="rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-1/4" style={{ height: '40%' }} />
+            <div
+              className="rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-1/4"
+              style={{ height: '60%' }}
+            />
+            <div
+              className="rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-1/4"
+              style={{ height: '100%' }}
+            />
+            <div
+              className="rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-1/4"
+              style={{ height: '80%' }}
+            />
+            <div
+              className="rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-1/4"
+              style={{ height: '40%' }}
+            />
           </div>
         ) : taskGroups.length === 0 ? (
           <Card>

@@ -41,7 +41,7 @@
   "noSubtasks": "Sin subtareas",
   "showSubtasks": "Mostrar subtareas",
   "hideSubtasks": "Ocultar subtareas",
-  
+
   "errorLoadingTasks": "Error al cargar tareas",
   "noTasksFound": "No se encontraron tareas",
   "loadingFilters": "Cargando filtros...",

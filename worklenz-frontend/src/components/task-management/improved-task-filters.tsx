@@ -763,7 +763,7 @@ const SortDropdown: React.FC<{ themeClasses: any; isDarkMode: boolean }> = ({
   const { t } = useTranslation('task-list-filters');
   const dispatch = useAppDispatch();
   const { projectId } = useAppSelector(state => state.projectReducer);
-  
+
   // Get current sort state from task-management slice
   const currentSortField = useAppSelector(selectSortField);
   const currentSortOrder = useAppSelector(selectSortOrder);
@@ -802,12 +802,12 @@ const SortDropdown: React.FC<{ themeClasses: any; isDarkMode: boolean }> = ({
     } else {
       dispatch(setSort({ field: fieldKey, order: 'ASC' }));
     }
-    
+
     // Fetch updated tasks
     if (projectId) {
       dispatch(fetchTasksV3(projectId));
     }
-    
+
     setOpen(false);
   };
 
@@ -855,7 +855,9 @@ const SortDropdown: React.FC<{ themeClasses: any; isDarkMode: boolean }> = ({
         )}
         <span className="hidden sm:inline">{t('sortText')}</span>
         {isActive && currentFieldLabel && (
-          <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} max-w-16 truncate hidden md:inline`}>
+          <span
+            className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} max-w-16 truncate hidden md:inline`}
+          >
             {currentFieldLabel}
           </span>
         )}
@@ -880,7 +882,7 @@ const SortDropdown: React.FC<{ themeClasses: any; isDarkMode: boolean }> = ({
               </button>
             </div>
           )}
-          
+
           {/* Options List */}
           <div className="max-h-48 overflow-y-auto">
             <div className="p-0.5">
@@ -903,10 +905,10 @@ const SortDropdown: React.FC<{ themeClasses: any; isDarkMode: boolean }> = ({
                       }
                     `}
                     title={
-                      isSelected 
-                        ? t('currentSort', { 
-                            field: sortField.label, 
-                            order: orderText 
+                      isSelected
+                        ? t('currentSort', {
+                            field: sortField.label,
+                            order: orderText,
                           }) + ` - ${t('sortDescending')}`
                         : t('sortByField', { field: sortField.label }) + ` - ${t('sortAscending')}`
                     }
@@ -914,7 +916,9 @@ const SortDropdown: React.FC<{ themeClasses: any; isDarkMode: boolean }> = ({
                     <div className="flex items-center gap-2">
                       <span className="truncate">{sortField.label}</span>
                       {isSelected && (
-                        <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <span
+                          className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}
+                        >
                           ({orderText})
                         </span>
                       )}

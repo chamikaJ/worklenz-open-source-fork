@@ -143,7 +143,11 @@ export const createSchedule = createAsyncThunk(
 // Resource Management Async Thunks
 export const fetchMemberWorkload = createAsyncThunk(
   'schedule/fetchMemberWorkload',
-  async ({ memberId, startDate, endDate }: {
+  async ({
+    memberId,
+    startDate,
+    endDate,
+  }: {
     memberId?: string;
     startDate?: string;
     endDate?: string;
@@ -158,7 +162,13 @@ export const fetchMemberWorkload = createAsyncThunk(
 
 export const updateResourceAllocation = createAsyncThunk(
   'schedule/updateResourceAllocation',
-  async ({ memberId, projectId, allocatedHours, startDate, endDate }: {
+  async ({
+    memberId,
+    projectId,
+    allocatedHours,
+    startDate,
+    endDate,
+  }: {
     memberId: string;
     projectId: string;
     allocatedHours: number;
@@ -181,12 +191,20 @@ export const updateResourceAllocation = createAsyncThunk(
 
 export const rebalanceWorkload = createAsyncThunk(
   'schedule/rebalanceWorkload',
-  async ({ memberIds, strategy = 'even', maxUtilization = 100 }: {
+  async ({
+    memberIds,
+    strategy = 'even',
+    maxUtilization = 100,
+  }: {
     memberIds?: string[];
     strategy?: 'even' | 'skills' | 'priority';
     maxUtilization?: number;
   }) => {
-    const response = await scheduleAPIService.rebalanceWorkload({ memberIds, strategy, maxUtilization });
+    const response = await scheduleAPIService.rebalanceWorkload({
+      memberIds,
+      strategy,
+      maxUtilization,
+    });
     if (!response.done) {
       throw new Error('Failed to rebalance workload');
     }
@@ -196,7 +214,11 @@ export const rebalanceWorkload = createAsyncThunk(
 
 export const fetchCapacityReport = createAsyncThunk(
   'schedule/fetchCapacityReport',
-  async ({ startDate, endDate, teamId }: {
+  async ({
+    startDate,
+    endDate,
+    teamId,
+  }: {
     startDate: string;
     endDate: string;
     teamId?: string;
@@ -261,7 +283,7 @@ const scheduleSlice = createSlice({
         member.allocatedHours = allocatedHours;
         member.availableHours = member.totalHours - allocatedHours;
         member.utilizationPercent = (allocatedHours / member.totalHours) * 100;
-        
+
         // Update status based on utilization
         if (member.utilizationPercent > 100) member.status = 'overallocated';
         else if (member.utilizationPercent === 100) member.status = 'fully-allocated';
@@ -353,7 +375,7 @@ const scheduleSlice = createSlice({
         state.error = action.error.message || 'Failed to send schedule';
       })
       // Resource Management Extra Reducers
-      .addCase(fetchMemberWorkload.pending, (state) => {
+      .addCase(fetchMemberWorkload.pending, state => {
         state.loading = true;
         state.error = null;
       })
@@ -365,7 +387,7 @@ const scheduleSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch workload data';
       })
-      .addCase(updateResourceAllocation.pending, (state) => {
+      .addCase(updateResourceAllocation.pending, state => {
         state.allocationLoading = true;
         state.error = null;
       })
@@ -378,7 +400,7 @@ const scheduleSlice = createSlice({
         state.allocationLoading = false;
         state.error = action.error.message || 'Failed to update allocation';
       })
-      .addCase(rebalanceWorkload.pending, (state) => {
+      .addCase(rebalanceWorkload.pending, state => {
         state.rebalanceLoading = true;
         state.error = null;
       })
@@ -393,7 +415,7 @@ const scheduleSlice = createSlice({
         state.rebalanceLoading = false;
         state.error = action.error.message || 'Failed to rebalance workload';
       })
-      .addCase(fetchCapacityReport.pending, (state) => {
+      .addCase(fetchCapacityReport.pending, state => {
         state.loading = true;
       })
       .addCase(fetchCapacityReport.fulfilled, (state, action) => {
@@ -404,7 +426,7 @@ const scheduleSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch capacity report';
       })
-      .addCase(fetchResourceConflicts.pending, (state) => {
+      .addCase(fetchResourceConflicts.pending, state => {
         state.loading = true;
       })
       .addCase(fetchResourceConflicts.fulfilled, (state, action) => {

@@ -33,8 +33,14 @@ export const labelsApiService = {
     return response.data;
   },
 
-  updateLabel: async (labelId: string, data: { name?: string; color?: string }): Promise<IServerResponse<ITaskLabel>> => {
-    const response = await apiClient.put<IServerResponse<ITaskLabel>>(`${rootUrl}/team/${labelId}`, data);
+  updateLabel: async (
+    labelId: string,
+    data: { name?: string; color?: string }
+  ): Promise<IServerResponse<ITaskLabel>> => {
+    const response = await apiClient.put<IServerResponse<ITaskLabel>>(
+      `${rootUrl}/team/${labelId}`,
+      data
+    );
     return response.data;
   },
 

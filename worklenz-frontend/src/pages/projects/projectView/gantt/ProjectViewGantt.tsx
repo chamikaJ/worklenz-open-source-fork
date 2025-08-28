@@ -63,7 +63,6 @@ const ProjectViewGantt: React.FC = React.memo(() => {
 
   const [reorderPhases, { isLoading: isReordering }] = useReorderPhasesMutation();
 
-
   // Transform API data to component format
   const tasks = useMemo(() => {
     if (tasksResponse?.body && phasesResponse?.body) {
@@ -146,22 +145,22 @@ const ProjectViewGantt: React.FC = React.memo(() => {
   useEffect(() => {
     const currentExpanded = expandedTasks;
     const previousExpanded = prevExpandedTasks;
-    
+
     // Find newly expanded or collapsed phases
     const newlyExpanded = new Set([...currentExpanded].filter(id => !previousExpanded.has(id)));
     const newlyCollapsed = new Set([...previousExpanded].filter(id => !currentExpanded.has(id)));
-    
+
     if (newlyExpanded.size > 0 || newlyCollapsed.size > 0) {
       // Set animation state for newly changed phases
       setAnimatingTasks(new Set([...newlyExpanded, ...newlyCollapsed]));
-      
+
       // Clear animation state after animation completes
       const timeout = setTimeout(() => {
         setAnimatingTasks(new Set());
       }, 400); // Match CSS animation duration
-      
+
       setPrevExpandedTasks(new Set(currentExpanded));
-      
+
       return () => clearTimeout(timeout);
     }
   }, [expandedTasks, prevExpandedTasks]);
@@ -258,42 +257,45 @@ const ProjectViewGantt: React.FC = React.memo(() => {
     [refetchTasks, refetchPhases]
   );
 
-  const handlePhaseReorder = useCallback(async (oldIndex: number, newIndex: number) => {
-    if (!projectId || !phasesResponse?.body) {
-      message.error('Unable to reorder phases: missing project data');
-      return;
-    }
+  const handlePhaseReorder = useCallback(
+    async (oldIndex: number, newIndex: number) => {
+      if (!projectId || !phasesResponse?.body) {
+        message.error('Unable to reorder phases: missing project data');
+        return;
+      }
 
-    // Get current phases sorted by sort_index
-    const currentPhases = [...phasesResponse.body].sort((a, b) => a.sort_index - b.sort_index);
-    
-    // Reorder phases array
-    const reorderedPhases = [...currentPhases];
-    const [moved] = reorderedPhases.splice(oldIndex, 1);
-    reorderedPhases.splice(newIndex, 0, moved);
+      // Get current phases sorted by sort_index
+      const currentPhases = [...phasesResponse.body].sort((a, b) => a.sort_index - b.sort_index);
 
-    // Create phase order data with new indices
-    const phase_orders = reorderedPhases.map((phase, index) => ({
-      phase_id: phase.id,
-      sort_index: index + 1, // Start from 1
-    }));
+      // Reorder phases array
+      const reorderedPhases = [...currentPhases];
+      const [moved] = reorderedPhases.splice(oldIndex, 1);
+      reorderedPhases.splice(newIndex, 0, moved);
 
-    try {
-      await reorderPhases({
-        project_id: projectId,
-        phase_orders,
-      }).unwrap();
+      // Create phase order data with new indices
+      const phase_orders = reorderedPhases.map((phase, index) => ({
+        phase_id: phase.id,
+        sort_index: index + 1, // Start from 1
+      }));
 
-      message.success('Phases reordered successfully');
-      
-      // Refresh data to reflect the changes
-      refetchPhases();
-      refetchTasks();
-    } catch (error: any) {
-      console.error('Failed to reorder phases:', error);
-      message.error(error?.data?.message || 'Failed to reorder phases');
-    }
-  }, [projectId, phasesResponse?.body, reorderPhases, refetchPhases, refetchTasks]);
+      try {
+        await reorderPhases({
+          project_id: projectId,
+          phase_orders,
+        }).unwrap();
+
+        message.success('Phases reordered successfully');
+
+        // Refresh data to reflect the changes
+        refetchPhases();
+        refetchTasks();
+      } catch (error: any) {
+        console.error('Failed to reorder phases:', error);
+        message.error(error?.data?.message || 'Failed to reorder phases');
+      }
+    },
+    [projectId, phasesResponse?.body, reorderPhases, refetchPhases, refetchTasks]
+  );
 
   const handleCreateQuickTask = useCallback(
     (taskName: string, phaseId?: string, startDate?: Date) => {
@@ -321,27 +323,27 @@ const ProjectViewGantt: React.FC = React.memo(() => {
       if (chartRef.current && task.start_date && dateRange) {
         const totalTimeSpan = dateRange.end.getTime() - dateRange.start.getTime();
         const timeFromStart = new Date(task.start_date).getTime() - dateRange.start.getTime();
-        
+
         // Calculate the position based on the current viewport dimensions
         const chartElement = chartRef.current;
         const chartWidth = chartElement.scrollWidth;
         const viewportWidth = chartElement.clientWidth;
-        
+
         // Calculate the scroll position to center the task
         const taskPosition = (timeFromStart / totalTimeSpan) * chartWidth;
         const scrollPosition = Math.max(0, taskPosition - viewportWidth / 2);
-        
+
         // Smooth scroll to the task position
         chartElement.scrollTo({
           left: scrollPosition,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
-        
+
         // Also scroll timeline to match
         if (timelineRef.current) {
           timelineRef.current.scrollTo({
             left: scrollPosition,
-            behavior: 'smooth'
+            behavior: 'smooth',
           });
         }
       } else if (!task.start_date) {

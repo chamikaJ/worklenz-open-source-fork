@@ -19,7 +19,12 @@ const CustomColorLabel = ({ label }: { label: ITaskLabel | null }) => {
         fontSize: 11,
       }}
     >
-      <Typography.Text style={{ fontSize: 11, color: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.85)' : colors.darkGray }}>
+      <Typography.Text
+        style={{
+          fontSize: 11,
+          color: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.85)' : colors.darkGray,
+        }}
+      >
         {label?.name}
       </Typography.Text>
     </Tag>

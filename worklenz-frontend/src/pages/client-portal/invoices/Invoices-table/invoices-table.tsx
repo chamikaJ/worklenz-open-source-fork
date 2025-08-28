@@ -72,7 +72,14 @@ const InvoicesTable = () => {
   if (isLoading) {
     return (
       <Card style={{ height: 'calc(100vh - 280px)' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '200px',
+          }}
+        >
           <Spin size="large" />
         </div>
       </Card>
@@ -108,17 +115,15 @@ const InvoicesTable = () => {
               <Typography.Title level={4} style={{ marginBottom: 8 }}>
                 {t('noInvoicesTitle')}
               </Typography.Title>
-              <Typography.Text type="secondary">
-                {t('noInvoicesDescription')}
-              </Typography.Text>
+              <Typography.Text type="secondary">{t('noInvoicesDescription')}</Typography.Text>
             </div>
           }
-          style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            justifyContent: 'center', 
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
             alignItems: 'center',
-            height: 'calc(100vh - 320px)'
+            height: 'calc(100vh - 320px)',
           }}
         >
           <Button
@@ -141,7 +146,7 @@ const InvoicesTable = () => {
     {
       key: 'invoice_no',
       title: t('invoiceNoColumn'),
-      render: (record) => (
+      render: record => (
         <Typography.Text strong style={{ color: colors.skyBlue }}>
           {record.invoice_no}
         </Typography.Text>
@@ -153,7 +158,7 @@ const InvoicesTable = () => {
     {
       key: 'client',
       title: t('clientColumn'),
-      render: (record) => (
+      render: record => (
         <Typography.Text style={{ textTransform: 'capitalize' }}>
           {record.client_name}
         </Typography.Text>
@@ -165,9 +170,7 @@ const InvoicesTable = () => {
     {
       key: 'service',
       title: t('serviceColumn'),
-      render: (record) => (
-        <Typography.Text>{record.service}</Typography.Text>
-      ),
+      render: record => <Typography.Text>{record.service}</Typography.Text>,
       onCell: () => ({
         style: { minWidth: 250 },
       }),
@@ -175,20 +178,16 @@ const InvoicesTable = () => {
     {
       key: 'status',
       title: t('statusColumn'),
-      render: (record) => (
-        <Tag color={getStatusColor(record.status)}>
-          {getStatusText(record.status)}
-        </Tag>
+      render: record => (
+        <Tag color={getStatusColor(record.status)}>{getStatusText(record.status)}</Tag>
       ),
       width: 120,
     },
     {
       key: 'issued_time',
       title: t('issuedTimeColumn'),
-      render: (record) => (
-        <Typography.Text>
-          {new Date(record.issued_time).toLocaleDateString()}
-        </Typography.Text>
+      render: record => (
+        <Typography.Text>{new Date(record.issued_time).toLocaleDateString()}</Typography.Text>
       ),
       width: 150,
     },
@@ -208,7 +207,7 @@ const InvoicesTable = () => {
         scroll={{
           x: 'max-content',
         }}
-        onRow={(record) => ({
+        onRow={record => ({
           onClick: () => navigate(`/worklenz/client-portal/invoices/${record.id}`),
           style: { cursor: 'pointer' },
         })}
@@ -217,4 +216,4 @@ const InvoicesTable = () => {
   );
 };
 
-export default InvoicesTable; 
+export default InvoicesTable;

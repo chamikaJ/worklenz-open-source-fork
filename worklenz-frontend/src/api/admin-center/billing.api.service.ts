@@ -2,7 +2,10 @@ import { API_BASE_URL } from '@/shared/constants';
 import { IServerResponse } from '@/types/common.types';
 import apiClient from '../api-client';
 import { toQueryString } from '@/utils/toQueryString';
-import { IUpgradeSubscriptionPlanResponse, IPricingOption } from '@/types/admin-center/admin-center.types';
+import {
+  IUpgradeSubscriptionPlanResponse,
+  IPricingOption,
+} from '@/types/admin-center/admin-center.types';
 
 export interface IPricingPlan {
   id?: string;
@@ -97,9 +100,7 @@ export const billingApiService = {
     return response.data;
   },
 
-  async getPricingOptions(
-    teamSize: number
-  ): Promise<IServerResponse<IPricingOption[]>> {
+  async getPricingOptions(teamSize: number): Promise<IServerResponse<IPricingOption[]>> {
     const q = toQueryString({ team_size: teamSize });
     const response = await apiClient.get<IServerResponse<IPricingOption[]>>(
       `${rootUrl}/pricing-options${q}`
@@ -112,14 +113,11 @@ export const billingApiService = {
     subscriptionId: string,
     teamSize?: number
   ): Promise<IServerResponse<any>> {
-    const response = await apiClient.post<IServerResponse<any>>(
-      `${rootUrl}/switch-pricing-model`,
-      { 
-        pricing_model: pricingModel, 
-        subscription_id: subscriptionId,
-        team_size: teamSize 
-      }
-    );
+    const response = await apiClient.post<IServerResponse<any>>(`${rootUrl}/switch-pricing-model`, {
+      pricing_model: pricingModel,
+      subscription_id: subscriptionId,
+      team_size: teamSize,
+    });
     return response.data;
   },
 

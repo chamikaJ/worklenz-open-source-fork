@@ -1,4 +1,9 @@
-import { CheckCircleOutlined, SyncOutlined, DownOutlined, RightOutlined } from '@/shared/antd-imports';
+import {
+  CheckCircleOutlined,
+  SyncOutlined,
+  DownOutlined,
+  RightOutlined,
+} from '@/shared/antd-imports';
 import { useRef, useState } from 'react';
 import Form from 'antd/es/form';
 import Input, { InputRef } from 'antd/es/input';
@@ -117,28 +122,33 @@ const TodoList = () => {
         ghost
         size="small"
         className="todo-collapse"
-        expandIcon={({ isActive }) => 
-          isActive ? <DownOutlined /> : <RightOutlined />
-        }
-        onChange={(keys) => {
+        expandIcon={({ isActive }) => (isActive ? <DownOutlined /> : <RightOutlined />)}
+        onChange={keys => {
           setIsCollapsed(keys.length === 0);
         }}
         items={[
           {
             key: '1',
             label: (
-              <Flex style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <Flex
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
                 <Typography.Title level={5} style={{ margin: 0 }}>
                   {t('home:todoList.title')} ({data?.body.length})
                 </Typography.Title>
                 <Tooltip title={t('home:todoList.refreshTasks')}>
-                  <Button 
-                    shape="circle" 
-                    icon={<SyncOutlined spin={isFetching} />} 
-                    onClick={(e) => {
+                  <Button
+                    shape="circle"
+                    icon={<SyncOutlined spin={isFetching} />}
+                    onClick={e => {
                       e.stopPropagation();
                       refetch();
-                    }} 
+                    }}
                   />
                 </Tooltip>
               </Flex>

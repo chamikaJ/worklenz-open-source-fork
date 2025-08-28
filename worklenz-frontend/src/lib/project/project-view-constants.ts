@@ -162,8 +162,8 @@ export const tabItems: TabItems[] = [
       Suspense,
       { fallback: React.createElement(InlineSuspenseFallback) },
       React.createElement(ProjectViewFinance)
-    )
-  }
+    ),
+  },
 ];
 
 // Function to update tab labels when language changes
@@ -212,25 +212,27 @@ export const getFilteredTabItems = (
 ): TabItems[] => {
   const hasFinancePermission = hasFinanceViewPermission(currentSession, currentProject);
   const hasBusinessAccess = hasBusinessFeatureAccess(currentSession);
-  
-  return tabItems.map(item => {
-    // Handle finance tab specially
-    if (item.key === 'finance') {
-      // If user has finance permission but no business access, show tab as disabled
-      if (hasFinancePermission && !hasBusinessAccess) {
-        return {
-          ...item,
-          disabled: true,
-          disabledReason: i18n.t('common:business-plan-upgrade')
-        };
+
+  return tabItems
+    .map(item => {
+      // Handle finance tab specially
+      if (item.key === 'finance') {
+        // If user has finance permission but no business access, show tab as disabled
+        if (hasFinancePermission && !hasBusinessAccess) {
+          return {
+            ...item,
+            disabled: true,
+            disabledReason: i18n.t('common:business-plan-upgrade'),
+          };
+        }
+        // If user has no finance permission, hide the tab
+        if (!hasFinancePermission) {
+          return null;
+        }
       }
-      // If user has no finance permission, hide the tab
-      if (!hasFinancePermission) {
-        return null;
-      }
-    }
-    
-    // Return tab as is for all other cases
-    return item;
-  }).filter(item => item !== null) as TabItems[];
+
+      // Return tab as is for all other cases
+      return item;
+    })
+    .filter(item => item !== null) as TabItems[];
 };

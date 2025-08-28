@@ -24,10 +24,18 @@ const NotificationsSettings = lazy(
 const ClientsSettings = lazy(() => import('../../pages/settings/clients/clients-settings'));
 const JobTitlesSettings = lazy(() => import('@/pages/settings/job-titles/job-titles-settings'));
 const LabelsSettings = lazy(() => import('../../pages/settings/labels/LabelsSettings'));
-const CategoriesSettings = lazy(() => import('../../pages/settings/categories/categories-settings'));
-const ProjectTemplatesSettings = lazy(() => import('@/pages/settings/project-templates/project-templates-settings'));
-const TaskTemplatesSettings = lazy(() => import('@/pages/settings/task-templates/task-templates-settings'));
-const TeamMembersSettings = lazy(() => import('@/pages/settings/team-members/team-members-settings'));
+const CategoriesSettings = lazy(
+  () => import('../../pages/settings/categories/categories-settings')
+);
+const ProjectTemplatesSettings = lazy(
+  () => import('@/pages/settings/project-templates/project-templates-settings')
+);
+const TaskTemplatesSettings = lazy(
+  () => import('@/pages/settings/task-templates/task-templates-settings')
+);
+const TeamMembersSettings = lazy(
+  () => import('@/pages/settings/team-members/team-members-settings')
+);
 const TeamsSettings = lazy(() => import('../../pages/settings/teams/teams-settings'));
 const ChangePassword = lazy(() => import('@/pages/settings/change-password/change-password'));
 const LanguageAndRegionSettings = lazy(
@@ -174,14 +182,14 @@ import { ILocalSession } from '@/types/auth/local-session.types';
 
 export const getAccessibleSettings = (isAdmin: boolean, session: ILocalSession | null) => {
   const hasBusinessAccess = hasBusinessFeatureAccess(session);
-  
+
   return settingsItems.filter(item => {
     // Check admin requirement
     if (item.adminOnly && !isAdmin) return false;
-    
+
     // Check business plan requirement
     if (item.businessPlanRequired && !hasBusinessAccess) return false;
-    
+
     return true;
   });
 };

@@ -12,17 +12,17 @@ export function canManageUserRole(
   if (isOwner) {
     return targetUserRole?.toLowerCase() !== 'owner';
   }
-  
+
   // Admin can manage Team Leads and Members, but not Owner
   if (currentUserRole?.toLowerCase() === 'admin') {
     return ['team lead', 'member'].includes(targetUserRole?.toLowerCase() || '');
   }
-  
+
   // Team Lead can manage Team Leads and Members, but not Admin or Owner
   if (currentUserRole?.toLowerCase() === 'team lead') {
     return ['team lead', 'member'].includes(targetUserRole?.toLowerCase() || '');
   }
-  
+
   // Members cannot manage other users
   return false;
 }
@@ -51,26 +51,22 @@ export function getAvailableRoleOptions(
       description: 'Full admin access to team management and settings',
     },
   ];
-  
+
   // Owner can assign any role except Owner
   if (isOwner) {
     return allOptions;
   }
-  
+
   // Admin can assign Team Lead and Member roles
   if (currentUserRole?.toLowerCase() === 'admin') {
-    return allOptions.filter(option => 
-      ['Member', 'Team Lead'].includes(option.value)
-    );
+    return allOptions.filter(option => ['Member', 'Team Lead'].includes(option.value));
   }
-  
-  // Team Lead can assign Team Lead and Member roles  
+
+  // Team Lead can assign Team Lead and Member roles
   if (currentUserRole?.toLowerCase() === 'team lead') {
-    return allOptions.filter(option => 
-      ['Member', 'Team Lead'].includes(option.value)
-    );
+    return allOptions.filter(option => ['Member', 'Team Lead'].includes(option.value));
   }
-  
+
   // Members get no role options
   return [];
 }

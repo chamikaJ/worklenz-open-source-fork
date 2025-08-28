@@ -1,6 +1,9 @@
 import React from 'react';
 import { Card, Typography, Spin, Alert, Collapse } from '@/shared/antd-imports';
-import { useFetchScheduleMembersQuery, useFetchScheduleDatesQuery } from '@/api/schedule/scheduleApi';
+import {
+  useFetchScheduleMembersQuery,
+  useFetchScheduleDatesQuery,
+} from '@/api/schedule/scheduleApi';
 import { useAppSelector } from '@/hooks/useAppSelector';
 
 const { Text, Title } = Typography;
@@ -12,10 +15,18 @@ interface ScheduleDataDebuggerProps {
 }
 
 const ScheduleDataDebugger: React.FC<ScheduleDataDebuggerProps> = ({ date, type }) => {
-  const { data: teamDataResponse, isLoading: teamLoading, error: teamError } = useFetchScheduleMembersQuery();
-  const { data: dateListResponse, isLoading: dateLoading, error: dateError } = useFetchScheduleDatesQuery({
+  const {
+    data: teamDataResponse,
+    isLoading: teamLoading,
+    error: teamError,
+  } = useFetchScheduleMembersQuery();
+  const {
+    data: dateListResponse,
+    isLoading: dateLoading,
+    error: dateError,
+  } = useFetchScheduleDatesQuery({
     date: date.toISOString(),
-    type
+    type,
   });
 
   const oldTeamData = useAppSelector(state => state.scheduleReducer.teamData);
@@ -30,7 +41,11 @@ const ScheduleDataDebugger: React.FC<ScheduleDataDebuggerProps> = ({ date, type 
             {teamLoading ? (
               <Spin size="small" />
             ) : teamError ? (
-              <Alert message="Error loading team data" description={JSON.stringify(teamError)} type="error" />
+              <Alert
+                message="Error loading team data"
+                description={JSON.stringify(teamError)}
+                type="error"
+              />
             ) : (
               <div>
                 <Text>Count: {teamDataResponse?.body?.length || 0}</Text>
@@ -46,7 +61,11 @@ const ScheduleDataDebugger: React.FC<ScheduleDataDebuggerProps> = ({ date, type 
             {dateLoading ? (
               <Spin size="small" />
             ) : dateError ? (
-              <Alert message="Error loading date data" description={JSON.stringify(dateError)} type="error" />
+              <Alert
+                message="Error loading date data"
+                description={JSON.stringify(dateError)}
+                type="error"
+              />
             ) : (
               <div>
                 <Text>Days: {dateListResponse?.body?.date_data?.[0]?.days?.length || 0}</Text>

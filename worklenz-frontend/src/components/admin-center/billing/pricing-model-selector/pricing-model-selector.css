@@ -23,7 +23,7 @@
 }
 
 .pricing-model-card.selected::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -103,46 +103,46 @@
   .pricing-details .price {
     font-size: 28px;
   }
-  
+
   .features li {
     font-size: 13px;
     padding: 4px 0;
   }
-  
+
   .pricing-model-card .ant-card-body {
     padding: 16px;
   }
 }
 
 /* Dark mode support */
-[data-theme='dark'] .pricing-model-card {
+[data-theme="dark"] .pricing-model-card {
   background: #1f1f1f;
   border-color: #434343;
 }
 
-[data-theme='dark'] .pricing-model-card:hover {
+[data-theme="dark"] .pricing-model-card:hover {
   border-color: #717171;
   box-shadow: 0 6px 16px rgba(255, 255, 255, 0.1);
 }
 
-[data-theme='dark'] .pricing-model-card.selected {
+[data-theme="dark"] .pricing-model-card.selected {
   border-color: #1890ff;
   box-shadow: 0 6px 16px rgba(24, 144, 255, 0.3);
 }
 
-[data-theme='dark'] .pricing-header {
+[data-theme="dark"] .pricing-header {
   border-bottom-color: #434343;
 }
 
-[data-theme='dark'] .pricing-details .price-label {
+[data-theme="dark"] .pricing-details .price-label {
   color: #a6a6a6;
 }
 
-[data-theme='dark'] .pricing-details .subtitle {
+[data-theme="dark"] .pricing-details .subtitle {
   color: #8c8c8c;
 }
 
-[data-theme='dark'] .features li {
+[data-theme="dark"] .features li {
   color: #d9d9d9;
 }
 

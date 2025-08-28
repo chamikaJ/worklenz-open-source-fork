@@ -35,23 +35,25 @@ const TaskActivityList: React.FC<TaskActivityListProps> = React.memo(({ tasks })
     {
       key: 'task',
       render: (record: IUserRecentTask) => (
-        <div 
-          style={{ 
-            display: 'flex', 
-            alignItems: 'flex-start', 
-            gap: 12, 
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12,
             width: '100%',
             cursor: 'pointer',
-            padding: '8px 0'
+            padding: '8px 0',
           }}
           onClick={() => handleTaskClick(record.task_id, record.project_id)}
           aria-label={`${t('tasks.recentTaskAriaLabel')} ${record.task_name}`}
         >
-          <div style={{ 
-            marginTop: 2,
-            color: token.colorPrimary,
-            fontSize: 16
-          }}>
+          <div
+            style={{
+              marginTop: 2,
+              color: token.colorPrimary,
+              fontSize: 16,
+            }}
+          >
             <FileTextOutlined />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -64,7 +66,7 @@ const TaskActivityList: React.FC<TaskActivityListProps> = React.memo(({ tasks })
               <Text type="secondary" style={{ fontSize: 12 }}>
                 {record.project_name}
               </Text>
-              <Tooltip 
+              <Tooltip
                 title={formatDate(record.last_activity_at, 'MMMM Do YYYY, h:mm:ss a')}
                 placement="topRight"
               >

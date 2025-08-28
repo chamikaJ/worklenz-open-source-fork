@@ -42,17 +42,23 @@ const PricingModelSelector: React.FC<PricingModelSelectorProps> = ({
   const { t } = useTranslation('admin-center/current-bill');
 
   const planGroups = useMemo(() => {
-    const grouped = pricingOptions.reduce((acc, option) => {
-      if (!acc[option.plan_id]) {
-        acc[option.plan_id] = {
-          plan_id: option.plan_id,
-          plan_name: option.plan_name,
-          variants: {},
-        };
-      }
-      acc[option.plan_id].variants[option.variant_type] = option;
-      return acc;
-    }, {} as Record<string, { plan_id: string; plan_name: string; variants: Record<string, IPricingOption> }>);
+    const grouped = pricingOptions.reduce(
+      (acc, option) => {
+        if (!acc[option.plan_id]) {
+          acc[option.plan_id] = {
+            plan_id: option.plan_id,
+            plan_name: option.plan_name,
+            variants: {},
+          };
+        }
+        acc[option.plan_id].variants[option.variant_type] = option;
+        return acc;
+      },
+      {} as Record<
+        string,
+        { plan_id: string; plan_name: string; variants: Record<string, IPricingOption> }
+      >
+    );
 
     return Object.values(grouped);
   }, [pricingOptions]);
@@ -107,7 +113,7 @@ const PricingModelSelector: React.FC<PricingModelSelectorProps> = ({
     ) => {
       const isPerUser = type === 'per_user';
       const price = isPerUser ? option.per_user_price! * teamSize : option.flat_price!;
-      const priceLabel = isPerUser 
+      const priceLabel = isPerUser
         ? `$${option.per_user_price}/user/month`
         : `$${option.flat_price}/month`;
 
@@ -128,20 +134,14 @@ const PricingModelSelector: React.FC<PricingModelSelectorProps> = ({
                   {t('recommended', 'Recommended')}
                 </Tag>
               )}
-              {isSelected && (
-                <CheckCircleFilled style={{ color: '#52c41a', fontSize: '16px' }} />
-              )}
+              {isSelected && <CheckCircleFilled style={{ color: '#52c41a', fontSize: '16px' }} />}
             </Space>
           </div>
 
           <div className="pricing-details">
-            <Typography.Text className="price">
-              ${price.toFixed(2)}
-            </Typography.Text>
-            <Typography.Text className="price-label">
-              {priceLabel}
-            </Typography.Text>
-            
+            <Typography.Text className="price">${price.toFixed(2)}</Typography.Text>
+            <Typography.Text className="price-label">{priceLabel}</Typography.Text>
+
             {!isPerUser && (
               <Typography.Text className="subtitle">
                 Up to {option.user_range_max} users
@@ -190,11 +190,13 @@ const PricingModelSelector: React.FC<PricingModelSelectorProps> = ({
       <Card title={t('selectTeamSize', 'Select Your Team Size')} style={{ marginBottom: 24 }}>
         <Row gutter={16} align="middle">
           <Col xs={24} sm={12} md={8}>
-            <Form.Item 
+            <Form.Item
               label={
                 <Space>
                   <span>{t('numberOfUsers', 'Number of Users')}</span>
-                  <Tooltip title={t('teamSizeTooltip', 'Select your current or expected team size')}>
+                  <Tooltip
+                    title={t('teamSizeTooltip', 'Select your current or expected team size')}
+                  >
                     <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
                   </Tooltip>
                 </Space>
@@ -211,18 +213,21 @@ const PricingModelSelector: React.FC<PricingModelSelectorProps> = ({
               />
             </Form.Item>
           </Col>
-          
+
           <Col xs={24} sm={12} md={16}>
             {pricingComparison && pricingComparison.savings > 0 && (
               <Alert
                 message={
                   <Typography.Text>
-                    <strong>Save ${pricingComparison.savings.toFixed(2)}/month ({pricingComparison.percentSavings}%)</strong>
-                    {' '}with {' '}
+                    <strong>
+                      Save ${pricingComparison.savings.toFixed(2)}/month (
+                      {pricingComparison.percentSavings}%)
+                    </strong>{' '}
+                    with{' '}
                     <Typography.Text strong>
                       {pricingComparison.betterOption === 'per_user' ? 'Per User' : 'Flat Rate'}
-                    </Typography.Text>
-                    {' '}pricing for {teamSize} {teamSize === 1 ? 'user' : 'users'}
+                    </Typography.Text>{' '}
+                    pricing for {teamSize} {teamSize === 1 ? 'user' : 'users'}
                   </Typography.Text>
                 }
                 type="success"
@@ -245,7 +250,7 @@ const PricingModelSelector: React.FC<PricingModelSelectorProps> = ({
               pricingComparison?.per_user.recommended || false
             )}
           </Col>
-          
+
           <Col xs={24} lg={12}>
             {renderPricingCard(
               'flat_rate',
@@ -266,13 +271,22 @@ const PricingModelSelector: React.FC<PricingModelSelectorProps> = ({
                 </Typography.Text>
                 <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
                   <li>
-                    {t('switchAnytime', 'You can switch between pricing models anytime from your billing settings')}
+                    {t(
+                      'switchAnytime',
+                      'You can switch between pricing models anytime from your billing settings'
+                    )}
                   </li>
                   <li>
-                    {t('flatRateLimit', 'Flat rate plans have user limits - ensure your team size fits within the limit')}
+                    {t(
+                      'flatRateLimit',
+                      'Flat rate plans have user limits - ensure your team size fits within the limit'
+                    )}
                   </li>
                   <li>
-                    {t('perUserScaling', 'Per user plans automatically scale with your team growth')}
+                    {t(
+                      'perUserScaling',
+                      'Per user plans automatically scale with your team growth'
+                    )}
                   </li>
                 </ul>
               </div>

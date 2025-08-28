@@ -21,10 +21,10 @@ const LoggingOutPage = () => {
       try {
         // Track logout event
         trackMixpanelEvent(evt_common_logout);
-        
+
         // Reset Mixpanel identity
         reset();
-        
+
         // Clear local session
         await auth.signOut();
 

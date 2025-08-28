@@ -568,10 +568,12 @@ const RateCardDrawer = ({
             <Alert
               message={
                 isManDaysMethod
-                  ? t('manDaysCalculationMessage', { 
-                      hours: organization.hours_per_day || 8 
-                    }) || `Organization is using man days calculation (${organization.hours_per_day || 8}h/day). Rates above represent daily rates.`
-                  : t('hourlyCalculationMessage') || 'Organization is using hourly calculation. Rates above represent hourly rates.'
+                  ? t('manDaysCalculationMessage', {
+                      hours: organization.hours_per_day || 8,
+                    }) ||
+                    `Organization is using man days calculation (${organization.hours_per_day || 8}h/day). Rates above represent daily rates.`
+                  : t('hourlyCalculationMessage') ||
+                    'Organization is using hourly calculation. Rates above represent hourly rates.'
               }
               type="info"
               showIcon

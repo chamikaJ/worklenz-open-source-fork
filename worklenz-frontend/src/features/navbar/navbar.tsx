@@ -34,8 +34,6 @@ const Navbar = () => {
   const currentSession = useAuthService().getCurrentSession();
   const [daysUntilExpiry, setDaysUntilExpiry] = useState<number | null>(null);
 
-
-
   const location = useLocation();
   const { isDesktop, isMobile, isTablet } = useResponsive();
   const { t } = useTranslation('navbar');
@@ -44,9 +42,7 @@ const Navbar = () => {
   const { setIdentity } = useMixpanelTracking();
   const [navRoutesList, setNavRoutesList] = useState<NavRoutesType[]>(navRoutes);
   const [isOwnerOrAdmin, setIsOwnerOrAdmin] = useState<boolean>(authService.isOwnerOrAdmin());
-  const showUpgradeTypes = [
-    ISUBSCRIPTION_TYPE.TRIAL,
-  ];
+  const showUpgradeTypes = [ISUBSCRIPTION_TYPE.TRIAL];
 
   useEffect(() => {
     authApiService
@@ -78,48 +74,53 @@ const Navbar = () => {
     }
   }, [currentSession?.trial_expire_date]);
 
-    const navlinkItems = useMemo(
-    () => {
-      const hasBusinessAccess = hasBusinessFeatureAccess(currentSession);
-      const isFreePlan = currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE;
+  const navlinkItems = useMemo(() => {
+    const hasBusinessAccess = hasBusinessFeatureAccess(currentSession);
+    const isFreePlan = currentSession?.subscription_type === ISUBSCRIPTION_TYPE.FREE;
 
-      return navRoutesList
-        .filter(route => {
-          if (route.adminOnly && !isOwnerOrAdmin) return false;
-          return true;
-        })
-        .map((route, index) => {
-          const isBusinessRoute = route.businessPlanRequired;
-          const isFreePlanRoute = !route.freePlanFeature;
-          const shouldDisable = (isBusinessRoute && !hasBusinessAccess) || (isFreePlanRoute && isFreePlan);
+    return navRoutesList
+      .filter(route => {
+        if (route.adminOnly && !isOwnerOrAdmin) return false;
+        return true;
+      })
+      .map((route, index) => {
+        const isBusinessRoute = route.businessPlanRequired;
+        const isFreePlanRoute = !route.freePlanFeature;
+        const shouldDisable =
+          (isBusinessRoute && !hasBusinessAccess) || (isFreePlanRoute && isFreePlan);
 
-          return {
-            key: route.path.split('/').pop() || route.name,
-            disabled: false, // Don't disable the menu item so click events work
-            label: shouldDisable ? (
-              <Tooltip title={isFreePlanRoute && isFreePlan ? tCommon('upgrade-plan') : tCommon('business-plan-upgrade')} placement="bottom">
-                <span
-                  className="disabled-navlink disabled-navlink-with-crown"
-                  style={{
-                    cursor: 'pointer',
-                    color: '#8c8c8c',
-                    opacity: 0.6,
-                  }}
-                >
-                  {t(route.name)}
-                  <CrownOutlined style={{ fontSize: '14px', color: '#faad14' }} />
-                </span>
-              </Tooltip>
-            ) : (
-              <Link to={route.path} style={{ fontWeight: 600 }}>
+        return {
+          key: route.path.split('/').pop() || route.name,
+          disabled: false, // Don't disable the menu item so click events work
+          label: shouldDisable ? (
+            <Tooltip
+              title={
+                isFreePlanRoute && isFreePlan
+                  ? tCommon('upgrade-plan')
+                  : tCommon('business-plan-upgrade')
+              }
+              placement="bottom"
+            >
+              <span
+                className="disabled-navlink disabled-navlink-with-crown"
+                style={{
+                  cursor: 'pointer',
+                  color: '#8c8c8c',
+                  opacity: 0.6,
+                }}
+              >
                 {t(route.name)}
-              </Link>
-            ),
-          };
-        });
-    },
-    [navRoutesList, t, isOwnerOrAdmin, currentSession, tCommon, dispatch]
-  );
+                <CrownOutlined style={{ fontSize: '14px', color: '#faad14' }} />
+              </span>
+            </Tooltip>
+          ) : (
+            <Link to={route.path} style={{ fontWeight: 600 }}>
+              {t(route.name)}
+            </Link>
+          ),
+        };
+      });
+  }, [navRoutesList, t, isOwnerOrAdmin, currentSession, tCommon, dispatch]);
 
   useEffect(() => {
     const afterWorklenzString = location.pathname.split('/worklenz/')[1];
@@ -182,7 +183,8 @@ const Navbar = () => {
                 if (clickedRoute) {
                   const isBusinessRoute = clickedRoute.businessPlanRequired;
                   const isFreePlanRoute = !clickedRoute.freePlanFeature;
-                  const shouldOpenModal = (isBusinessRoute && !hasBusinessAccess) || (isFreePlanRoute && isFreePlan);
+                  const shouldOpenModal =
+                    (isBusinessRoute && !hasBusinessAccess) || (isFreePlanRoute && isFreePlan);
 
                   if (shouldOpenModal) {
                     dispatch(toggleUpgradeModal());
@@ -229,8 +231,6 @@ const Navbar = () => {
           </Flex>
         </Flex>
       </Flex>
-
-
 
       {isOwnerOrAdmin && createPortal(<InviteTeamMembers />, document.body, 'invite-team-members')}
       {createPortal(<NotificationDrawer />, document.body, 'notification-drawer')}

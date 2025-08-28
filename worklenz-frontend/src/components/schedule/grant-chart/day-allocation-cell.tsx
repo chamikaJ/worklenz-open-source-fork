@@ -31,12 +31,13 @@ const DayAllocationCell = ({
   const effectiveLoggedHours = isWeekend ? 0 : loggedHours;
   const effectiveWorkingHours = isWeekend ? 1 : workingHours; // Avoid division by zero
   const effectiveAvailableHours = isWeekend ? 0 : availableHours;
-  
+
   // Calculate utilization percentage
-  const utilizationPercent = effectiveAvailableHours > 0 
-    ? ((effectiveTotalPerDayHours + effectiveLoggedHours) / effectiveAvailableHours) * 100 
-    : 0;
-  
+  const utilizationPercent =
+    effectiveAvailableHours > 0
+      ? ((effectiveTotalPerDayHours + effectiveLoggedHours) / effectiveAvailableHours) * 100
+      : 0;
+
   // Determine workload status
   const getWorkloadStatus = () => {
     if (isWeekend) return 'weekend';
@@ -45,7 +46,7 @@ const DayAllocationCell = ({
     if (utilizationPercent <= 100) return 'fully-allocated';
     return 'overallocated';
   };
-  
+
   const workloadStatus = getWorkloadStatus();
 
   const tooltipContent = isWeekend ? (
@@ -54,7 +55,11 @@ const DayAllocationCell = ({
     </div>
   ) : (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      {memberName && <span><strong>{memberName}</strong></span>}
+      {memberName && (
+        <span>
+          <strong>{memberName}</strong>
+        </span>
+      )}
       {date && <span>{date}</span>}
       <hr style={{ margin: '4px 0', border: 'none', borderTop: '1px solid #ddd' }} />
       <span>Available: {effectiveAvailableHours}h</span>
@@ -62,7 +67,9 @@ const DayAllocationCell = ({
       <span>Logged: {effectiveLoggedHours}h</span>
       <span>Total Used: {effectiveTotalPerDayHours + effectiveLoggedHours}h</span>
       <span>Utilization: {utilizationPercent.toFixed(1)}%</span>
-      <span><strong>Status: {workloadStatus.replace('-', ' ').toUpperCase()}</strong></span>
+      <span>
+        <strong>Status: {workloadStatus.replace('-', ' ').toUpperCase()}</strong>
+      </span>
     </div>
   );
 
@@ -101,7 +108,7 @@ const DayAllocationCell = ({
         };
     }
   };
-  
+
   const { background: gradientColor, border: borderColor } = getWorkloadColors();
 
   return (
@@ -121,12 +128,14 @@ const DayAllocationCell = ({
         <div
           style={{
             width: '63px',
-            background: !isWeekend 
-              ? `linear-gradient(to top, ${gradientColor} ${
-                  Math.min((effectiveTotalPerDayHours * 100) / effectiveAvailableHours, 100)
-                }%, rgba(190, 190, 190, 0.25) ${
-                  Math.min((effectiveTotalPerDayHours * 100) / effectiveAvailableHours, 100)
-                }%)`
+            background: !isWeekend
+              ? `linear-gradient(to top, ${gradientColor} ${Math.min(
+                  (effectiveTotalPerDayHours * 100) / effectiveAvailableHours,
+                  100
+                )}%, rgba(190, 190, 190, 0.25) ${Math.min(
+                  (effectiveTotalPerDayHours * 100) / effectiveAvailableHours,
+                  100
+                )}%)`
               : gradientColor,
             justifyContent: effectiveLoggedHours > 0 ? 'flex-end' : 'center',
             display: 'flex',
@@ -150,12 +159,13 @@ const DayAllocationCell = ({
                 left: 0,
                 right: 0,
                 height: '4px',
-                background: 'repeating-linear-gradient(45deg, #ef4444, #ef4444 4px, #fbbf24 4px, #fbbf24 8px)',
+                background:
+                  'repeating-linear-gradient(45deg, #ef4444, #ef4444 4px, #fbbf24 4px, #fbbf24 8px)',
                 zIndex: 1,
               }}
             />
           )}
-          
+
           <span
             style={{
               display: 'flex',
@@ -189,7 +199,7 @@ const DayAllocationCell = ({
               {effectiveLoggedHours}h
             </span>
           )}
-          
+
           {/* Capacity indicator */}
           {!isWeekend && (
             <div
@@ -200,11 +210,16 @@ const DayAllocationCell = ({
                 width: '8px',
                 height: '8px',
                 borderRadius: '50%',
-                backgroundColor: 
-                  workloadStatus === 'available' ? '#22c55e' :
-                  workloadStatus === 'normal' ? '#3b82f6' :
-                  workloadStatus === 'fully-allocated' ? '#f59e0b' :
-                  workloadStatus === 'overallocated' ? '#ef4444' : '#6b7280',
+                backgroundColor:
+                  workloadStatus === 'available'
+                    ? '#22c55e'
+                    : workloadStatus === 'normal'
+                      ? '#3b82f6'
+                      : workloadStatus === 'fully-allocated'
+                        ? '#f59e0b'
+                        : workloadStatus === 'overallocated'
+                          ? '#ef4444'
+                          : '#6b7280',
                 border: '1px solid white',
                 fontSize: '8px',
               }}

@@ -69,8 +69,8 @@ import {
   Steps,
   Slider,
   Descriptions,
-  Upload, 
-  UploadProps, 
+  Upload,
+  UploadProps,
 } from 'antd/es';
 
 import TextArea from 'antd/es/input/TextArea';
@@ -271,7 +271,7 @@ export {
   TextArea,
   Slider,
   Descriptions,
-  Upload, 
+  Upload,
 };
 
 // TypeScript Types - Import commonly used ones

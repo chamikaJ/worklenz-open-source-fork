@@ -59,10 +59,10 @@ const TaskStatusDropdown: React.FC<TaskStatusDropdownProps> = ({
       if (currentGroupingV3 === 'status' && groups && groups.length > 0) {
         // Find current group containing the task
         const currentGroup = groups.find(group => group.taskIds.includes(task.id));
-        
+
         // Find target group based on the new status ID
         let targetGroup = groups.find(group => group.id === statusId);
-        
+
         // If not found by status ID, try matching with group value
         if (!targetGroup) {
           targetGroup = groups.find(group => group.groupValue === statusId);

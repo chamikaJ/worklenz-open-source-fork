@@ -21,12 +21,12 @@ import {
 } from '@/shared/antd-imports';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
-import { 
+import {
   useFetchMemberWorkloadQuery,
   useUpdateResourceAllocationMutation,
   useRebalanceWorkloadMutation,
   useFetchResourceConflictsQuery,
-  useFetchCapacityReportQuery
+  useFetchCapacityReportQuery,
 } from '@/api/schedule/scheduleApi';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -69,33 +69,43 @@ interface ResourceAllocationProps {
 const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClose }) => {
   const { t } = useTranslation('schedule');
   const dispatch = useAppDispatch();
-  
+
   const { workingHours } = useAppSelector(state => state.scheduleReducer);
   const [selectedMember, setSelectedMember] = useState<string | undefined>(memberId);
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>([
     dayjs().startOf('month'),
-    dayjs().endOf('month')
+    dayjs().endOf('month'),
   ]);
   const [allocationForm] = Form.useForm();
   const [isAllocationModalVisible, setIsAllocationModalVisible] = useState(false);
-  
+
   // RTK Query hooks with conditional fetching
-  const { data: workloadResponse, isLoading: workloadLoading, refetch: refetchWorkload } = useFetchMemberWorkloadQuery({
-    memberId: selectedMember || '',
-    startDate: dateRange[0]?.toISOString() || dayjs().startOf('month').toISOString(),
-    endDate: dateRange[1]?.toISOString() || dayjs().endOf('month').toISOString(),
-  }, {
-    skip: !selectedMember && !memberId // Skip query if no member is selected
-  });
-  
-  const { data: conflictsResponse, isLoading: conflictsLoading } = useFetchResourceConflictsQuery(undefined, {
-    // Only fetch conflicts if we have workload data
-    skip: workloadLoading || !workloadResponse
-  });
-  
+  const {
+    data: workloadResponse,
+    isLoading: workloadLoading,
+    refetch: refetchWorkload,
+  } = useFetchMemberWorkloadQuery(
+    {
+      memberId: selectedMember || '',
+      startDate: dateRange[0]?.toISOString() || dayjs().startOf('month').toISOString(),
+      endDate: dateRange[1]?.toISOString() || dayjs().endOf('month').toISOString(),
+    },
+    {
+      skip: !selectedMember && !memberId, // Skip query if no member is selected
+    }
+  );
+
+  const { data: conflictsResponse, isLoading: conflictsLoading } = useFetchResourceConflictsQuery(
+    undefined,
+    {
+      // Only fetch conflicts if we have workload data
+      skip: workloadLoading || !workloadResponse,
+    }
+  );
+
   const [updateAllocation, { isLoading: updateLoading }] = useUpdateResourceAllocationMutation();
   const [rebalanceWorkload, { isLoading: rebalanceLoading }] = useRebalanceWorkloadMutation();
-  
+
   const workloadData = workloadResponse?.body || [];
   const conflicts = conflictsResponse?.body || [];
 
@@ -104,30 +114,40 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
     if (!workloadData || workloadData.length === 0) {
       return [];
     }
-    
+
     return workloadData.map((member: any) => ({
       ...member,
-      conflicts: conflicts?.filter?.((conflict: any) => conflict.memberId === member.id) || []
+      conflicts: conflicts?.filter?.((conflict: any) => conflict.memberId === member.id) || [],
     }));
   }, [workloadData, conflicts]);
 
   const getStatusColor = (status: WorkloadData['status']) => {
     switch (status) {
-      case 'available': return '#52c41a';
-      case 'normal': return '#1890ff';
-      case 'fully-allocated': return '#faad14';
-      case 'overallocated': return '#f5222d';
-      default: return '#d9d9d9';
+      case 'available':
+        return '#52c41a';
+      case 'normal':
+        return '#1890ff';
+      case 'fully-allocated':
+        return '#faad14';
+      case 'overallocated':
+        return '#f5222d';
+      default:
+        return '#d9d9d9';
     }
   };
 
   const getStatusText = (status: WorkloadData['status']) => {
     switch (status) {
-      case 'available': return t('available') || 'Available';
-      case 'normal': return t('normal') || 'Normal';
-      case 'fully-allocated': return t('fullyAllocated') || 'Fully Allocated';
-      case 'overallocated': return t('overAllocated') || 'Over Allocated';
-      default: return t('unknown') || 'Unknown';
+      case 'available':
+        return t('available') || 'Available';
+      case 'normal':
+        return t('normal') || 'Normal';
+      case 'fully-allocated':
+        return t('fullyAllocated') || 'Fully Allocated';
+      case 'overallocated':
+        return t('overAllocated') || 'Over Allocated';
+      default:
+        return t('unknown') || 'Unknown';
     }
   };
 
@@ -225,7 +245,7 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
           min={0}
           max={workingHours}
           value={hours}
-          onChange={(value) => handleHoursChange(record.id, value || 0)}
+          onChange={value => handleHoursChange(record.id, value || 0)}
           addonAfter="h"
           size="small"
         />
@@ -245,8 +265,7 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
         <Text type="secondary">
           {record.startDate && record.endDate
             ? `${dayjs(record.startDate).format('MMM DD')} - ${dayjs(record.endDate).format('MMM DD')}`
-            : t('notSet') || 'Not set'
-          }
+            : t('notSet') || 'Not set'}
         </Text>
       ),
     },
@@ -257,41 +276,49 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
     setIsAllocationModalVisible(true);
   }, []);
 
-  const handleRebalance = useCallback((memberId: string) => {
-    Modal.confirm({
-      title: t('rebalanceWorkload') || 'Rebalance Workload',
-      icon: <ExclamationCircleOutlined />,
-      content: t('rebalanceConfirm') || 'This will automatically redistribute tasks to optimize workload. Continue?',
-      onOk: async () => {
-        try {
-          await rebalanceWorkload({
-            memberIds: [memberId],
-            strategy: 'even',
-            maxUtilization: 100,
-          }).unwrap();
-          message.success(t('workloadRebalanced') || 'Workload rebalanced successfully');
-          refetchWorkload();
-        } catch (error) {
-          message.error(t('rebalanceError') || 'Failed to rebalance workload');
-        }
-      },
-    });
-  }, [rebalanceWorkload, refetchWorkload, t]);
+  const handleRebalance = useCallback(
+    (memberId: string) => {
+      Modal.confirm({
+        title: t('rebalanceWorkload') || 'Rebalance Workload',
+        icon: <ExclamationCircleOutlined />,
+        content:
+          t('rebalanceConfirm') ||
+          'This will automatically redistribute tasks to optimize workload. Continue?',
+        onOk: async () => {
+          try {
+            await rebalanceWorkload({
+              memberIds: [memberId],
+              strategy: 'even',
+              maxUtilization: 100,
+            }).unwrap();
+            message.success(t('workloadRebalanced') || 'Workload rebalanced successfully');
+            refetchWorkload();
+          } catch (error) {
+            message.error(t('rebalanceError') || 'Failed to rebalance workload');
+          }
+        },
+      });
+    },
+    [rebalanceWorkload, refetchWorkload, t]
+  );
 
-  const handleHoursChange = useCallback(async (projectId: string, hours: number) => {
-    if (!selectedMember) return;
-    
-    try {
-      await updateAllocation({
-        memberId: selectedMember,
-        projectId,
-        allocatedHours: hours,
-      }).unwrap();
-      message.success(t('allocationUpdated') || 'Allocation updated successfully');
-    } catch (error) {
-      message.error(t('allocationError') || 'Failed to update allocation');
-    }
-  }, [selectedMember, updateAllocation, t]);
+  const handleHoursChange = useCallback(
+    async (projectId: string, hours: number) => {
+      if (!selectedMember) return;
+
+      try {
+        await updateAllocation({
+          memberId: selectedMember,
+          projectId,
+          allocatedHours: hours,
+        }).unwrap();
+        message.success(t('allocationUpdated') || 'Allocation updated successfully');
+      } catch (error) {
+        message.error(t('allocationError') || 'Failed to update allocation');
+      }
+    },
+    [selectedMember, updateAllocation, t]
+  );
 
   const selectedMemberData = useMemo(() => {
     return processedWorkloadData.find(member => member.id === selectedMember);
@@ -307,12 +334,12 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
         </Flex>
       );
     }
-    
+
     const totalMembers = processedWorkloadData.length;
     const overallocated = processedWorkloadData.filter(m => m.status === 'overallocated').length;
     const fullyAllocated = processedWorkloadData.filter(m => m.status === 'fully-allocated').length;
     const available = processedWorkloadData.filter(m => m.status === 'available').length;
-    
+
     return (
       <Flex gap={16} style={{ marginBottom: 24 }}>
         <Card size="small" style={{ flex: 1 }}>
@@ -320,31 +347,37 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
             <UserOutlined style={{ color: '#1890ff' }} />
             <div>
               <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{totalMembers}</div>
-              <div style={{ fontSize: '12px', color: '#666' }}>{t('totalMembers') || 'Total Members'}</div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                {t('totalMembers') || 'Total Members'}
+              </div>
             </div>
           </Flex>
         </Card>
-        
+
         <Card size="small" style={{ flex: 1 }}>
           <Flex align="center" gap={8}>
             <WarningOutlined style={{ color: '#f5222d' }} />
             <div>
               <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{overallocated}</div>
-              <div style={{ fontSize: '12px', color: '#666' }}>{t('overAllocated') || 'Over Allocated'}</div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                {t('overAllocated') || 'Over Allocated'}
+              </div>
             </div>
           </Flex>
         </Card>
-        
+
         <Card size="small" style={{ flex: 1 }}>
           <Flex align="center" gap={8}>
             <ClockCircleOutlined style={{ color: '#faad14' }} />
             <div>
               <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{fullyAllocated}</div>
-              <div style={{ fontSize: '12px', color: '#666' }}>{t('fullyAllocated') || 'Fully Allocated'}</div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                {t('fullyAllocated') || 'Fully Allocated'}
+              </div>
             </div>
           </Flex>
         </Card>
-        
+
         <Card size="small" style={{ flex: 1 }}>
           <Flex align="center" gap={8}>
             <UserOutlined style={{ color: '#52c41a' }} />
@@ -385,7 +418,7 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
             loading={workloadLoading}
           />
         </TabPane>
-        
+
         <TabPane tab={t('allocation') || 'Resource Allocation'} key="allocation">
           <Space direction="vertical" style={{ width: '100%' }}>
             <Flex gap={16} align="center">
@@ -398,19 +431,23 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
                 loading={workloadLoading}
                 allowClear
               >
-                {processedWorkloadData && processedWorkloadData.length > 0 && processedWorkloadData.map(member => (
-                  <Option key={member.id} value={member.id}>
-                    {member.name} ({member.utilizationPercent?.toFixed?.(0) || 0}%)
-                  </Option>
-                ))}
+                {processedWorkloadData &&
+                  processedWorkloadData.length > 0 &&
+                  processedWorkloadData.map(member => (
+                    <Option key={member.id} value={member.id}>
+                      {member.name} ({member.utilizationPercent?.toFixed?.(0) || 0}%)
+                    </Option>
+                  ))}
               </Select>
             </Flex>
-            
+
             {selectedMemberData && (
               <Card size="small">
                 <Flex gap={24} align="center" style={{ marginBottom: 16 }}>
                   <div>
-                    <Text strong style={{ fontSize: '16px' }}>{selectedMemberData.name}</Text>
+                    <Text strong style={{ fontSize: '16px' }}>
+                      {selectedMemberData.name}
+                    </Text>
                     <div style={{ marginTop: 4 }}>
                       <Tag color={getStatusColor(selectedMemberData.status)}>
                         {getStatusText(selectedMemberData.status)}
@@ -432,7 +469,7 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
                     </div>
                   </div>
                 </Flex>
-                
+
                 <Table
                   dataSource={selectedMemberData.projects}
                   columns={projectColumns}
@@ -444,15 +481,16 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
             )}
           </Space>
         </TabPane>
-        
+
         <TabPane tab={t('balancing') || 'Load Balancing'} key="balancing">
           <Space direction="vertical" style={{ width: '100%' }}>
             <Card>
               <Title level={5}>{t('autoBalancing') || 'Automatic Load Balancing'}</Title>
               <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-                {t('autoBalancingDesc') || 'Automatically redistribute workload across team members to optimize resource utilization.'}
+                {t('autoBalancingDesc') ||
+                  'Automatically redistribute workload across team members to optimize resource utilization.'}
               </Text>
-              
+
               <Space>
                 <Button type="primary" icon={<ReloadOutlined />}>
                   {t('rebalanceAll') || 'Rebalance All'}
@@ -460,7 +498,7 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
                 <Button>{t('previewChanges') || 'Preview Changes'}</Button>
               </Space>
             </Card>
-            
+
             <Card>
               <Title level={5}>{t('balancingRules') || 'Balancing Rules'}</Title>
               <Form layout="vertical">
@@ -473,11 +511,11 @@ const WorkloadManagement: React.FC<ResourceAllocationProps> = ({ memberId, onClo
                       50: '50%',
                       75: '75%',
                       100: '100%',
-                      120: '120%'
+                      120: '120%',
                     }}
                   />
                 </Form.Item>
-                
+
                 <Form.Item label={t('balancingStrategy') || 'Balancing Strategy'}>
                   <Select defaultValue="even" style={{ width: 200 }}>
                     <Option value="even">{t('evenDistribution') || 'Even Distribution'}</Option>

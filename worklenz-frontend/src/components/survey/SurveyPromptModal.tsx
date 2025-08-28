@@ -16,7 +16,10 @@ interface SurveyPromptModalProps {
   onClose?: () => void;
 }
 
-export const SurveyPromptModal: React.FC<SurveyPromptModalProps> = ({ forceShow = false, onClose }) => {
+export const SurveyPromptModal: React.FC<SurveyPromptModalProps> = ({
+  forceShow = false,
+  onClose,
+}) => {
   const { t } = useTranslation('survey');
   const dispatch = useAppDispatch();
   const [visible, setVisible] = useState(false);
@@ -57,7 +60,7 @@ export const SurveyPromptModal: React.FC<SurveyPromptModalProps> = ({ forceShow 
           if (response.done && response.body) {
             setSurveyInfo({
               id: response.body.id,
-              questions: response.body.questions || []
+              questions: response.body.questions || [],
             });
           }
         } catch (error) {
@@ -75,7 +78,7 @@ export const SurveyPromptModal: React.FC<SurveyPromptModalProps> = ({ forceShow 
           if (response.done && response.body) {
             setSurveyInfo({
               id: response.body.id,
-              questions: response.body.questions || []
+              questions: response.body.questions || [],
             });
           }
         } catch (error) {
@@ -94,66 +97,73 @@ export const SurveyPromptModal: React.FC<SurveyPromptModalProps> = ({ forceShow 
   const handleComplete = async () => {
     try {
       setSubmitting(true);
-      
+
       if (!surveyData || !surveyInfo) {
         throw new Error('Survey data not found');
       }
 
       // Create a map of question keys to IDs
-      const questionMap = surveyInfo.questions.reduce((acc, q) => {
-        acc[q.question_key] = q.id;
-        return acc;
-      }, {} as Record<string, string>);
+      const questionMap = surveyInfo.questions.reduce(
+        (acc, q) => {
+          acc[q.question_key] = q.id;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
 
       // Prepare submission data with actual question IDs - only include answered questions
       const answers: any[] = [];
-      
+
       if (surveyData.organization_type && questionMap['organization_type']) {
         answers.push({
           question_id: questionMap['organization_type'],
-          answer_text: surveyData.organization_type
+          answer_text: surveyData.organization_type,
         });
       }
-      
+
       if (surveyData.user_role && questionMap['user_role']) {
         answers.push({
           question_id: questionMap['user_role'],
-          answer_text: surveyData.user_role
+          answer_text: surveyData.user_role,
         });
       }
-      
-      if (surveyData.main_use_cases && surveyData.main_use_cases.length > 0 && questionMap['main_use_cases']) {
+
+      if (
+        surveyData.main_use_cases &&
+        surveyData.main_use_cases.length > 0 &&
+        questionMap['main_use_cases']
+      ) {
         answers.push({
           question_id: questionMap['main_use_cases'],
-          answer_json: surveyData.main_use_cases
+          answer_json: surveyData.main_use_cases,
         });
       }
-      
+
       if (surveyData.previous_tools && questionMap['previous_tools']) {
         answers.push({
           question_id: questionMap['previous_tools'],
-          answer_text: surveyData.previous_tools
+          answer_text: surveyData.previous_tools,
         });
       }
-      
+
       if (surveyData.how_heard_about && questionMap['how_heard_about']) {
         answers.push({
           question_id: questionMap['how_heard_about'],
-          answer_text: surveyData.how_heard_about
+          answer_text: surveyData.how_heard_about,
         });
       }
 
       const submissionData: ISurveySubmissionRequest = {
         survey_id: surveyInfo.id,
-        answers
+        answers,
       };
 
       const response = await surveyApiService.submitSurveyResponse(submissionData);
-      
+
       if (response.done) {
         setSurveyCompleted(true);
         appMessage.success(t('survey:submitSuccessMessage'));
-        
+
         // Wait a moment before closing
         setTimeout(() => {
           setVisible(false);
@@ -217,18 +227,14 @@ export const SurveyPromptModal: React.FC<SurveyPromptModalProps> = ({ forceShow 
         surveyCompleted ? null : (
           <Flex justify="space-between" align="center">
             <div>
-              <Button onClick={handleSkip}>
-                {t('survey:skip')}
-              </Button>
+              <Button onClick={handleSkip}>{t('survey:skip')}</Button>
             </div>
             <Flex gap={8}>
               {surveySubStep > 0 && (
-                <Button onClick={handlePrevious}>
-                  {t('survey:previous')}
-                </Button>
+                <Button onClick={handlePrevious}>{t('survey:previous')}</Button>
               )}
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 onClick={handleNext}
                 disabled={!isCurrentStepValid()}
                 loading={submitting && surveySubStep === 2}
@@ -256,7 +262,7 @@ export const SurveyPromptModal: React.FC<SurveyPromptModalProps> = ({ forceShow 
         />
       ) : (
         <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-          <SurveyStep 
+          <SurveyStep
             onEnter={() => {}} // Empty function since we handle navigation via buttons
             styles={{}}
             isDarkMode={isDarkMode}

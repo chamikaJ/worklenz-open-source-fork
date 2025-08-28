@@ -221,7 +221,7 @@ export const sriLankanHolidayApiService = {
     try {
       // For now, use mock implementation
       const allHolidays = await sriLankanHolidayApiService.getHolidays({ year: params.year });
-      
+
       if (!allHolidays.done || !allHolidays.body) {
         return {
           done: false,
@@ -288,11 +288,16 @@ export const sriLankanHolidayApiService = {
     const getColorCode = (type: string, isPoya?: boolean): string => {
       if (isPoya) return '#8B4513'; // Brown for Poya days
       switch (type) {
-        case 'Public': return '#DC143C'; // Crimson for public holidays
-        case 'Bank': return '#4682B4'; // Steel blue for bank holidays
-        case 'Mercantile': return '#32CD32'; // Lime green for mercantile holidays
-        case 'Poya': return '#8B4513'; // Brown for Poya days
-        default: return '#f37070'; // Default red
+        case 'Public':
+          return '#DC143C'; // Crimson for public holidays
+        case 'Bank':
+          return '#4682B4'; // Steel blue for bank holidays
+        case 'Mercantile':
+          return '#32CD32'; // Lime green for mercantile holidays
+        case 'Poya':
+          return '#8B4513'; // Brown for Poya days
+        default:
+          return '#f37070'; // Default red
       }
     };
 

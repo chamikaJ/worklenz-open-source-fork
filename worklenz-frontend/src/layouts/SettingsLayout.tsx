@@ -11,11 +11,7 @@ const SettingsLayout = () => {
       <Typography.Title level={4}>Settings</Typography.Title>
 
       {isTablet ? (
-        <Flex
-          gap={24}
-          align="flex-start"
-          className="w-full mt-6"
-        >
+        <Flex gap={24} align="flex-start" className="w-full mt-6">
           <Flex className="w-full max-w-60">
             <SettingsSidebar />
           </Flex>
@@ -24,11 +20,7 @@ const SettingsLayout = () => {
           </Flex>
         </Flex>
       ) : (
-        <Flex
-          vertical
-          gap={24}
-          className="mt-6"
-        >
+        <Flex vertical gap={24} className="mt-6">
           <SettingsSidebar />
           <Outlet />
         </Flex>

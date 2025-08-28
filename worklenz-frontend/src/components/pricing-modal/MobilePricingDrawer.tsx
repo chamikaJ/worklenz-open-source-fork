@@ -24,7 +24,13 @@ import {
   ArrowUpOutlined,
 } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
-import { PlanTier, PricingModel, BillingCycle, UserPersonalization, PricingCalculation } from './PricingModal';
+import {
+  PlanTier,
+  PricingModel,
+  BillingCycle,
+  UserPersonalization,
+  PricingCalculation,
+} from './PricingModal';
 
 interface MobilePricingDrawerProps {
   visible: boolean;
@@ -80,10 +86,13 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
   }, []);
 
   // Handle team size change with validation
-  const handleTeamSizeChange = useCallback((value: number | null) => {
-    const newSize = Math.max(1, Math.min(500, value || 1));
-    onTeamSizeChange(newSize);
-  }, [onTeamSizeChange]);
+  const handleTeamSizeChange = useCallback(
+    (value: number | null) => {
+      const newSize = Math.max(1, Math.min(500, value || 1));
+      onTeamSizeChange(newSize);
+    },
+    [onTeamSizeChange]
+  );
 
   // Render sticky controls
   const renderStickyControls = () => (
@@ -99,14 +108,16 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
             onChange={onBillingCycleChange}
             options={[
               { label: 'Monthly', value: 'MONTHLY' },
-              { 
+              {
                 label: (
                   <Space>
                     <span>Yearly</span>
-                    <Tag color="green" size="small">Save 30%</Tag>
+                    <Tag color="green" size="small">
+                      Save 30%
+                    </Tag>
                   </Space>
-                ), 
-                value: 'YEARLY' 
+                ),
+                value: 'YEARLY',
               },
             ]}
             block
@@ -122,23 +133,23 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
             value={pricingModel}
             onChange={onPricingModelChange}
             options={[
-              { 
+              {
                 label: (
                   <Space>
                     <TeamOutlined />
                     <span>Per User</span>
                   </Space>
-                ), 
-                value: 'PER_USER' 
+                ),
+                value: 'PER_USER',
               },
-              { 
+              {
                 label: (
                   <Space>
                     <DollarOutlined />
                     <span>Base Plan</span>
                   </Space>
-                ), 
-                value: 'BASE_PLAN' 
+                ),
+                value: 'BASE_PLAN',
               },
             ]}
             block
@@ -170,7 +181,7 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
     const isSelected = selectedPlan === plan.id;
     const isExpanded = expandedPlan === plan.id;
     const isCurrent = userPersonalization?.currentPlan === plan.id;
-    
+
     if (!calculation) return null;
 
     const { totalCost, discountApplied } = calculation;
@@ -183,12 +194,12 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
         style={{ marginBottom: 12 }}
       >
         {/* Plan Header */}
-        <div 
-          style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: 12 
+            marginBottom: 12,
           }}
           onClick={() => setExpandedPlan(isExpanded ? null : plan.id)}
         >
@@ -198,19 +209,25 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
               {plan.badge && (
                 <Badge
                   count={
-                    plan.badge === 'most_popular' ? 'Popular' :
-                    plan.badge === 'recommended' ? 'Recommended' :
-                    'Best Value'
+                    plan.badge === 'most_popular'
+                      ? 'Popular'
+                      : plan.badge === 'recommended'
+                        ? 'Recommended'
+                        : 'Best Value'
                   }
-                  style={{ 
-                    backgroundColor: plan.badge === 'most_popular' ? '#1890ff' : 
-                                   plan.badge === 'recommended' ? '#52c41a' : '#fa8c16',
-                    fontSize: '10px'
+                  style={{
+                    backgroundColor:
+                      plan.badge === 'most_popular'
+                        ? '#1890ff'
+                        : plan.badge === 'recommended'
+                          ? '#52c41a'
+                          : '#fa8c16',
+                    fontSize: '10px',
                   }}
                 />
               )}
             </Space>
-            
+
             {isCurrent && (
               <Tag color="blue" size="small" style={{ marginLeft: 8 }}>
                 Current
@@ -221,18 +238,18 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
           {/* Pricing Display */}
           <div style={{ textAlign: 'right' }}>
             {discountApplied && (
-              <Typography.Text 
-                delete 
+              <Typography.Text
+                delete
                 style={{ fontSize: '12px', color: '#8c8c8c', display: 'block' }}
               >
                 ${(totalCost + discountApplied.amount).toFixed(2)}
               </Typography.Text>
             )}
-            
+
             <Typography.Title level={5} style={{ margin: 0, color: '#1890ff' }}>
               {plan.id === 'free' ? 'Free' : `$${totalCost.toFixed(2)}`}
             </Typography.Title>
-            
+
             {plan.id !== 'free' && (
               <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
                 /month
@@ -254,13 +271,11 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
             <List
               size="small"
               dataSource={plan.features.slice(0, 3)}
-              renderItem={(feature) => (
+              renderItem={feature => (
                 <List.Item style={{ padding: '4px 0', border: 'none' }}>
                   <Space>
                     <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '12px' }} />
-                    <Typography.Text style={{ fontSize: '12px' }}>
-                      {feature}
-                    </Typography.Text>
+                    <Typography.Text style={{ fontSize: '12px' }}>{feature}</Typography.Text>
                   </Space>
                 </List.Item>
               )}
@@ -286,9 +301,7 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
             disabled={loading}
             icon={isCurrent ? <CheckCircleOutlined /> : undefined}
           >
-            {isCurrent ? 'Current Plan' : 
-             isSelected ? 'Selected' : 
-             'Select Plan'}
+            {isCurrent ? 'Current Plan' : isSelected ? 'Selected' : 'Select Plan'}
           </Button>
 
           {!isCurrent && plan.id !== 'free' && (
@@ -331,9 +344,7 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
       open={visible}
       height="90%"
       className="mobile-pricing-drawer"
-      extra={
-        <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
-      }
+      extra={<Button type="text" icon={<CloseOutlined />} onClick={onClose} />}
     >
       <div onScroll={handleScroll} style={{ height: '100%', overflowY: 'auto' }}>
         {/* User Personalization Banner */}
@@ -348,9 +359,7 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
         )}
 
         {/* Sticky Controls */}
-        <Affix offsetTop={0}>
-          {renderStickyControls()}
-        </Affix>
+        <Affix offsetTop={0}>{renderStickyControls()}</Affix>
 
         {/* Pricing Model Recommendation */}
         {teamSize <= 5 && pricingModel === 'BASE_PLAN' && (
@@ -364,11 +373,7 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
             showIcon
             style={{ marginBottom: 16 }}
             action={
-              <Button
-                size="small"
-                type="primary"
-                onClick={() => onPricingModelChange('PER_USER')}
-              >
+              <Button size="small" type="primary" onClick={() => onPricingModelChange('PER_USER')}>
                 Switch
               </Button>
             }
@@ -376,9 +381,7 @@ const MobilePricingDrawer: React.FC<MobilePricingDrawerProps> = ({
         )}
 
         {/* Plan Cards */}
-        <div style={{ paddingBottom: 80 }}>
-          {plans.map(renderCompactPlanCard)}
-        </div>
+        <div style={{ paddingBottom: 80 }}>{plans.map(renderCompactPlanCard)}</div>
 
         {/* Back to Top Button */}
         {showBackToTop && (

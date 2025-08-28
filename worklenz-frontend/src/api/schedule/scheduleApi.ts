@@ -1,6 +1,13 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { API_BASE_URL } from '@/shared/constants';
-import { PickerType, ScheduleData, DateList, Member, Project, Settings } from '@/types/schedule/schedule-v2.types';
+import {
+  PickerType,
+  ScheduleData,
+  DateList,
+  Member,
+  Project,
+  Settings,
+} from '@/types/schedule/schedule-v2.types';
 import { IServerResponse } from '@/types/common.types';
 
 const rootUrl = `${API_BASE_URL}/schedule-gannt-v2`;
@@ -84,9 +91,9 @@ export const scheduleApi = createApi({
     'Workload',
     'Allocation',
     'CapacityReport',
-    'Conflicts'
+    'Conflicts',
   ],
-  endpoints: (builder) => ({
+  endpoints: builder => ({
     // Settings endpoints
     fetchScheduleSettings: builder.query<IServerResponse<Settings>, void>({
       query: () => '/settings',
@@ -116,9 +123,7 @@ export const scheduleApi = createApi({
 
     fetchMemberProjects: builder.query<IServerResponse<Project>, MemberProjectsRequest>({
       query: ({ id }) => `/members/projects/${id}`,
-      providesTags: (result, error, { id }) => [
-        { type: 'MemberProjects' as const, id },
-      ],
+      providesTags: (result, error, { id }) => [{ type: 'MemberProjects' as const, id }],
     }),
 
     // Schedule submission
@@ -138,7 +143,7 @@ export const scheduleApi = createApi({
         if (memberId) params.append('memberId', memberId);
         if (startDate) params.append('startDate', startDate);
         if (endDate) params.append('endDate', endDate);
-        
+
         return `/workload?${params.toString()}`;
       },
       providesTags: ['Workload'],
@@ -158,10 +163,7 @@ export const scheduleApi = createApi({
       }),
       invalidatesTags: ['Workload', 'Members', 'Allocation'],
       // Optimistic update
-      async onQueryStarted(
-        { memberId, projectId, allocatedHours },
-        { dispatch, queryFulfilled }
-      ) {
+      async onQueryStarted({ memberId, projectId, allocatedHours }, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
           // Invalidate related queries after successful update
@@ -192,7 +194,7 @@ export const scheduleApi = createApi({
           endDate,
         });
         if (teamId) params.append('teamId', teamId);
-        
+
         return `/capacity-report?${params.toString()}`;
       },
       providesTags: ['CapacityReport'],
@@ -205,7 +207,7 @@ export const scheduleApi = createApi({
 
     // Bulk operations
     bulkUpdateAllocations: builder.mutation<IServerResponse<any>, ResourceAllocation[]>({
-      query: (allocations) => ({
+      query: allocations => ({
         url: '/allocations/bulk',
         method: 'PUT',
         body: { allocations },
@@ -214,7 +216,10 @@ export const scheduleApi = createApi({
     }),
 
     // Analytics endpoints
-    fetchUtilizationAnalytics: builder.query<IServerResponse<any>, { startDate: string; endDate: string }>({
+    fetchUtilizationAnalytics: builder.query<
+      IServerResponse<any>,
+      { startDate: string; endDate: string }
+    >({
       query: ({ startDate, endDate }) => {
         const params = new URLSearchParams({ startDate, endDate });
         return `/analytics/utilization?${params.toString()}`;
@@ -283,7 +288,7 @@ export const {
 export default scheduleApi.reducer;
 
 // Export util for manual cache management
-export const { 
+export const {
   util: scheduleApiUtil,
   endpoints: scheduleApiEndpoints,
   reducerPath: scheduleApiReducerPath,

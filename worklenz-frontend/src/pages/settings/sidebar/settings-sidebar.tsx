@@ -33,7 +33,7 @@ const SettingSidebar: React.FC = () => {
           <Flex gap={8} justify="space-between" align="center">
             <Flex gap={8} align="center">
               {item.icon}
-              <Link 
+              <Link
                 to={`/worklenz/settings/${item.endpoint}`}
                 style={{ color: isDangerous ? '#ff4d4f' : undefined }}
               >
