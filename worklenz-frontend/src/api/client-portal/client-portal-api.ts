@@ -744,14 +744,14 @@ export const clientPortalApi = createApi({
       }
     >({
       query: params => ({
-        url: '/clients/portal/services',
+        url: '/client-portal/services/organization/all',
         params,
       }),
       providesTags: ['Services'],
     }),
 
     getOrganizationServiceById: builder.query<any, string>({
-      query: id => `/clients/portal/services/${id}`,
+      query: id => `/client-portal/services/organization/${id}`,
       providesTags: (result, error, id) => [{ type: 'Services', id }],
     }),
 
@@ -766,7 +766,7 @@ export const clientPortalApi = createApi({
       }
     >({
       query: serviceData => ({
-        url: '/clients/portal/services',
+        url: '/client-portal/services/organization',
         method: 'POST',
         body: serviceData,
       }),
@@ -775,7 +775,7 @@ export const clientPortalApi = createApi({
 
     updateOrganizationService: builder.mutation<any, { id: string; data: any }>({
       query: ({ id, data }) => ({
-        url: `/clients/portal/services/${id}`,
+        url: `/client-portal/services/organization/${id}`,
         method: 'PUT',
         body: data,
       }),
@@ -784,7 +784,7 @@ export const clientPortalApi = createApi({
 
     deleteOrganizationService: builder.mutation<void, string>({
       query: id => ({
-        url: `/clients/portal/services/${id}`,
+        url: `/client-portal/services/organization/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['Services'],

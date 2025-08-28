@@ -18,23 +18,25 @@ import {
   Empty,
 } from '@/shared/antd-imports';
 import { TableProps } from 'antd/lib';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { colors } from '../../../../styles/colors';
 import { useAppDispatch } from '../../../../hooks/useAppDispatch';
 import { useNavigate } from 'react-router-dom';
 import { useGetInvoicesQuery } from '../../../../api/client-portal/client-portal-api';
 import { PlusOutlined } from '@ant-design/icons';
+import AddInvoiceDrawer from '@/components/client-portal/AddInvoiceDrawer';
 
 const InvoicesTable = () => {
   // localization
   const { t } = useTranslation('client-portal-invoices');
+  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   // Fetch invoices from API
-  const { data: invoicesData, isLoading, error } = useGetInvoicesQuery();
+  const { data: invoicesData, isLoading, error, refetch } = useGetInvoicesQuery();
 
   // Function to get status color
   const getStatusColor = (status: string) => {
@@ -130,8 +132,7 @@ const InvoicesTable = () => {
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => {
-              // TODO: Open add invoice modal/drawer
-              console.log('Add invoice clicked');
+              setIsAddDrawerOpen(true);
             }}
           >
             {t('addInvoiceButton')}
@@ -211,6 +212,15 @@ const InvoicesTable = () => {
           onClick: () => navigate(`/worklenz/client-portal/invoices/${record.id}`),
           style: { cursor: 'pointer' },
         })}
+      />
+      
+      <AddInvoiceDrawer
+        open={isAddDrawerOpen}
+        onClose={() => setIsAddDrawerOpen(false)}
+        onSuccess={() => {
+          setIsAddDrawerOpen(false);
+          refetch();
+        }}
       />
     </Card>
   );

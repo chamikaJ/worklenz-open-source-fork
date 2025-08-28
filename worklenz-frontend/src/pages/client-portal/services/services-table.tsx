@@ -166,9 +166,9 @@ const ServicesTable = () => {
   }
 
   // Extract services from API response
-  // The response structure from backend: { total: number, data: Service[] }
-  const servicesResponse = servicesData?.body || { total: 0, data: [] };
-  const services = servicesResponse.data || [];
+  // The response structure from backend: { body: { services: Service[], total: number } }
+  const servicesResponse = servicesData?.body || { total: 0, services: [] };
+  const services = servicesResponse.services || [];
 
   // Handle empty state
   if (!services || services.length === 0) {

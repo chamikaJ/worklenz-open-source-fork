@@ -1,9 +1,10 @@
 import { Badge, Button, Flex, Table, Typography, Tooltip } from '@/shared/antd-imports';
-import React from 'react';
+import React, { useState } from 'react';
 import { TempChatsType } from './chat-box/chat-box-wrapper';
 import { PlusOutlined } from '@ant-design/icons';
 import { colors } from '../../../../styles/colors';
 import { useTranslation } from 'react-i18next';
+import NewChatModal from '@/components/client-portal/NewChatModal';
 
 type ChatListProps = {
   chatList: TempChatsType[];
@@ -12,10 +13,14 @@ type ChatListProps = {
 
 const ChatList = ({ chatList, setOpenedChatId }: ChatListProps) => {
   const { t } = useTranslation('client-portal-chats');
+  const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
 
   const handleNewChat = () => {
-    // TODO: Implement new chat functionality
-    console.log('New chat clicked');
+    setIsNewChatModalOpen(true);
+  };
+
+  const handleNewChatSuccess = (chatId: string) => {
+    setOpenedChatId(chatId);
   };
 
   // Ensure chatList is always an array
@@ -100,6 +105,12 @@ const ChatList = ({ chatList, setOpenedChatId }: ChatListProps) => {
           ),
         },
       ]}
+    />
+    
+    <NewChatModal
+      open={isNewChatModalOpen}
+      onClose={() => setIsNewChatModalOpen(false)}
+      onSuccess={handleNewChatSuccess}
     />
   );
 };
