@@ -264,8 +264,6 @@ const UpgradePlans = () => {
     };
 
     tiers.forEach(tier => {
-      console.log('Processing tier:', tier);
-
       // Map based on tier name from the database
       if (tier.tier_name === 'PRO_SMALL') {
         // Pro small team (per-user pricing for 1-5 users)
@@ -351,8 +349,6 @@ const UpgradePlans = () => {
         mapped.free.pricing_model = 'free';
         mapped.free.tier_id = tier.id;
       }
-
-      console.log(`Mapped tier ${tier.tier_name}:`, mapped);
     });
 
     return mapped;
@@ -437,7 +433,6 @@ const UpgradePlans = () => {
         // Filter tiers for AppSumo users - only show Business and Enterprise plans (based on Paddle setup)
         let filteredTiers = tiers;
         if (isAppSumoUser()) {
-          console.log('AppSumo user detected - filtering to Business and Enterprise plans only');
           filteredTiers = tiers.filter((tier: any) => {
             return tier.tier_name.includes('BUSINESS') || tier.tier_name.includes('ENTERPRISE');
           });
@@ -533,8 +528,6 @@ const UpgradePlans = () => {
   };
 
   const handlePaddleCallback = (data: any) => {
-    console.log('Paddle event:', data);
-
     switch (data.event) {
       case 'Checkout.Loaded':
         setSwitchingToPaddlePlan(false);
@@ -624,7 +617,6 @@ const UpgradePlans = () => {
       const effectivePricingModel = getEffectivePricingModel(
         selectedPlanType as 'pro' | 'business' | 'enterprise'
       );
-      console.log('Effective pricing model:', effectivePricingModel);
 
       // Check if user should use upgrade API (free, trial, or no active paddle subscription)
       const shouldUseUpgradeAPI =
@@ -639,21 +631,11 @@ const UpgradePlans = () => {
         // Determine pricing model using helper function
         const apiPricingModel = effectivePricingModel === 'base_plan' ? 'regular' : 'per_user';
 
-        console.log('Upgrade request:', {
-          planId,
-          pricingModel: effectivePricingModel,
-          teamSize: teamSize,
-          isAppSumo: isAppSumoUser(),
-          discountApplied: isAppSumoUser() ? '50%' : 'none',
-        });
-
         const res = await billingApiService.upgradeToPaidPlan(
           planId,
           apiPricingModel as 'per_user' | 'regular',
           effectivePricingModel === 'per_user' ? teamSize : undefined
         );
-
-        console.log('Upgrade API response:', res);
 
         if (res.done) {
           initializePaddle(res.body);
@@ -779,14 +761,6 @@ const UpgradePlans = () => {
         });
       }
 
-      console.log('Plan selection debug:', {
-        targetPlanType,
-        billingFrequency,
-        isAnnual,
-        planId,
-        pricingData: JSON.stringify(pricingData, null, 2),
-      });
-
       // Set the selected plan for the legacy system
       if (isAnnual) {
         setSelectedCard(paddlePlans.ANNUAL);
@@ -863,11 +837,6 @@ const UpgradePlans = () => {
 
   const calculateAnnualTotal = useCallback(
     (planType: 'pro' | 'business' | 'enterprise') => {
-      console.log(`Calculating annual total for ${planType}:`, {
-        teamSize,
-        pricingData: pricingData,
-      });
-
       let finalPrice = 0;
 
       // For teams 1-5, use per-user pricing from small team data
@@ -877,9 +846,6 @@ const UpgradePlans = () => {
           // So yearly total = monthly rate * 12 * users
           const perUserMonthlyIfAnnual = parseFloat(pricingData.pro_small.annual_price || '0');
           finalPrice = perUserMonthlyIfAnnual * 12 * teamSize; // e.g., 6.99 * 12 * 5 = 419.40
-          console.log(
-            `Pro Small Team: $${perUserMonthlyIfAnnual}/month x 12 months x ${teamSize} users = ${finalPrice}`
-          );
         } else if (
           planType === 'business' &&
           pricingData.business_small?.pricing_model === 'per_user'
@@ -888,9 +854,6 @@ const UpgradePlans = () => {
           // So yearly total = monthly rate * 12 * users
           const perUserMonthlyIfAnnual = parseFloat(pricingData.business_small.annual_price || '0');
           finalPrice = perUserMonthlyIfAnnual * 12 * teamSize;
-          console.log(
-            `Business Small Team: $${perUserMonthlyIfAnnual}/month x 12 months x ${teamSize} users = ${finalPrice}`
-          );
         } else if (planType === 'enterprise') {
           // Enterprise is always flat rate
           const annualTotal = parseFloat(pricingData.enterprise.annual_total || '0');
@@ -946,8 +909,6 @@ const UpgradePlans = () => {
         finalPrice = finalPrice * 0.5;
       }
 
-      console.log(`Final annual price for ${planType}:`, finalPrice);
-
       return finalPrice.toFixed(2);
     },
     [teamSize, pricingData, isAppSumoUser]
@@ -955,11 +916,6 @@ const UpgradePlans = () => {
 
   const calculateMonthlyTotal = useCallback(
     (planType: 'pro' | 'business' | 'enterprise') => {
-      console.log(`Calculating monthly total for ${planType}:`, {
-        teamSize,
-        pricingData: pricingData,
-      });
-
       let finalPrice = 0;
 
       // For teams 1-5, use per-user pricing from small team data
@@ -968,9 +924,6 @@ const UpgradePlans = () => {
           // Use Pro Small Team per-user pricing (monthly rate)
           const perUserMonthlyPrice = parseFloat(pricingData.pro_small.monthly_price || '0');
           finalPrice = perUserMonthlyPrice * teamSize;
-          console.log(
-            `Pro Small Team: $${perUserMonthlyPrice}/user/month x ${teamSize} users = ${finalPrice}`
-          );
         } else if (
           planType === 'business' &&
           pricingData.business_small?.pricing_model === 'per_user'
@@ -978,9 +931,6 @@ const UpgradePlans = () => {
           // Use Business Small Team per-user pricing (monthly rate)
           const perUserMonthlyPrice = parseFloat(pricingData.business_small.monthly_price || '0');
           finalPrice = perUserMonthlyPrice * teamSize;
-          console.log(
-            `Business Small Team: $${perUserMonthlyPrice}/user/month x ${teamSize} users = ${finalPrice}`
-          );
         } else if (planType === 'enterprise') {
           // Enterprise is always flat rate
           finalPrice = parseFloat(pricingData.enterprise.monthly_price || '0');
@@ -1029,8 +979,6 @@ const UpgradePlans = () => {
       if (isAppSumoUser()) {
         finalPrice = finalPrice * 0.5;
       }
-
-      console.log(`Final monthly price for ${planType}:`, finalPrice);
 
       return finalPrice.toFixed(2);
     },
@@ -1220,7 +1168,6 @@ const UpgradePlans = () => {
             <Select
               value={teamSize}
               onChange={value => {
-                console.log('Team size changed to:', value);
                 setTeamSize(value);
               }}
               style={{ width: 140 }}
