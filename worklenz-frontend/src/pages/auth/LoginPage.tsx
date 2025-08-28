@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Card, Input, Flex, Checkbox, Button, Typography, Space, Form, message } from 'antd/es';
+import { Card, Input, Flex, Checkbox, Button, Typography, Space, Form, message } from '@/shared/antd-imports';
 import { Rule } from 'antd/es/form';
 
 import { LockOutlined, UserOutlined } from '@/shared/antd-imports';

@@ -16,6 +16,7 @@ import {
   CheckOutlined,
   SortAscendingOutlined,
   SortDescendingOutlined,
+  SettingOutlined,
 } from '@/shared/antd-imports';
 import { RootState } from '@/app/store';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -510,20 +511,26 @@ const FilterDropdown: React.FC<{
           {section.selectedValues[0] === 'phase' && (
             <button
               onClick={onManagePhase}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border transition-all duration-200 ease-in-out hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${themeClasses.buttonBg} ${themeClasses.buttonBorder} ${themeClasses.buttonText} ${
-                isDarkMode ? 'focus:ring-offset-gray-900' : 'focus:ring-offset-white'
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border-2 transition-all duration-200 ease-in-out hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                isDarkMode 
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-500 focus:ring-offset-gray-900' 
+                  : 'bg-blue-500 hover:bg-blue-600 text-white border-blue-600 focus:ring-offset-white'
               }`}
             >
+              <SettingOutlined className="w-3.5 h-3.5" />
               {t('manage')} {projectPhaseLabel || t('phasesText')}
             </button>
           )}
           {section.selectedValues[0] === 'status' && (
             <button
               onClick={onManageStatus}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border transition-all duration-200 ease-in-out hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${themeClasses.buttonBg} ${themeClasses.buttonBorder} ${themeClasses.buttonText} ${
-                isDarkMode ? 'focus:ring-offset-gray-900' : 'focus:ring-offset-white'
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border-2 transition-all duration-200 ease-in-out hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                isDarkMode 
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-500 focus:ring-offset-gray-900' 
+                  : 'bg-blue-500 hover:bg-blue-600 text-white border-blue-600 focus:ring-offset-white'
               }`}
             >
+              <SettingOutlined className="w-3.5 h-3.5" />
               {t('manageStatuses')}
             </button>
           )}

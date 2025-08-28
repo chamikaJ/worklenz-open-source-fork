@@ -21,9 +21,6 @@ import {
   FileTextOutlined,
   FilePdfOutlined
 } from '@/shared/antd-imports';
-import {
-
-} from '@ant-design/icons';
 import { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import clientPortalAPI from '@/services/api';
 import { ApiResponse } from '@/types';
@@ -43,7 +40,7 @@ interface FileUploaderProps {
 }
 
 interface UploadedFileInfo {
-  id: string;
+  id?: string;
   url: string;
   filename: string;
   originalName: string;
@@ -172,14 +169,16 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       });
     } else {
       // Remove from file list (pending uploads)
-      setFileList(prev => prev.filter(f => f.uid !== file.uid));
+      const uploadFile = file as UploadFile;
+      setFileList(prev => prev.filter(f => f.uid !== uploadFile.uid));
     }
   };
 
   const handlePreview = (file: UploadedFileInfo) => {
     if (file.fileType.startsWith('image/')) {
       // For images, show in modal
-      Image.PreviewGroup.preview({ src: file.url });
+      // @ts-ignore
+      Image.PreviewGroup?.preview?.({ src: file.url }) || window.open(file.url, '_blank');
     } else {
       // For other files, open in new tab
       window.open(file.url, '_blank');
@@ -282,7 +281,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
                       <Text ellipsis style={{ maxWidth: 200 }}>
                         {file.originalName}
                       </Text>
-                      <Tag color="blue" size="small">
+                      <Tag color="blue">
                         {formatFileSize(file.size)}
                       </Tag>
                     </Space>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge, Dropdown, Flex, Tooltip, Button, InputRef, CheckboxChangeEvent } from 'antd/es';
+import { Badge, Dropdown, Flex, Tooltip, Button, InputRef, CheckboxChangeEvent } from '@/shared/antd-imports';
 import {
   RetweetOutlined,
   TagsOutlined,

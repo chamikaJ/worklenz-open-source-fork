@@ -1167,7 +1167,7 @@ const UpgradePlans = () => {
             <Typography.Text strong>Team Size:</Typography.Text>
             <Select
               value={teamSize}
-              onChange={value => {
+              onChange={(value: number) => {
                 setTeamSize(value);
               }}
               style={{ width: 140 }}

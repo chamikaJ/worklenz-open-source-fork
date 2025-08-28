@@ -63,10 +63,10 @@ const ChatsPage: React.FC = () => {
   const loadChats = async () => {
     try {
       setIsLoading(true);
-      const response: ApiResponse<ClientChat[]> = await clientPortalAPI.getChats();
+      const response: ApiResponse<any> = await clientPortalAPI.getChats();
       if (response.done && response.body) {
         // Transform the chat data to include IDs and titles
-        const chatList: ChatListItem[] = response.body.map((chat, index) => ({
+        const chatList: ChatListItem[] = (response.body as ClientChat[]).map((chat, index) => ({
           ...chat,
           id: `chat-${index}`,
           title: `Chat - ${new Date(chat.date).toLocaleDateString()}`
@@ -88,15 +88,15 @@ const ChatsPage: React.FC = () => {
     }
   };
 
-  const loadMessages = async (chatId: string) => {
+  const loadMessages = async (_chatId: string) => {
     try {
       setIsMessagesLoading(true);
-      const response: ApiResponse<ClientMessage[]> = await clientPortalAPI.getMessages({
+      const response: ApiResponse<any> = await clientPortalAPI.getMessages({
         page: 1,
         limit: 50
       });
       if (response.done && response.body) {
-        setMessages(response.body);
+        setMessages(response.body as ClientMessage[]);
       } else {
         setError('Failed to load messages');
       }
@@ -113,13 +113,13 @@ const ChatsPage: React.FC = () => {
 
     try {
       setIsSending(true);
-      const response: ApiResponse<ClientMessage> = await clientPortalAPI.sendMessage({
+      const response: ApiResponse<any> = await clientPortalAPI.sendMessage({
         message: newMessage.trim(),
         messageType: 'text'
       });
       
       if (response.done && response.body) {
-        setMessages(prev => [...prev, response.body]);
+        setMessages(prev => [...prev, response.body as ClientMessage]);
         setNewMessage('');
         message.success('Message sent successfully');
       } else {
@@ -155,7 +155,7 @@ const ChatsPage: React.FC = () => {
         });
         
         if (messageResponse.done && messageResponse.body) {
-          setMessages(prev => [...prev, messageResponse.body]);
+          setMessages(prev => [...prev, messageResponse.body as ClientMessage]);
           message.success('File uploaded and sent successfully');
         }
       }

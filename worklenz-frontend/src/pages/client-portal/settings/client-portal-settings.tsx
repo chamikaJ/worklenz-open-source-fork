@@ -141,7 +141,7 @@ const ClientPortalSettings = () => {
     accept: 'image/*',
     beforeUpload: handleLogoUpload,
     showUploadList: false,
-    onDrop(e) {
+    onDrop(e: React.DragEvent<HTMLDivElement>) {
       console.log('Dropped files', e.dataTransfer.files);
     },
   };

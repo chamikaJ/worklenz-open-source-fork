@@ -40,6 +40,9 @@ export {
   List,
 } from "antd/es";
 
+// Types
+export type { MenuProps } from "antd/es";
+
 // Icons
 export {
   DashboardOutlined,
@@ -82,4 +85,7 @@ export {
   ClockCircleOutlined,
   DollarOutlined,
   ReloadOutlined,
+  WarningOutlined,
+  InfoCircleOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMediaQuery } from 'react-responsive';
 import { LockOutlined, MailOutlined, UserOutlined } from '@/shared/antd-imports';
-import { Form, Card, Input, Flex, Button, Typography, Space, message } from 'antd/es';
+import { Form, Card, Input, Flex, Button, Typography, Space, message } from '@/shared/antd-imports';
 import { Rule } from 'antd/es/form';
 import { CheckCircleTwoTone, CloseCircleTwoTone } from '@/shared/antd-imports';
 import { useAppSelector } from '@/hooks/useAppSelector';

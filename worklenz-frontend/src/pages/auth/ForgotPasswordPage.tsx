@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useMediaQuery } from 'react-responsive';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserOutlined } from '@/shared/antd-imports';
-import { Form, Card, Input, Flex, Button, Typography, Result } from 'antd/es';
+import { Form, Card, Input, Flex, Button, Typography, Result } from '@/shared/antd-imports';
 
 import PageHeader from '@components/AuthPageHeader';
 

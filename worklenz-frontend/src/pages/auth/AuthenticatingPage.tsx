@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Card, Flex, Spin, Typography } from 'antd/es';
+import { Card, Flex, Spin, Typography } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 

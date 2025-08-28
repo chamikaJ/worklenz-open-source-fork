@@ -1,4 +1,4 @@
-import { Drawer, Flex, Form, Select, Typography, List, Button, Modal, Divider } from 'antd/es';
+import { Drawer, Flex, Form, Select, Typography, List, Button, Modal, Divider } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 
@@ -258,7 +258,7 @@ const ProjectMemberDrawer = () => {
               size="small"
               itemLayout="horizontal"
               dataSource={currentMembersList}
-              renderItem={member => (
+              renderItem={(member: any) => (
                 <List.Item key={member.id}>
                   <Flex gap={4} align="center" justify="space-between" style={{ width: '100%' }}>
                     {renderMemberOption(member)}

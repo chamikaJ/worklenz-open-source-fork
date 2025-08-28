@@ -15,11 +15,9 @@ import {
 import {
   BellOutlined,
   CheckOutlined,
-  DeleteOutlined,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
   CheckCircleOutlined,
-  WarningOutlined,
 } from '@ant-design/icons';
 import clientPortalAPI from '@/services/api';
 import { ClientNotification, ApiResponse } from '@/types';

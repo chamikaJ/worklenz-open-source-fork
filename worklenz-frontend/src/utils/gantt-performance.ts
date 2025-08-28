@@ -3,7 +3,7 @@ import { GanttTask, PerformanceMetrics } from '../types/advanced-gantt.types';
 
 // Debounce utility for drag operations
 export function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number): T {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   return useCallback(
     (...args: Parameters<T>) => {
@@ -221,7 +221,7 @@ export const useIntersectionObserver = (
   options?: IntersectionObserverInit
 ) => {
   const targetRef = useRef<HTMLElement>(null);
-  const observerRef = useRef<IntersectionObserver>();
+  const observerRef = useRef<IntersectionObserver | undefined>(undefined);
 
   useEffect(() => {
     if (!targetRef.current) return;
@@ -348,7 +348,7 @@ export const useMemoryManagement = () => {
 // Batch update utility for multiple task changes
 export const useBatchUpdates = <T>(updateFunction: (updates: T[]) => void, delay: number = 100) => {
   const batchRef = useRef<T[]>([]);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const addUpdate = useCallback(
     (update: T) => {

@@ -6,7 +6,7 @@ import { calculateTimeGap } from '@/utils/calculate-time-gap';
 import logger from '@/utils/errorLogger';
 import { formatDateTimeWithLocale } from '@/utils/format-date-time-with-locale';
 import { PlayCircleFilled } from '@/shared/antd-imports';
-import { Flex, Button, Popover, Typography, Divider, Skeleton } from 'antd/es';
+import { Flex, Button, Popover, Typography, Divider, Skeleton } from '@/shared/antd-imports';
 import React from 'react';
 import { useState } from 'react';
 

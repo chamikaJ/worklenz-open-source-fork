@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Checkbox, Divider, Flex, Form, Typography } from 'antd/es';
+import { Card, Checkbox, Divider, Flex, Form, Typography } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useDocumentTitle } from '@/hooks/useDoumentTItle';

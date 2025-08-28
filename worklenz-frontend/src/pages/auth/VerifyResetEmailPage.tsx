@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Form, Card, Input, Flex, Button, Typography, Result } from 'antd/es';
+import { Form, Card, Input, Flex, Button, Typography, Result } from '@/shared/antd-imports';
 import { LockOutlined } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { useMediaQuery } from 'react-responsive';
