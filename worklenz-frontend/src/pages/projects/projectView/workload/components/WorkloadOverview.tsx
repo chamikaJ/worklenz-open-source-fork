@@ -4,7 +4,6 @@ import {
   Card,
   Statistic,
   Progress,
-  Badge,
   Flex,
   Skeleton,
   Typography,
@@ -91,22 +90,6 @@ Member Status:
               }
               value={summary.totalMembers}
               prefix={<TeamOutlined />}
-              suffix={
-                <Flex gap={8}>
-                  {summary.overallocatedMembers > 0 && (
-                    <Badge
-                      count={summary.overallocatedMembers}
-                      style={{ backgroundColor: token.colorError }}
-                    />
-                  )}
-                  {summary.underutilizedMembers > 0 && (
-                    <Badge
-                      count={summary.underutilizedMembers}
-                      style={{ backgroundColor: token.colorWarning }}
-                    />
-                  )}
-                </Flex>
-              }
             />
           </Tooltip>
         </Card>
