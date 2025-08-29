@@ -462,7 +462,7 @@ class ClientPortalController {
 
       // Emit socket event for request update
       try {
-        const io = IO.getMainInstance();
+        const io = IO.getInstance();
         if (io) {
           io.emit(`client_portal:request_status_updated`, {
             requestId: updatedRequest.id,
@@ -587,11 +587,11 @@ class ClientPortalController {
         LEFT JOIN client_portal_requests r ON s.id = r.service_id
         ${whereClause}
         GROUP BY s.id, u.name
-        ORDER BY ${sortBy} ${sortOrder.toUpperCase()}
+        ORDER BY ${sortBy} ${String(sortOrder).toUpperCase()}
         LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
       `;
 
-      queryParams.push(limit, (Number(page) - 1) * Number(limit));
+      queryParams.push(String(limit), String((Number(page) - 1) * Number(limit)));
 
       const result = await db.query(query, queryParams);
 
@@ -680,7 +680,7 @@ class ClientPortalController {
   static async createOrganizationService(req: AuthenticatedClientRequest, res: IWorkLenzResponse) {
     try {
       const { name, description, service_data, is_public = false, allowed_client_ids = [] } = req.body;
-      const {organizationId, userId} = req;
+      const {organizationId, clientUserId} = req;
 
       if (!name) {
         return res.status(400).json(new ServerResponse(false, null, "Service name is required"));
@@ -702,7 +702,7 @@ class ClientPortalController {
         allowed_client_ids,
         organizationId, // team_id
         organizationId, // organization_team_id
-        userId
+        clientUserId
       ]);
 
       const service = result.rows[0];
@@ -1589,7 +1589,7 @@ class ClientPortalController {
 
       // Emit socket events for real-time updates
       try {
-        const io = IO.getMainInstance();
+        const io = IO.getInstance();
         if (io) {
           // Emit to organization team members
           io.emit(`client_portal:new_message`, {

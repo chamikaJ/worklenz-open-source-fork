@@ -4,6 +4,9 @@
   "tableView": "Table View",
   "noWorkloadData": "No workload data available",
   "noMembersFound": "No team members found",
+  "errorLoadingData": "Error loading workload data",
+  "retry": "Retry",
+  "refreshData": "Refresh Data",
 
   "overview": {
     "teamMembers": "Team Members",
@@ -12,7 +15,8 @@
     "points": "points",
     "averageUtilization": "Average Utilization",
     "criticalTasks": "Critical Tasks",
-    "totalTasks": "{{count}} Total Tasks"
+    "totalTasks": "{{count}} Total Tasks",
+    "criticalTasksTooltip": "High priority tasks requiring immediate attention.\n\nTask Breakdown:\n• Critical Tasks: {{criticalTasks}}\n• Total Tasks: {{totalTasks}}\n• Critical Percentage: {{criticalPercentage}}%"
   },
 
   "chart": {
@@ -87,6 +91,14 @@
     "daily": "Daily",
     "weekly": "Weekly",
     "monthly": "Monthly",
+    "workingDays": "Working Days",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday",
     "showWeekends": "Show Weekends",
     "showOverallocated": "Show Overallocated Only",
     "showUnderutilized": "Show Underutilized Only",

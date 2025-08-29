@@ -17,7 +17,7 @@ export async function on_chat_leave(io: Server, socket: Socket, data: any) {
     const userId = (socket as any).user?.id;
     const userName = (socket as any).user?.name || 'Unknown User';
     
-    log(`User ${userName} (${userId}) left chat ${chatId}`);
+    log("CLIENT_PORTAL", `User ${userName} (${userId}) left chat ${chatId}`);
     
     // Notify others in the room (optional)
     socket.to(`chat_${chatId}`).emit('chat:user_left', {

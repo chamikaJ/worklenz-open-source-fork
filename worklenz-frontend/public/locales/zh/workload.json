@@ -4,6 +4,9 @@
   "tableView": "Table View",
   "noWorkloadData": "No workload data available",
   "noMembersFound": "No team members found",
+  "errorLoadingData": "加载工作负载数据时出错",
+  "retry": "重试",
+  "refreshData": "刷新数据",
 
   "overview": {
     "teamMembers": "Team Members",
@@ -12,7 +15,8 @@
     "points": "points",
     "averageUtilization": "Average Utilization",
     "criticalTasks": "Critical Tasks",
-    "totalTasks": "{{count}} Total Tasks"
+    "totalTasks": "{{count}} Total Tasks",
+    "criticalTasksTooltip": "需要立即关注的高优先级任务。\n\n任务明细:\n• 关键任务: {{criticalTasks}}\n• 总任务: {{totalTasks}}\n• 关键百分比: {{criticalPercentage}}%"
   },
 
   "chart": {
@@ -87,6 +91,14 @@
     "daily": "Daily",
     "weekly": "Weekly",
     "monthly": "Monthly",
+    "workingDays": "工作日",
+    "monday": "星期一",
+    "tuesday": "星期二",
+    "wednesday": "星期三",
+    "thursday": "星期四",
+    "friday": "星期五",
+    "saturday": "星期六",
+    "sunday": "星期日",
     "showWeekends": "Show Weekends",
     "showOverallocated": "Show Overallocated Only",
     "showUnderutilized": "Show Underutilized Only",

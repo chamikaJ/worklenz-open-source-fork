@@ -158,7 +158,7 @@ const ProjectViewWorkload = React.memo(() => {
           <Empty
             description={
               <div>
-                <p>Error loading workload data</p>
+                <p>{t('errorLoadingData')}</p>
                 <p
                   style={{
                     fontSize: '12px',
@@ -176,7 +176,7 @@ const ProjectViewWorkload = React.memo(() => {
                     cursor: 'pointer',
                   }}
                 >
-                  Retry
+                  {t('retry')}
                 </button>
               </div>
             }
@@ -201,7 +201,7 @@ const ProjectViewWorkload = React.memo(() => {
                     marginTop: '16px',
                   }}
                 >
-                  Refresh Data
+                  {t('refreshData')}
                 </button>
               </div>
             }

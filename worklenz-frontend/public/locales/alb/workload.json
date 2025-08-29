@@ -4,6 +4,9 @@
   "tableView": "Table View",
   "noWorkloadData": "No workload data available",
   "noMembersFound": "No team members found",
+  "errorLoadingData": "Gabim në ngarkimin e të dhënave të ngarkesës së punës",
+  "retry": "Provo përsëri",
+  "refreshData": "Rifresko të dhënat",
 
   "overview": {
     "teamMembers": "Team Members",
@@ -12,7 +15,8 @@
     "points": "points",
     "averageUtilization": "Average Utilization",
     "criticalTasks": "Critical Tasks",
-    "totalTasks": "{{count}} Total Tasks"
+    "totalTasks": "{{count}} Total Tasks",
+    "criticalTasksTooltip": "Detyra me prioritet të lartë që kërkojnë vëmendje të menjehëershme.\n\nNdarja e detyrave:\n• Detyra kritike: {{criticalTasks}}\n• Detyra gjithsej: {{totalTasks}}\n• Perqindja kritike: {{criticalPercentage}}%"
   },
 
   "chart": {
@@ -87,6 +91,14 @@
     "daily": "Daily",
     "weekly": "Weekly",
     "monthly": "Monthly",
+    "workingDays": "Ditët e punës",
+    "monday": "E hënë",
+    "tuesday": "E martë",
+    "wednesday": "E mërkurë",
+    "thursday": "E enjte",
+    "friday": "E premte",
+    "saturday": "E shtunë",
+    "sunday": "E diel",
     "showWeekends": "Show Weekends",
     "showOverallocated": "Show Overallocated Only",
     "showUnderutilized": "Show Underutilized Only",

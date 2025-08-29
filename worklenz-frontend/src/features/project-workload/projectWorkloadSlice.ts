@@ -23,6 +23,15 @@ interface IWorkloadState {
   capacityUnit: 'hours' | 'points';
   timeScale: 'day' | 'week' | 'month';
   showWeekends: boolean;
+  workingDays: {
+    monday: boolean;
+    tuesday: boolean;
+    wednesday: boolean;
+    thursday: boolean;
+    friday: boolean;
+    saturday: boolean;
+    sunday: boolean;
+  };
   alertThresholds: {
     overallocation: number;
     underutilization: number;
@@ -43,6 +52,15 @@ const initialState: IWorkloadState = {
   capacityUnit: 'hours',
   timeScale: 'week',
   showWeekends: false,
+  workingDays: {
+    monday: true,
+    tuesday: true,
+    wednesday: true,
+    thursday: true,
+    friday: true,
+    saturday: false,
+    sunday: false,
+  },
   alertThresholds: {
     overallocation: 100,
     underutilization: 50,
@@ -77,6 +95,12 @@ const projectWorkloadSlice = createSlice({
     toggleWeekends: state => {
       state.showWeekends = !state.showWeekends;
     },
+    setWorkingDays: (state, action: PayloadAction<Partial<typeof initialState.workingDays>>) => {
+      state.workingDays = { ...state.workingDays, ...action.payload };
+    },
+    toggleWorkingDay: (state, action: PayloadAction<keyof typeof initialState.workingDays>) => {
+      state.workingDays[action.payload] = !state.workingDays[action.payload];
+    },
     setAlertThresholds: (
       state,
       action: PayloadAction<{ overallocation?: number; underutilization?: number }>
@@ -96,6 +120,8 @@ export const {
   setCapacityUnit,
   setTimeScale,
   toggleWeekends,
+  setWorkingDays,
+  toggleWorkingDay,
   setAlertThresholds,
   resetWorkloadState,
 } = projectWorkloadSlice.actions;

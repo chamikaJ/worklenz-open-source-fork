@@ -184,12 +184,11 @@ Includes:
       <Col xs={24} sm={12} md={6}>
         <Card style={{ height: '100%' }}>
           <Tooltip
-            title={`High priority tasks requiring immediate attention.
-
-Task Breakdown:
-• Critical Tasks: ${summary.criticalTasks}
-• Total Tasks: ${summary.totalTasks}
-• Critical Percentage: ${Math.round((summary.criticalTasks / summary.totalTasks) * 100)}%`}
+            title={t('overview.criticalTasksTooltip', {
+              criticalTasks: summary.criticalTasks,
+              totalTasks: summary.totalTasks,
+              criticalPercentage: Math.round((summary.criticalTasks / summary.totalTasks) * 100)
+            })}
             placement="top"
           >
             <Statistic

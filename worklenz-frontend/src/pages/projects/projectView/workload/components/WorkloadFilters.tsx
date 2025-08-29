@@ -14,6 +14,7 @@ import {
   List,
   Typography,
   Divider,
+  Checkbox,
 } from '@/shared/antd-imports';
 import {
   FilterOutlined,
@@ -32,6 +33,8 @@ import {
   setTimeScale,
   setCapacityUnit,
   toggleWeekends,
+  toggleWorkingDay,
+  setWorkingDays,
 } from '@/features/project-workload/projectWorkloadSlice';
 import dayjs from 'dayjs';
 
@@ -45,7 +48,7 @@ const WorkloadFilters = ({ onRefresh }: WorkloadFiltersProps) => {
   const { t } = useTranslation('workload');
   const dispatch = useAppDispatch();
   const { token } = theme.useToken();
-  const { dateRange, filters, timeScale, capacityUnit, showWeekends } = useAppSelector(
+  const { dateRange, filters, timeScale, capacityUnit, showWeekends, workingDays } = useAppSelector(
     state => state.projectWorkload
   );
 
@@ -171,13 +174,18 @@ const WorkloadFilters = ({ onRefresh }: WorkloadFiltersProps) => {
     setIsDateDropdownOpen(false);
   };
 
+  const defaultWorkingDaysCount = 5; // Monday to Friday
+  const currentWorkingDaysCount = Object.values(workingDays).filter(Boolean).length;
+  const workingDaysChanged = currentWorkingDaysCount !== defaultWorkingDaysCount;
+
   const activeFiltersCount =
     (filters.showOverallocated ? 1 : 0) +
     (filters.showUnderutilized ? 1 : 0) +
     (filters.memberIds?.length || 0) +
     (filters.teamIds?.length || 0) +
     (filters.taskStatuses?.length || 0) +
-    (filters.taskPriorities?.length || 0);
+    (filters.taskPriorities?.length || 0) +
+    (workingDaysChanged ? 1 : 0);
 
   const filterContent = (
     <Flex vertical gap={16} style={{ width: 300 }}>
@@ -208,6 +216,70 @@ const WorkloadFilters = ({ onRefresh }: WorkloadFiltersProps) => {
         />
       </div>
 
+      <div>
+        <label style={{ display: 'block', marginBottom: 8 }}>{t('filters.workingDays')}</label>
+        <Flex vertical gap={8}>
+          <Flex justify="space-between" align="center">
+            <Checkbox
+              checked={workingDays.monday}
+              onChange={() => dispatch(toggleWorkingDay('monday'))}
+            >
+              {t('filters.monday')}
+            </Checkbox>
+          </Flex>
+          <Flex justify="space-between" align="center">
+            <Checkbox
+              checked={workingDays.tuesday}
+              onChange={() => dispatch(toggleWorkingDay('tuesday'))}
+            >
+              {t('filters.tuesday')}
+            </Checkbox>
+          </Flex>
+          <Flex justify="space-between" align="center">
+            <Checkbox
+              checked={workingDays.wednesday}
+              onChange={() => dispatch(toggleWorkingDay('wednesday'))}
+            >
+              {t('filters.wednesday')}
+            </Checkbox>
+          </Flex>
+          <Flex justify="space-between" align="center">
+            <Checkbox
+              checked={workingDays.thursday}
+              onChange={() => dispatch(toggleWorkingDay('thursday'))}
+            >
+              {t('filters.thursday')}
+            </Checkbox>
+          </Flex>
+          <Flex justify="space-between" align="center">
+            <Checkbox
+              checked={workingDays.friday}
+              onChange={() => dispatch(toggleWorkingDay('friday'))}
+            >
+              {t('filters.friday')}
+            </Checkbox>
+          </Flex>
+          <Flex justify="space-between" align="center">
+            <Checkbox
+              checked={workingDays.saturday}
+              onChange={() => dispatch(toggleWorkingDay('saturday'))}
+            >
+              {t('filters.saturday')}
+            </Checkbox>
+          </Flex>
+          <Flex justify="space-between" align="center">
+            <Checkbox
+              checked={workingDays.sunday}
+              onChange={() => dispatch(toggleWorkingDay('sunday'))}
+            >
+              {t('filters.sunday')}
+            </Checkbox>
+          </Flex>
+        </Flex>
+      </div>
+
+      <Divider style={{ marginBlock: 12 }} />
+
       <Flex justify="space-between" align="center">
         <span>{t('filters.showWeekends')}</span>
         <Switch checked={showWeekends} onChange={() => dispatch(toggleWeekends())} />
@@ -232,7 +304,19 @@ const WorkloadFilters = ({ onRefresh }: WorkloadFiltersProps) => {
       <Button
         type="text"
         danger
-        onClick={() => dispatch(clearFilters())}
+        onClick={() => {
+          dispatch(clearFilters());
+          // Reset working days to default (Monday-Friday)
+          dispatch(setWorkingDays({
+            monday: true,
+            tuesday: true,
+            wednesday: true,
+            thursday: true,
+            friday: true,
+            saturday: false,
+            sunday: false,
+          }));
+        }}
         disabled={activeFiltersCount === 0}
       >
         {t('filters.clearAll')}
@@ -334,12 +418,6 @@ const WorkloadFilters = ({ onRefresh }: WorkloadFiltersProps) => {
       </Popover>
 
       <Button icon={<ReloadOutlined />} onClick={onRefresh} title={t('filters.refresh')} />
-
-      <Button icon={<DownloadOutlined />} title={t('filters.export')}>
-        {t('filters.export')}
-      </Button>
-
-      <Button icon={<SettingOutlined />} title={t('filters.settings')} />
     </Flex>
   );
 };

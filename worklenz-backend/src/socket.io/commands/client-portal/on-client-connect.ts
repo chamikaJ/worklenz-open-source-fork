@@ -53,7 +53,7 @@ export async function on_client_connect(io: Server, socket: Socket, data: any) {
         [socket.id, client.id]
       );
 
-      log(`Client ${client.name} (${client.id}) connected via Socket.IO`);
+      log("CLIENT_PORTAL", `Client ${client.name} (${client.id}) connected via Socket.IO`);
       
       socket.emit('client_portal:connected', {
         success: true,
@@ -105,7 +105,7 @@ export async function on_client_connect(io: Server, socket: Socket, data: any) {
         [socket.id, user.id]
       );
 
-      log(`User ${user.name} (${user.id}) connected via Socket.IO`);
+      log("CLIENT_PORTAL", `User ${user.name} (${user.id}) connected via Socket.IO`);
       
       socket.emit('connected', {
         success: true,
