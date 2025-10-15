@@ -1,0 +1,286 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: worklenz_postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-worklenz}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_DB: ${DB_NAME:-worklenz_db}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - worklenz_postgres_data:/var/lib/postgresql/data
+      - ../../worklenz-backend/database:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-worklenz} -d ${DB_NAME:-worklenz_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - worklenz_internal
+
+  # ============================================
+  # Redis Cache
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: worklenz_redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required} --maxmemory ${REDIS_MAX_MEMORY:-256mb} --maxmemory-policy ${REDIS_EVICTION_POLICY:-allkeys-lru} --appendonly yes
+    volumes:
+      - worklenz_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - worklenz_internal
+
+  # ============================================
+  # MinIO Object Storage
+  # ============================================
+  minio:
+    image: minio/minio:latest
+    container_name: worklenz_minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+    volumes:
+      - worklenz_minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - worklenz_internal
+    # Note: MinIO console not exposed to host in production
+    # Access via Nginx or kubectl port-forward for admin tasks
+
+  # ============================================
+  # MinIO Setup - Creates bucket
+  # ============================================
+  minio_setup:
+    image: minio/mc:latest
+    container_name: worklenz_minio_setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for MinIO to be ready...';
+      sleep 5;
+      for i in 1 2 3 4 5; do
+        echo 'Attempt $$i: Connecting to MinIO...';
+        if /usr/bin/mc config host add worklenz http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}; then
+          echo 'Connected successfully!';
+          /usr/bin/mc mb --ignore-existing worklenz/worklenz-bucket;
+          /usr/bin/mc anonymous set public worklenz/worklenz-bucket;
+          echo 'Bucket created and configured!';
+          exit 0;
+        fi;
+        echo 'Connection failed, retrying in 5 seconds...';
+        sleep 5;
+      done;
+      echo 'Failed to setup MinIO after 5 attempts';
+      exit 1;
+      "
+    networks:
+      - worklenz_internal
+
+  # ============================================
+  # Backend API Server
+  # ============================================
+  backend:
+    build:
+      context: ../../
+      dockerfile: deploy/docker/dockerfiles/backend.Dockerfile
+    container_name: worklenz_backend
+    environment:
+      # Core
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${BACKEND_PORT:-3000}
+
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-worklenz_db}
+      DB_USER: ${DB_USER:-worklenz}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_MAX_CLIENTS: ${DB_MAX_CONNECTIONS:-50}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      REDIS_DB: ${REDIS_DB:-0}
+
+      # Storage
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-minio}
+      S3_URL: ${S3_URL:-http://minio:9000/worklenz-bucket}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-worklenz-bucket}
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+
+      # Security
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+      SESSION_NAME: ${SESSION_NAME:-worklenz.sid}
+      COOKIE_SECRET: ${COOKIE_SECRET:?COOKIE_SECRET is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+
+      # CORS
+      SERVER_CORS: ${CORS_ORIGIN:-*}
+      SOCKET_IO_CORS: ${FRONTEND_URL:-http://localhost}
+
+      # URLs
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      HOSTNAME: ${DOMAIN:-localhost}
+
+      # Features
+      ENABLE_EMAIL_CRONJOBS: ${ENABLE_EMAIL_CRONJOBS:-false}
+      ENABLE_RECURRING_JOBS: ${ENABLE_RECURRING_JOBS:-false}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - worklenz_internal
+    # Note: Port not exposed to host, accessed via Nginx
+
+  # ============================================
+  # Backend Worker (Background Jobs)
+  # ============================================
+  worker:
+    build:
+      context: ../../
+      dockerfile: deploy/docker/dockerfiles/worker.Dockerfile
+    container_name: worklenz_worker
+    environment:
+      # Core
+      NODE_ENV: ${NODE_ENV:-production}
+      WORKER_MODE: "true"
+
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-worklenz_db}
+      DB_USER: ${DB_USER:-worklenz}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_MAX_CLIENTS: ${DB_MAX_CONNECTIONS:-50}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      REDIS_DB: ${REDIS_DB:-0}
+
+      # Storage
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-minio}
+      S3_URL: ${S3_URL:-http://minio:9000/worklenz-bucket}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-worklenz-bucket}
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+
+      # Security
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+
+      # Worker Features
+      ENABLE_EMAIL_CRONJOBS: ${ENABLE_EMAIL_CRONJOBS:-true}
+      ENABLE_RECURRING_JOBS: ${ENABLE_RECURRING_JOBS:-true}
+      RECURRING_JOBS_INTERVAL: ${RECURRING_JOBS_INTERVAL:-"0 11 */1 * 1-5"}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - worklenz_internal
+
+  # ============================================
+  # Frontend React App
+  # ============================================
+  frontend:
+    build:
+      context: ../../
+      dockerfile: deploy/docker/dockerfiles/frontend.Dockerfile
+    container_name: worklenz_frontend
+    environment:
+      # Runtime environment variables
+      VITE_API_URL: ${BACKEND_URL:-http://localhost:3000}
+      VITE_SOCKET_URL: ${SOCKET_URL:-ws://localhost:3000}
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - worklenz_internal
+    # Note: Port not exposed to host, accessed via Nginx
+
+  # ============================================
+  # Nginx Reverse Proxy
+  # ============================================
+  nginx:
+    image: nginx:alpine
+    container_name: worklenz_nginx
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/ssl:/etc/nginx/ssl:ro
+      - ../nginx/certs:/etc/nginx/certs:ro
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - worklenz_internal
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  worklenz_postgres_data:
+    driver: local
+  worklenz_redis_data:
+    driver: local
+  worklenz_minio_data:
+    driver: local
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  worklenz_internal:
+    driver: bridge
