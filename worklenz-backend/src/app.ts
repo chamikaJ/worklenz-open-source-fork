@@ -21,6 +21,7 @@ import { isInternalServer, isProduction } from "./shared/utils";
 import sessionMiddleware from "./middlewares/session-middleware";
 import safeControllerFunction from "./shared/safe-controller-function";
 import AwsSesController from "./controllers/aws-ses-controller";
+import HealthController from "./controllers/health-controller";
 import { CSP_POLICIES } from "./shared/csp";
 
 const app = express();
@@ -153,6 +154,12 @@ app.get("/csrf-token", (req: Request, res: Response) => {
     res.status(500).json({ done: false, message: "Failed to generate CSRF token" });
   }
 });
+
+// Health check endpoints (no auth required - for load balancers & monitoring)
+app.get("/health", safeControllerFunction(HealthController.liveness));
+app.get("/health/live", safeControllerFunction(HealthController.liveness));
+app.get("/health/ready", safeControllerFunction(HealthController.readiness));
+app.get("/health/status", safeControllerFunction(HealthController.status));
 
 // Webhook endpoints (no CSRF required)
 app.post("/webhook/emails/bounce", safeControllerFunction(AwsSesController.handleBounceResponse));

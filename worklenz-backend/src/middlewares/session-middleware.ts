@@ -1,11 +1,21 @@
 import session from "express-session";
 import db from "../config/db";
-import { isProduction } from "../shared/utils";
 import * as cookieSignature from "cookie-signature";
 import { randomBytes } from "crypto";
+import { createRedisSessionStore, useRedisForSessions } from "../config/redis";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pgSession = require("connect-pg-simple")(session);
+
+// Determine which session store to use
+const sessionStore = useRedisForSessions()
+  ? createRedisSessionStore()
+  : new pgSession({
+      pool: db.pool,
+      tableName: "pg_sessions"
+    });
+
+console.log(`Using ${useRedisForSessions() ? "Redis" : "PostgreSQL"} for session storage`);
 
 const sessionConfig = {
   name: process.env.SESSION_NAME,
@@ -14,10 +24,7 @@ const sessionConfig = {
   resave: false,
   saveUninitialized: true,
   rolling: true,
-  store: new pgSession({
-    pool: db.pool,
-    tableName: "pg_sessions"
-  }),
+  store: sessionStore,
   cookie: {
     path: "/",
     httpOnly: true,

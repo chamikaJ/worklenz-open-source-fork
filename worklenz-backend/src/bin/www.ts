@@ -13,7 +13,7 @@ import sessionMiddleware from "../middlewares/session-middleware";
 import {getLoggedInUserIdFromSocket} from "../socket.io/util";
 import {startCronJobs} from "../cron_jobs";
 import FileConstants from "../shared/file-constants";
-import {initRedis} from "../redis/client";
+import {initRedis, pubClient, subClient, createAdapter, closeRedis} from "../redis/client";
 import DbTaskStatusChangeListener from "../pg_notify_listeners/db-task-status-changed";
 
 function normalizePort(val?: string) {
@@ -36,6 +36,18 @@ const io = new Server(server, {
   },
   cookie: true
 });
+
+// Initialize Socket.IO Redis adapter for multi-instance support
+async function initializeSocketIOAdapter() {
+  try {
+    await initRedis();
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log("✓ Socket.IO Redis adapter initialized");
+  } catch (error) {
+    console.error("Failed to initialize Socket.IO Redis adapter:", error);
+    console.log("⚠ Running Socket.IO in single-instance mode");
+  }
+}
 
 const wrap = (middleware: any) => (socket: any, next: any) => middleware(socket.request, {}, next);
 
@@ -95,8 +107,14 @@ function onListening() {
     ? `pipe ${addr}`
     : `port ${addr.port}`;
 
-  process.env.ENABLE_EMAIL_CRONJOBS === "true" && startCronJobs();
-  // void initRedis();
+  // Initialize Redis and Socket.IO adapter
+  void initializeSocketIOAdapter();
+  
+  // Start cron jobs if enabled (only in API server, not in worker)
+  if (process.env.WORKER_MODE !== "true") {
+    process.env.ENABLE_EMAIL_CRONJOBS === "true" && startCronJobs();
+  }
+  
   FileConstants.init();
   void DbTaskStatusChangeListener.connect();
 
@@ -105,6 +123,7 @@ function onListening() {
 
 function onClose() {
   DbTaskStatusChangeListener.disconnect();
+  void closeRedis();
 }
 
 server.on("error", onError);
