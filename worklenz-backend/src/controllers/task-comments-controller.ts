@@ -6,13 +6,14 @@ import { ServerResponse } from "../models/server-response";
 import WorklenzControllerBase from "./worklenz-controller-base";
 import HandleExceptions from "../decorators/handle-exceptions";
 import { NotificationsService } from "../services/notifications/notifications.service";
-import { humanFileSize, log_error, megabytesToBytes } from "../shared/utils";
-import { HTML_TAG_REGEXP, S3_URL, getStorageUrl } from "../shared/constants";
+import { humanFileSize, log_error, megabytesToBytes, sanitizeCommentContent, sanitizePlainText } from "../shared/utils";
+import { HTML_TAG_REGEXP, S3_URL } from "../shared/constants";
 import { getBaseUrl } from "../cron_jobs/helpers";
 import { ICommentEmailNotification } from "../interfaces/comment-email-notification";
 import { sendTaskComment } from "../shared/email-notifications";
 import { getRootDir, uploadBase64, getKey, getTaskAttachmentKey, createPresignedUrlWithClient } from "../shared/s3";
 import { getFreePlanSettings, getUsedStorage } from "../shared/paddle-utils";
+import { ExternalNotificationsService } from "../services/external-notifications.service";
 
 interface ITaskAssignee {
   team_member_id: string;
@@ -81,7 +82,8 @@ export default class TaskCommentsController extends WorklenzControllerBase {
              (SELECT color_code FROM projects WHERE id = $3) AS project_color
       FROM users
       WHERE id != $1
-        AND id IN (SELECT user_id FROM team_members WHERE id = $2);
+        AND id IN (SELECT user_id FROM team_members WHERE id = $2)
+        AND users.is_deleted IS NOT TRUE;
     `;
     const result = await db.query(q, [senderUserId, teamMemberId, projectId]);
     const [data] = result.rows;
@@ -104,9 +106,13 @@ export default class TaskCommentsController extends WorklenzControllerBase {
     const { mentions, attachments, task_id } = req.body;
     const url = `${S3_URL}/${getRootDir()}`;
 
-    let commentContent = req.body.content;
+    // Content is already sanitized by the validator middleware
+    // Process mentions after sanitization to ensure safe HTML
+    let commentContent = req.body.content || '';
     if (mentions.length > 0) {
       commentContent = this.replaceContent(commentContent, mentions);
+      // Re-sanitize after mention processing to ensure no XSS was introduced
+      commentContent = sanitizeCommentContent(commentContent);
     }
 
     req.body.content = commentContent;
@@ -148,12 +154,14 @@ export default class TaskCommentsController extends WorklenzControllerBase {
       }
     }
 
-    const mentionMessage = `<b>${req.user?.name}</b> has mentioned you in a comment on <b>${response.task_name}</b> (${response.team_name})`;
+    // Sanitize user name to prevent XSS attacks in notification messages
+    const safeName = sanitizePlainText(req.user?.name || "Unknown User");
+    const mentionMessage = `<b>${safeName}</b> has mentioned you in a comment on <b>${response.task_name}</b> (${response.team_name})`;
     // const mentions = [...new Set(req.body.mentions || [])] as string[]; // remove duplicates
 
     const assignees = await getAssignees(req.body.task_id);
 
-    const commentMessage = `<b>${req.user?.name}</b> added a comment on <b>${response.task_name}</b> (${response.team_name})`;
+    const commentMessage = `<b>${safeName}</b> added a comment on <b>${response.task_name}</b> (${response.team_name})`;
     for (const member of assignees || []) {
       if (member.user_id && member.user_id === req.user?.id) continue;
 
@@ -259,6 +267,19 @@ export default class TaskCommentsController extends WorklenzControllerBase {
       user_id: req.user?.id || ""
     };
 
+    // Send external notifications (Slack, Teams) for comment added
+    try {
+      await ExternalNotificationsService.sendExternalNotifications(
+        response.project_id,
+        req.body.task_id,
+        "comment_added",
+        req.user?.name || "Unknown User"
+      );
+    } catch (notifError) {
+      log_error("Error sending external notifications for comment:", notifError);
+      // Don't throw - continue even if notifications fail
+    }
+
     return res.status(200).send(new ServerResponse(true, commentdata));
   }
 
@@ -268,9 +289,13 @@ export default class TaskCommentsController extends WorklenzControllerBase {
     req.body.team_id = req.user?.team_id;
     const { mentions, comment_id } = req.body;
 
-    let commentContent = req.body.content;
+    // Content is already sanitized by the validator middleware
+    // Process mentions after sanitization to ensure safe HTML
+    let commentContent = req.body.content || '';
     if (mentions.length > 0) {
       commentContent = await this.replaceContent(commentContent, mentions);
+      // Re-sanitize after mention processing to ensure no XSS was introduced
+      commentContent = sanitizeCommentContent(commentContent);
     }
 
     req.body.content = commentContent;
@@ -281,12 +306,14 @@ export default class TaskCommentsController extends WorklenzControllerBase {
 
     const response = data.comment;
 
-    const mentionMessage = `<b>${req.user?.name}</b> has mentioned you in a comment on <b>${response.task_name}</b> (${response.team_name})`;
+    // Sanitize user name to prevent XSS attacks in notification messages
+    const safeName = sanitizePlainText(req.user?.name || "Unknown User");
+    const mentionMessage = `<b>${safeName}</b> has mentioned you in a comment on <b>${response.task_name}</b> (${response.team_name})`;
     // const mentions = [...new Set(req.body.mentions || [])] as string[]; // remove duplicates
 
     const assignees = await getAssignees(req.body.task_id);
 
-    const commentMessage = `<b>${req.user?.name}</b> added a comment on <b>${response.task_name}</b> (${response.team_name})`;
+    const commentMessage = `<b>${safeName}</b> added a comment on <b>${response.task_name}</b> (${response.team_name})`;
     for (const member of assignees || []) {
       if (member.user_id && member.user_id === req.user?.id) continue;
 
@@ -382,7 +409,7 @@ export default class TaskCommentsController extends WorklenzControllerBase {
   }
 
   private static async getTaskComments(taskId: string) {
-    const url = `${getStorageUrl()}/${getRootDir()}`;
+    const url = `${S3_URL}/${getRootDir()}`;
 
     const q = `SELECT task_comments.id,
                     tc.text_content AS content,
@@ -532,7 +559,9 @@ export default class TaskCommentsController extends WorklenzControllerBase {
       await db.query(q, [id, req.user?.id, req.user?.team_member_id]);
 
       const getTaskCommentData = await TaskCommentsController.getTaskCommentData(id);
-      const commentMessage = `<b>${getTaskCommentData.reactor_name}</b> liked your comment on <b>${getTaskCommentData.task_name}</b> (${getTaskCommentData.team_name})`;
+      // Sanitize reactor name to prevent XSS attacks
+      const safeReactorName = sanitizePlainText(getTaskCommentData.reactor_name || "Unknown User");
+      const commentMessage = `<b>${safeReactorName}</b> liked your comment on <b>${getTaskCommentData.task_name}</b> (${getTaskCommentData.team_name})`;
 
       if (getTaskCommentData && getTaskCommentData.user_id !== req.user?.id) {
         void NotificationsService.createNotification({
@@ -567,7 +596,7 @@ export default class TaskCommentsController extends WorklenzControllerBase {
 
     const commentId = data.id;
 
-    const url = `${getStorageUrl()}/${getRootDir()}`;
+    const url = `${S3_URL}/${getRootDir()}`;
 
     for (const attachment of attachments) {
       if (req.user?.subscription_status === "free" && req.user?.owner_id) {
@@ -607,7 +636,9 @@ export default class TaskCommentsController extends WorklenzControllerBase {
 
     const assignees = await getAssignees(task_id);
 
-    const commentMessage = `<b>${req.user?.name}</b> added a new attachment as a comment on <b>${commentId.task_name}</b> (${commentId.team_name})`;
+    // Sanitize user name to prevent XSS attacks in notification messages
+    const safeName = sanitizePlainText(req.user?.name || "Unknown User");
+    const commentMessage = `<b>${safeName}</b> added a new attachment as a comment on <b>${commentId.task_name}</b> (${commentId.team_name})`;
 
     for (const member of assignees || []) {
       if (member.user_id && member.user_id === req.user?.id) continue;

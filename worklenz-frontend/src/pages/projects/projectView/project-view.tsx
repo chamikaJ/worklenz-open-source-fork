@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, Suspense, useRef } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 
@@ -8,14 +8,24 @@ import {
   ConfigProvider,
   Flex,
   Tabs,
+  Tooltip,
   PushpinFilled,
   PushpinOutlined,
+  message,
 } from '@/shared/antd-imports';
+import { CrownOutlined } from '@ant-design/icons';
 
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
+import { toggleUpgradeModal } from '@/features/admin-center/admin-center.slice';
+import { hasBusinessFeatureAccess } from '@/utils/subscription-utils';
+import { hasFinanceViewPermission } from '@/utils/finance-permissions';
 import { getProject, setProjectId, setProjectView } from '@/features/project/project.slice';
-import { fetchStatuses, resetStatuses } from '@/features/taskAttributes/taskStatusSlice';
+import {
+  fetchStatuses,
+  fetchStatusesCategories,
+  resetStatuses,
+} from '@/features/taskAttributes/taskStatusSlice';
 import { projectsApiService } from '@/api/projects/projects.api.service';
 import { useDocumentTitle } from '@/hooks/useDoumentTItle';
 import ProjectViewHeader from './project-view-header';
@@ -23,12 +33,17 @@ import './project-view.css';
 import { resetTaskListData } from '@/features/tasks/tasks.slice';
 import { resetBoardData } from '@/features/board/board-slice';
 import { resetTaskManagement } from '@/features/task-management/task-management.slice';
+import { setActiveTeam } from '@/features/teams/teamSlice';
 import { resetGrouping } from '@/features/task-management/grouping.slice';
 import { resetSelection } from '@/features/task-management/selection.slice';
-import { resetFields } from '@/features/task-management/taskListFields.slice';
+import { resetFields, setProjectContext } from '@/features/task-management/taskListFields.slice';
 import { fetchLabels } from '@/features/taskAttributes/taskLabelSlice';
 import { deselectAll } from '@/features/projects/bulkActions/bulkActionSlice';
-import { tabItems, updateTabLabels } from '@/lib/project/project-view-constants';
+import {
+  tabItems,
+  updateTabLabels,
+  getFilteredTabItems,
+} from '@/lib/project/project-view-constants';
 import {
   setSelectedTaskId,
   setShowTaskDrawer,
@@ -37,11 +52,18 @@ import {
 import { resetState as resetEnhancedKanbanState } from '@/features/enhanced-kanban/enhanced-kanban.slice';
 import { setProjectId as setInsightsProjectId } from '@/features/projects/insights/project-insights.slice';
 import { SuspenseFallback } from '@/components/suspense-fallback/suspense-fallback';
+import ProjectViewSkeleton from './project-view-skeleton';
 import { useTranslation } from 'react-i18next';
 import { useTimerInitialization } from '@/hooks/useTimerInitialization';
+import { useAuthService } from '@/hooks/useAuth';
+import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
+import { useAuthStatus } from '@/hooks/useAuthStatus';
+import { evt_paywall_hit } from '@/shared/worklenz-analytics-events';
 
 // Import critical components synchronously to avoid suspense interruptions
 import TaskDrawer from '@components/task-drawer/task-drawer';
+import { fetchPhasesByProjectId } from '@/features/projects/singleProject/phase/phases.slice';
+import { fetchTaskListColumns, fetchTasksV3 } from '@/features/task-management/task-management.slice';
 
 // Lazy load non-critical components with better error handling
 const DeleteStatusDrawer = React.lazy(
@@ -51,8 +73,8 @@ const PhaseDrawer = React.lazy(() => import('@/features/projects/singleProject/p
 const StatusDrawer = React.lazy(
   () => import('@/components/project-task-filters/create-status-drawer/create-status-drawer')
 );
-const ProjectMemberDrawer = React.lazy(
-  () => import('@/components/projects/project-member-invite-drawer/project-member-invite-drawer')
+const InviteProjectMembers = React.lazy(
+  () => import('@/components/common/invite-project-members/InviteProjectMembers')
 );
 
 const ProjectView = React.memo(() => {
@@ -73,30 +95,57 @@ const ProjectView = React.memo(() => {
   // Optimize document title updates
   useDocumentTitle(selectedProject?.name || t('projectView'));
 
+  // Get auth service and current session
+  const authService = useAuthService();
+  const currentSession = useMemo(() => authService.getCurrentSession(), [authService]);
+  const { trackMixpanelEvent } = useMixpanelTracking();
+  const { isLicenseExpired } = useAuthStatus();
+
   // Memoize URL params to prevent unnecessary state updates
-  const urlParams = useMemo(
-    () => ({
-      tab: searchParams.get('tab') || tabItems[0].key,
+  const urlParams = useMemo(() => {
+    const filteredTabItems = getFilteredTabItems(currentSession, selectedProject);
+    return {
+      tab: searchParams.get('tab') || filteredTabItems[0]?.key || 'tasks-list',
       pinnedTab: searchParams.get('pinned_tab') || '',
       taskId: searchParams.get('task') || '',
-    }),
-    [searchParams]
-  );
+    };
+  }, [searchParams, currentSession, selectedProject]);
 
   const [activeTab, setActiveTab] = useState<string>(urlParams.tab);
   const [pinnedTab, setPinnedTab] = useState<string>(urlParams.pinnedTab);
   const [taskid, setTaskId] = useState<string>(urlParams.taskId);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Use ref to prevent duplicate API calls and error messages
+  const isLoadingRef = useRef(false);
+  const hasShownErrorRef = useRef(false);
+
   // Initialize timer state from backend when project view loads
   useTimerInitialization();
 
   // Update local state when URL params change
   useEffect(() => {
-    setActiveTab(urlParams.tab);
+    // Validate that the tab from URL is not disabled before setting it
+    const filteredTabItems = getFilteredTabItems(currentSession, selectedProject);
+    const requestedTab = filteredTabItems.find(item => item.key === urlParams.tab);
+
+    // If tab is disabled, redirect to first available tab and show upgrade modal
+    if (requestedTab?.disabled) {
+      const firstAvailableTab = filteredTabItems.find(item => !item.disabled);
+      if (firstAvailableTab) {
+        setActiveTab(firstAvailableTab.key);
+        // Show upgrade modal after a brief delay to ensure component is mounted
+        setTimeout(() => {
+          dispatch(toggleUpgradeModal());
+        }, 100);
+      }
+    } else {
+      setActiveTab(urlParams.tab);
+    }
+
     setPinnedTab(urlParams.pinnedTab);
     setTaskId(urlParams.taskId);
-  }, [urlParams]);
+  }, [urlParams, currentSession, selectedProject, dispatch]);
 
   // Remove translation preloading since we're using simple load-as-you-go approach
   useEffect(() => {
@@ -149,10 +198,23 @@ const ProjectView = React.memo(() => {
     }
   }, [location.pathname, resetAllProjectData]);
 
+  // Reset initialization when project changes - must run first
+  useEffect(() => {
+    setIsInitialized(false);
+    isLoadingRef.current = false;
+    hasShownErrorRef.current = false;
+  }, [projectId]);
+
   // Optimized project data loading with better error handling and performance tracking
   useEffect(() => {
-    if (projectId && !isInitialized) {
+    if (projectId && !isInitialized && !isLoadingRef.current) {
       const loadProjectData = async () => {
+        // Prevent duplicate calls
+        if (isLoadingRef.current) {
+          return;
+        }
+        isLoadingRef.current = true;
+
         try {
           // Clean up previous project data before loading new project
           dispatch(resetTaskListData());
@@ -164,33 +226,152 @@ const ProjectView = React.memo(() => {
           // Load new project data
           dispatch(setProjectId(projectId));
 
+          // Set project context for field visibility
+          dispatch(setProjectContext(projectId));
+
+          const requestedTab = searchParams.get('tab') || 'tasks-list';
+          const shouldPreloadTaskList = requestedTab === 'tasks-list';
+
           // Load project and essential data in parallel
           const [projectResult] = await Promise.allSettled([
             dispatch(getProject(projectId)),
             dispatch(fetchStatuses(projectId)),
             dispatch(fetchLabels()),
+            ...(shouldPreloadTaskList
+              ? [
+                  dispatch(fetchTasksV3(projectId)),
+                  dispatch(fetchTaskListColumns(projectId)),
+                  dispatch(fetchPhasesByProjectId(projectId)),
+                  dispatch(fetchStatusesCategories()),
+                ]
+              : []),
           ]);
 
-          if (projectResult.status === 'fulfilled' && !projectResult.value.payload) {
+          // Check if project fetch was rejected (access denied or not found)
+          if (projectResult.status === 'rejected') {
+            // Redirect to projects list
             navigate('/worklenz/projects');
             return;
+          }
+
+          // Check if project fetch was fulfilled
+          if (projectResult.status === 'fulfilled') {
+            const result = projectResult.value as any;
+
+            // Check if the Redux action was rejected (type ends with '/rejected')
+            if (result.type && result.type.includes('/rejected')) {
+              const payload = result.payload;
+
+              // Check if it's a 403 error (access denied)
+              if (payload?.statusCode === 403) {
+                // Check if user needs to switch teams (backend has already verified project access)
+                // The backend only sets requiresTeamSwitch=true if the user actually has access to the project
+                if (payload.requiresTeamSwitch && payload.projectTeamId) {
+                  console.log(
+                    'Project belongs to different team, switching teams...',
+                    payload.projectTeamId
+                  );
+
+                  // Show message that we're switching teams (only once)
+                  if (!hasShownErrorRef.current) {
+                    hasShownErrorRef.current = true;
+                    message.info(
+                      t('Switching to project team...', {
+                        defaultValue: 'Switching to project team...',
+                      })
+                    );
+                  }
+
+                  try {
+                    // Switch to the project's team
+                    const switchResult = await dispatch(setActiveTeam(payload.projectTeamId));
+
+                    if (setActiveTeam.fulfilled.match(switchResult)) {
+                      // Team switched successfully, reload the page to refresh session
+                      message.success(
+                        t('Team switched successfully', {
+                          defaultValue: 'Team switched successfully',
+                        })
+                      );
+
+                      // Reload the page to get new session with correct team
+                      window.location.reload();
+                      return;
+                    } else {
+                      // Team switch failed
+                      if (!hasShownErrorRef.current) {
+                        hasShownErrorRef.current = true;
+                        message.error(
+                          t('Failed to switch teams', {
+                            defaultValue: 'Failed to switch teams',
+                          })
+                        );
+                      }
+                      navigate('/worklenz/projects');
+                      return;
+                    }
+                  } catch (switchError) {
+                    console.error('Error switching teams:', switchError);
+                    if (!hasShownErrorRef.current) {
+                      hasShownErrorRef.current = true;
+                      message.error(
+                        t('Failed to switch teams', {
+                          defaultValue: 'Failed to switch teams',
+                        })
+                      );
+                    }
+                    navigate('/worklenz/projects');
+                    return;
+                  }
+                }
+
+                // Access denied (user doesn't have access to the project)
+                console.log('Access denied to project:', projectId);
+                if (!hasShownErrorRef.current) {
+                  hasShownErrorRef.current = true;
+                  message.error(
+                    payload?.message ||
+                      t('You do not have permission to access this project', {
+                        defaultValue: 'You do not have permission to access this project',
+                      })
+                  );
+                }
+                navigate('/worklenz/projects');
+                return;
+              }
+
+              // For other errors, also redirect
+              if (!hasShownErrorRef.current) {
+                hasShownErrorRef.current = true;
+                message.error(
+                  t('Failed to load project', {
+                    defaultValue: 'Failed to load project',
+                  })
+                );
+              }
+              navigate('/worklenz/projects');
+              return;
+            }
+
+            // Check if project data is missing
+            if (!result.payload) {
+              navigate('/worklenz/projects');
+              return;
+            }
           }
 
           setIsInitialized(true);
         } catch (error) {
           console.error('Error loading project data:', error);
           navigate('/worklenz/projects');
+        } finally {
+          isLoadingRef.current = false;
         }
       };
 
       loadProjectData();
     }
-  }, [dispatch, navigate, projectId]);
-
-  // Reset initialization when project changes
-  useEffect(() => {
-    setIsInitialized(false);
-  }, [projectId]);
+  }, [dispatch, projectId, isInitialized, navigate, t, searchParams]);
 
   // Effect for handling task drawer opening from URL params
   useEffect(() => {
@@ -241,6 +422,47 @@ const ProjectView = React.memo(() => {
   // Optimized tab change handler
   const handleTabChange = useCallback(
     (key: string) => {
+      // Find the tab item to check if it's disabled
+      const filteredTabItems = getFilteredTabItems(currentSession, selectedProject);
+      const tabItem = filteredTabItems.find(item => item.key === key);
+
+      if (!tabItem) {
+        return;
+      }
+
+      // If tab is disabled, open upgrade modal instead of navigating
+      if (tabItem?.disabled) {
+        // Track paywall hit for trial expired users clicking Finance tab
+        if (isLicenseExpired && key === 'finance') {
+          trackMixpanelEvent(evt_paywall_hit, {
+            feature_blocked: 'finance',
+            user_type: currentSession?.subscription_type?.toLowerCase(),
+            trial_expired: true,
+            project_id: projectId,
+            source: 'project_finance_tab',
+          });
+        }
+        dispatch(toggleUpgradeModal());
+        return;
+      }
+
+      // Track finance tab clicks
+      if (key === 'finance') {
+        const hasBusinessAccess = hasBusinessFeatureAccess(currentSession);
+        const hasFinanceAccess = hasFinanceViewPermission(currentSession, selectedProject);
+
+        trackMixpanelEvent('finance_tab_clicked', {
+          source: 'project_view_header',
+          project_id: projectId,
+          project_name: selectedProject?.name,
+          user_type: currentSession?.subscription_type?.toLowerCase(),
+          has_business_access: hasBusinessAccess,
+          has_finance_permission: hasFinanceAccess,
+          is_admin: currentSession?.is_admin || currentSession?.owner,
+          tab_disabled: tabItem?.disabled || false,
+        });
+      }
+
       setActiveTab(key);
       dispatch(setProjectView(key === 'board' ? 'kanban' : 'list'));
 
@@ -256,7 +478,16 @@ const ProjectView = React.memo(() => {
         { replace: true }
       );
     },
-    [dispatch, location.pathname, navigate, pinnedTab]
+    [
+      dispatch,
+      location.pathname,
+      navigate,
+      pinnedTab,
+      currentSession,
+      selectedProject,
+      projectId,
+      trackMixpanelEvent,
+    ]
   );
 
   // Memoized tab menu items with enhanced styling
@@ -266,61 +497,82 @@ const ProjectView = React.memo(() => {
       return [];
     }
 
-    const menuItems = tabItems.map(item => ({
-      key: item.key,
-      label: (
-        <Flex align="center" gap={6} style={{ color: 'inherit' }}>
-          <span style={{ fontWeight: 500, fontSize: '13px' }}>{item.label}</span>
-          {(item.key === 'tasks-list' || item.key === 'board') && (
-            <ConfigProvider wave={{ disabled: true }}>
-              <Button
-                className="borderless-icon-btn"
-                size="small"
-                type="text"
-                style={{
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  boxShadow: 'none',
-                  padding: '2px',
-                  minWidth: 'auto',
-                  height: 'auto',
-                  lineHeight: 1,
-                }}
-                icon={
-                  item.key === pinnedTab ? (
-                    <PushpinFilled
-                      style={{
-                        fontSize: '12px',
-                        color: 'currentColor',
-                        transform: 'rotate(-45deg)',
-                        transition: 'all 0.3s ease',
-                      }}
-                    />
-                  ) : (
-                    <PushpinOutlined
-                      style={{
-                        fontSize: '12px',
-                        color: 'currentColor',
-                        transition: 'all 0.3s ease',
-                      }}
-                    />
-                  )
-                }
-                onClick={e => {
-                  e.stopPropagation();
-                  pinToDefaultTab(item.key);
-                }}
-                title={item.key === pinnedTab ? t('unpinTab') : t('pinTab')}
-              />
-            </ConfigProvider>
-          )}
-        </Flex>
-      ),
-      children: item.element,
-    }));
+    const filteredTabItems = getFilteredTabItems(currentSession, selectedProject);
+
+    const menuItems = filteredTabItems.map(item => {
+      const premiumTabs = ['finance', 'project-insights-member-overview', 'roadmap', 'workload'];
+      const isPremiumTab = premiumTabs.includes(item.key);
+
+      return {
+        key: item.key,
+        disabled: false, // Never disable at Ant Design level - we handle clicks manually
+        label: (
+          <Tooltip title={item.disabled ? item.disabledReason : undefined} placement="bottom">
+            <Flex
+              align="center"
+              gap={6}
+              style={{
+                color: 'inherit', // Always use normal color
+                opacity: 1, // Always full opacity
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ fontWeight: 500, fontSize: '13px' }}>{item.label}</span>
+              {item.disabled && (
+                <CrownOutlined style={{ fontSize: '14px', color: '#faad14', marginLeft: '4px' }} />
+              )}
+              {(item.key === 'tasks-list' || item.key === 'board') && !item.disabled && (
+                <ConfigProvider wave={{ disabled: true }}>
+                  <Button
+                    className="borderless-icon-btn"
+                    size="small"
+                    type="text"
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      boxShadow: 'none',
+                      padding: '2px',
+                      minWidth: 'auto',
+                      height: 'auto',
+                      lineHeight: 1,
+                    }}
+                    icon={
+                      item.key === pinnedTab ? (
+                        <PushpinFilled
+                          style={{
+                            fontSize: '12px',
+                            color: 'currentColor',
+                            transform: 'rotate(-45deg)',
+                            transition: 'all 0.3s ease',
+                          }}
+                        />
+                      ) : (
+                        <PushpinOutlined
+                          style={{
+                            fontSize: '12px',
+                            color: 'currentColor',
+                            transition: 'all 0.3s ease',
+                          }}
+                        />
+                      )
+                    }
+                    onClick={e => {
+                      e.stopPropagation();
+                      pinToDefaultTab(item.key);
+                    }}
+                    title={item.key === pinnedTab ? t('unpinTab') : t('pinTab')}
+                  />
+                </ConfigProvider>
+              )}
+            </Flex>
+          </Tooltip>
+        ),
+        children: item.element,
+      };
+    });
 
     return menuItems;
-  }, [pinnedTab, pinToDefaultTab, t, translationsReady]);
+  }, [pinnedTab, pinToDefaultTab, t, translationsReady, currentSession, selectedProject]);
 
   // Optimized secondary components loading with better UX
   const [shouldLoadSecondaryComponents, setShouldLoadSecondaryComponents] = useState(false);
@@ -346,7 +598,15 @@ const ProjectView = React.memo(() => {
         {/* Non-critical components - load after delay with suspense fallback */}
         {shouldLoadSecondaryComponents && (
           <Suspense fallback={<SuspenseFallback />}>
-            {createPortal(<ProjectMemberDrawer />, document.body, 'project-member-drawer')}
+            {selectedProject &&
+              createPortal(
+                <InviteProjectMembers
+                  projectId={selectedProject.id || ''}
+                  projectName={selectedProject.name || ''}
+                />,
+                document.body,
+                'project-member-drawer'
+              )}
             {createPortal(<PhaseDrawer />, document.body, 'phase-drawer')}
             {createPortal(<StatusDrawer />, document.body, 'status-drawer')}
             {createPortal(<DeleteStatusDrawer />, document.body, 'delete-status-drawer')}
@@ -357,13 +617,9 @@ const ProjectView = React.memo(() => {
     [shouldLoadSecondaryComponents]
   );
 
-  // Show loading state while project is being fetched or translations are loading
+  // Show skeleton while project is being fetched or translations are loading
   if (projectLoading || !isInitialized || !translationsReady) {
-    return (
-      <div style={{ marginBlockEnd: 12, minHeight: '80vh' }}>
-        <SuspenseFallback />
-      </div>
-    );
+    return <ProjectViewSkeleton />;
   }
 
   return (

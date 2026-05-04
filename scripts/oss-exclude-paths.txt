@@ -1,0 +1,50 @@
+# Business-only code paths to remove when exporting from business repo to OSS fork.
+# Paths are relative to repository root.
+
+# Separate private app
+worklenz-client-portal/
+
+# Backend premium routers
+worklenz-backend/src/routes/apis/client-portal-api-router.ts
+worklenz-backend/src/routes/apis/slack-api-router.ts
+worklenz-backend/src/routes/apis/project-finance-api-router.ts
+worklenz-backend/src/routes/apis/billing-api-router.ts
+worklenz-backend/src/routes/apis/plan-trial-api-router.ts
+worklenz-backend/src/routes/apis/subscriptions-api-router.ts
+worklenz-backend/src/routes/apis/plans-api-router.ts
+worklenz-backend/src/routes/apis/users-api-router.ts
+
+# Backend premium controllers/modules
+worklenz-backend/src/controllers/client-portal/
+worklenz-backend/src/controllers/client-portal-attachment-controller.ts
+worklenz-backend/src/controllers/slack-controller.ts
+worklenz-backend/src/controllers/billing-controller.ts
+worklenz-backend/src/controllers/plan-trial-controller.ts
+worklenz-backend/src/services/slack.service.ts
+worklenz-backend/src/middlewares/client-auth-middleware.ts
+
+# Frontend premium features/pages
+worklenz-frontend/src/features/clients-portal/
+worklenz-frontend/src/features/client-view/
+worklenz-frontend/src/features/projects/finance/
+worklenz-frontend/src/features/navbar/upgrade-plan/
+worklenz-frontend/src/components/LicenseExpiredModal/
+worklenz-frontend/src/pages/license-expired/
+worklenz-frontend/src/pages/client-portal/
+worklenz-frontend/src/api/client-portal/
+worklenz-frontend/src/utils/finance-permissions.ts
+
+# i18n bundles for private features
+worklenz-frontend/public/locales/en/client-portal-*.json
+worklenz-frontend/public/locales/es/client-portal-*.json
+worklenz-frontend/public/locales/en/project-view-finance.json
+worklenz-frontend/public/locales/es/project-view-finance.json
+
+# Keep all docs private
+docs/
+worklenz-backend/doc/
+worklenz-backend/docs/
+worklenz-backend/src/docs/
+
+# Security worklogs/checklists are internal implementation records
+security/phase2-sql-injection-fixes/

@@ -63,6 +63,7 @@ import dateReducer from '@features/date/dateSlice';
 import notificationReducer from '@/features/navbar/notificationSlice';
 import buttonReducer from '@features/actionSetup/buttonSlice';
 import scheduleReducer from '../features/schedule/scheduleSlice';
+import scheduleRTKReducer from '../features/schedule/scheduleSliceRTK';
 
 // Reports
 import reportingReducer from '@features/reporting/reporting.slice';
@@ -71,6 +72,7 @@ import taskTemplateReducer from '../features/settings/taskTemplates/taskTemplate
 import projectReportsTableColumnsReducer from '../features/reporting/projectReports/project-reports-table-column-slice/project-reports-table-column-slice';
 import projectReportsReducer from '../features/reporting/projectReports/project-reports-slice';
 import membersReportsReducer from '../features/reporting/membersReports/membersReportsSlice';
+import allTasksReportsReducer from '../features/reporting/allTasksReports/all-tasks-reports-slice';
 import timeReportsOverviewReducer from '@features/reporting/time-reports/time-reports-overview.slice';
 
 import roadmapReducer from '../features/roadmap/roadmap-slice';
@@ -82,17 +84,46 @@ import taskManagementReducer from '@/features/task-management/task-management.sl
 import groupingReducer from '@/features/task-management/grouping.slice';
 import selectionReducer from '@/features/task-management/selection.slice';
 import homePageApiService from '@/api/home-page/home-page.api.service';
+import personalOverviewApi from '@/api/personal-overview/personal-overview.api.service';
 import { projectsApi } from '@/api/projects/projects.v1.api.service';
 import { userActivityApiService } from '@/api/home-page/user-activity.api.service';
+import { roadmapApi } from '@/pages/projects/projectView/gantt/services/roadmap-api.service';
+import projectWorkloadApi from '@/api/project-workload/project-workload.api.service';
 
 import projectViewReducer from '@features/project/project-view-slice';
 import taskManagementFieldsReducer from '@features/task-management/taskListFields.slice';
+import projectWorkloadReducer from '@features/project-workload/projectWorkloadSlice';
+
+//clients portal
+import clientsPortalReducer from '../features/clients-portal';
+
+//client view
+import clientViewReducer from '../features/client-view';
+
+// Client Portal API
+import { clientPortalApi } from '@/api/client-portal/client-portal-api';
+
+// Schedule API
+import { scheduleApi } from '@/api/schedule/scheduleApi';
+
+import projectFinanceRateCardReducer from '@/features/finance/project-finance-slice';
+import projectFinancesReducer from '@/features/projects/finance/project-finance.slice';
+import financeReducer from '@/features/projects/finance/finance-slice';
 
 export const store = configureStore({
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(homePageApiService.middleware, projectsApi.middleware, userActivityApiService.middleware),
+    }).concat(
+      homePageApiService.middleware,
+      personalOverviewApi.middleware,
+      projectsApi.middleware,
+      clientPortalApi.middleware,
+      userActivityApiService.middleware,
+      roadmapApi.middleware,
+      projectWorkloadApi.middleware,
+      scheduleApi.middleware
+    ),
   reducer: {
     // Auth & User
     auth: authReducer,
@@ -104,7 +135,12 @@ export const store = configureStore({
     // Home Page
     homePageReducer: homePageReducer,
     [homePageApiService.reducerPath]: homePageApiService.reducer,
+    [personalOverviewApi.reducerPath]: personalOverviewApi.reducer,
     [projectsApi.reducerPath]: projectsApi.reducer,
+    [clientPortalApi.reducerPath]: clientPortalApi.reducer,
+    [roadmapApi.reducerPath]: roadmapApi.reducer,
+    [projectWorkloadApi.reducerPath]: projectWorkloadApi.reducer,
+    [scheduleApi.reducerPath]: scheduleApi.reducer,
     userActivityReducer: userActivityReducer,
     [userActivityApiService.reducerPath]: userActivityApiService.reducer,
 
@@ -130,6 +166,7 @@ export const store = configureStore({
     projectDrawerReducer: projectDrawerReducer,
 
     projectViewReducer: projectViewReducer,
+    projectWorkload: projectWorkloadReducer,
 
     // Project Lookups
     projectCategoriesReducer: projectCategoriesReducer,
@@ -162,6 +199,7 @@ export const store = configureStore({
     notificationReducer: notificationReducer,
     button: buttonReducer,
     scheduleReducer: scheduleReducer,
+    schedule: scheduleRTKReducer,
 
     // Reports
     reportingReducer: reportingReducer,
@@ -170,6 +208,7 @@ export const store = configureStore({
     projectReportsTableColumnsReducer: projectReportsTableColumnsReducer,
     projectReportsReducer: projectReportsReducer,
     membersReportsReducer: membersReportsReducer,
+    allTasksReportsReducer: allTasksReportsReducer,
     roadmapReducer: roadmapReducer,
     groupByFilterDropdownReducer: groupByFilterDropdownReducer,
     timeReportsOverviewReducer: timeReportsOverviewReducer,
@@ -179,11 +218,20 @@ export const store = configureStore({
     grouping: groupingReducer,
     taskManagementSelection: selectionReducer,
     taskManagementFields: taskManagementFieldsReducer,
+
+    //clients portal
+    clientsPortalReducer: clientsPortalReducer,
+
+    //client view
+    clientViewReducer: clientViewReducer,
+    // Finance
+    projectFinanceRateCardReducer: projectFinanceRateCardReducer,
+    projectFinancesReducer: projectFinancesReducer,
+    financeReducer: financeReducer,
   },
 });
 
 export type RootState = ReturnType<typeof store.getState>;
-
 export type AppDispatch = typeof store.dispatch;
 
 export const useAppDispatch = () => useDispatch<AppDispatch>();

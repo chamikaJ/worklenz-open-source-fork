@@ -17,9 +17,12 @@ import settingsApiRouter from "./settings-api-router";
 import statusesApiRouter from "./statuses-api-router";
 import subTasksApiRouter from "./sub-tasks-api-router";
 import taskCommentsApiRouter from "./task-comments-api-router";
+import taskDuplicateApiRouter from "./task-duplicate-api-router";
 import taskWorkLogApiRouter from "./task-work-log-api-router";
 import tasksApiRouter from "./tasks-api-router";
 import teamMembersApiRouter from "./team-members-api-router";
+import teamManagementApiRouter from "./team-management-api-router";
+import teamLeadReportsApiRouter from "./team-lead-reports-api-router";
 import teamsApiRouter from "./teams-api-router";
 import timezonesApiRouter from "./timezones-api-router";
 import todoListApiRouter from "./todo-list-api-router";
@@ -29,17 +32,19 @@ import sharedProjectsApiRouter from "./shared-projects-api-router";
 import resourceAllocationApiRouter from "./resource-allocation-api-router";
 import taskTemplatesApiRouter from "./task-templates-api-router";
 import projectInsightsApiRouter from "./project-insights-api-router";
-import passwordValidator from "../../middlewares/validators/password-validator";
 import adminCenterApiRouter from "./admin-center-api-router";
 import reportingApiRouter from "./reporting-api-router";
+import teamLeadReportingApiRouter from "./team-lead-reporting-api-router";
 import activityLogsApiRouter from "./activity-logs-api-router";
 import safeControllerFunction from "../../shared/safe-controller-function";
+import passwordValidator from "../../middlewares/validators/password-validator";
 import projectFoldersApiRouter from "./project-folders-api-router";
 import taskPhasesApiRouter from "./task-phases-api-router";
 import projectCategoriesApiRouter from "./project-categories-api-router";
 import homePageApiRouter from "./home-page-api-router";
-import ganttApiRouter from "./gantt-api-router";
+import projectRoadmapApiRouter from "./roadmap-api-router";
 import projectCommentsApiRouter from "./project-comments-api-router";
+import projectCommentReactionsApiRouter from "./project-comment-reactions-api-router";
 import reportingExportApiRouter from "./reporting-export-api-router";
 import projectHealthsApiRouter from "./project-healths-api-router";
 import ptTasksApiRouter from "./pt-tasks-api-router";
@@ -47,26 +52,44 @@ import projectTemplatesApiRouter from "./project-templates-api";
 import ptTaskPhasesApiRouter from "./pt_task-phases-api-router";
 import ptStatusesApiRouter from "./pt-statuses-api-router";
 import workloadApiRouter from "./gannt-apis/workload-api-router";
-import roadmapApiRouter from "./gannt-apis/roadmap-api-router";
+import roadmapGanttApiRouter from "./gannt-apis/roadmap-api-router";
 import scheduleApiRouter from "./gannt-apis/schedule-api-router";
 import scheduleApiV2Router from "./gannt-apis/schedule-api-v2-router";
 import projectManagerApiRouter from "./project-managers-api-router";
 import surveyApiRouter from "./survey-api-router";
 
-import billingApiRouter from "./billing-api-router";
 import taskDependenciesApiRouter from "./task-dependencies-api-router";
 
 import taskRecurringApiRouter from "./task-recurring-api-router";
 
 import customColumnsApiRouter from "./custom-columns-api-router";
+import projectRatecardApiRouter from "./project-ratecard-api-router";
+import ratecardApiRouter from "./ratecard-api-router";
+import holidayApiRouter from "./holiday-api-router";
 import userActivityLogsApiRouter from "./user-activity-logs-api-router";
 import supportApiRouter from "./support-api-router";
 import accountApiRouter from "./account-api-router";
+import onboardingApiRouter from "./onboarding-api-router";
+import importsApiRouter from "./imports-api-router";
+import { featureFlags } from "../../config/feature-flags";
 
 const api = express.Router();
 
+const loadOptionalRouter = (modulePath: string) => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const module = require(modulePath);
+    return module.default;
+  } catch (error) {
+    console.warn(`[api-router] optional module not loaded: ${modulePath}`);
+    return null;
+  }
+};
+
 api.use("/projects", projectsApiRouter);
 api.use("/team-members", teamMembersApiRouter);
+api.use("/team-management", teamManagementApiRouter);
+api.use("/team-lead-reports", teamLeadReportsApiRouter);
 api.use("/job-titles", jobTitlesApiRouter);
 api.use("/clients", clientsApiRouter);
 api.use("/teams", teamsApiRouter);
@@ -81,6 +104,7 @@ api.use("/sub-tasks", subTasksApiRouter);
 api.use("/project-members", projectMembersApiRouter);
 api.use("/task-time-log", taskWorkLogApiRouter);
 api.use("/task-comments", taskCommentsApiRouter);
+api.use("/task-duplicate", taskDuplicateApiRouter);
 api.use("/timezones", timezonesApiRouter);
 api.use("/project-statuses", projectStatusesApiRouter);
 api.use("/labels", labelsApiRouter);
@@ -90,13 +114,15 @@ api.use("/task-templates", taskTemplatesApiRouter);
 api.use("/project-insights", projectInsightsApiRouter);
 api.use("/admin-center", adminCenterApiRouter);
 api.use("/reporting", reportingApiRouter);
+api.use("/reporting", teamLeadReportingApiRouter);
 api.use("/activity-logs", activityLogsApiRouter);
 api.use("/projects-folders", projectFoldersApiRouter);
 api.use("/task-phases", taskPhasesApiRouter);
 api.use("/project-categories", projectCategoriesApiRouter);
 api.use("/home", homePageApiRouter);
-api.use("/gantt", ganttApiRouter);
+api.use("/roadmap", projectRoadmapApiRouter);
 api.use("/project-comments", projectCommentsApiRouter);
+api.use("/project-comment-reactions", projectCommentReactionsApiRouter);
 api.use("/reporting-export", reportingExportApiRouter);
 api.use("/project-healths", projectHealthsApiRouter);
 api.use("/project-templates", projectTemplatesApiRouter);
@@ -104,19 +130,44 @@ api.use("/pt-tasks", ptTasksApiRouter);
 api.use("/pt-task-phases", ptTaskPhasesApiRouter);
 api.use("/pt-statuses", ptStatusesApiRouter);
 api.use("/workload-gannt", workloadApiRouter);
-api.use("/roadmap-gannt", roadmapApiRouter);
+api.use("/roadmap-gannt", roadmapGanttApiRouter);
 api.use("/schedule-gannt", scheduleApiRouter);
 api.use("/schedule-gannt-v2", scheduleApiV2Router);
 api.use("/project-managers", projectManagerApiRouter);
 api.use("/surveys", surveyApiRouter);
+api.use("/onboarding", onboardingApiRouter);
 
 api.get("/overview/:id", safeControllerFunction(OverviewController.getById));
-api.get("/task-priorities", safeControllerFunction(TaskPrioritiesController.get));
-api.post("/change-password", passwordValidator, safeControllerFunction(AuthController.changePassword));
-api.get("/access-controls/roles", safeControllerFunction(AccessControlsController.getRoles));
-api.get("/logs/my-dashboard", safeControllerFunction(LogsController.getActivityLog));
+api.get(
+  "/task-priorities",
+  safeControllerFunction(TaskPrioritiesController.get)
+);
+api.post(
+  "/change-password",
+  passwordValidator,
+  safeControllerFunction(AuthController.changePassword)
+);
+api.get(
+  "/access-controls/roles",
+  safeControllerFunction(AccessControlsController.getRoles)
+);
+api.get(
+  "/logs/my-dashboard",
+  safeControllerFunction(LogsController.getActivityLog)
+);
 
-api.use("/billing", billingApiRouter);
+if (featureFlags.enableBusinessFeatures && featureFlags.enableBusinessBilling) {
+  const billingApiRouter = loadOptionalRouter("./billing-api-router");
+  if (billingApiRouter) {
+    api.use("/billing", billingApiRouter);
+  }
+}
+if (featureFlags.enableBusinessFeatures && featureFlags.enableBusinessPlanTrials) {
+  const planTrialApiRouter = loadOptionalRouter("./plan-trial-api-router");
+  if (planTrialApiRouter) {
+    api.use("/plan-trials", planTrialApiRouter);
+  }
+}
 api.use("/task-dependencies", taskDependenciesApiRouter);
 
 api.use("/task-recurring", taskRecurringApiRouter);
@@ -125,5 +176,55 @@ api.use("/custom-columns", customColumnsApiRouter);
 api.use("/support", supportApiRouter);
 api.use("/account", accountApiRouter);
 
+if (featureFlags.enableProjectFinance) {
+  const projectFinanceApiRouter = loadOptionalRouter("./project-finance-api-router");
+  if (projectFinanceApiRouter) {
+    api.use("/project-finance", projectFinanceApiRouter);
+  }
+}
+
+api.use("/project-ratecard", projectRatecardApiRouter);
+
+api.use("/ratecard", ratecardApiRouter);
+
+api.use("/holidays", holidayApiRouter);
+
 api.use("/logs", userActivityLogsApiRouter);
+
+if (featureFlags.enableBusinessFeatures && featureFlags.enableBusinessPlanTrials) {
+  const planRecommendationApiRouter = loadOptionalRouter("./plan-recommendation-api-router");
+  if (planRecommendationApiRouter) {
+    api.use("/plan-recommendations", planRecommendationApiRouter);
+  }
+}
+
+// Migration and subscription management APIs
+if (featureFlags.enableBusinessFeatures && featureFlags.enableBusinessSubscriptions) {
+  const migrationApiRouter = loadOptionalRouter("./migration-api-router");
+  const subscriptionsApiRouter = loadOptionalRouter("./subscriptions-api-router");
+  const plansApiRouter = loadOptionalRouter("./plans-api-router");
+  const usersApiRouter = loadOptionalRouter("./users-api-router");
+  if (migrationApiRouter) api.use("/migration", migrationApiRouter);
+  if (subscriptionsApiRouter) api.use("/subscriptions", subscriptionsApiRouter);
+  if (plansApiRouter) api.use("/plans", plansApiRouter);
+  if (usersApiRouter) api.use("/users", usersApiRouter);
+}
+api.use("/imports", importsApiRouter);
+
+// Client portal APIs
+if (featureFlags.enableClientPortal) {
+  const clientPortalApiRouter = loadOptionalRouter("./client-portal-api-router");
+  if (clientPortalApiRouter) {
+    api.use("/client-portal", clientPortalApiRouter);
+  }
+}
+
+// Slack integration APIs
+if (featureFlags.enableSlackIntegration) {
+  const slackApiRouter = loadOptionalRouter("./slack-api-router");
+  if (slackApiRouter) {
+    api.use("/slack", slackApiRouter);
+  }
+}
+
 export default api;

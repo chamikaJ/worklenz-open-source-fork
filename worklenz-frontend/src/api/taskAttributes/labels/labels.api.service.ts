@@ -33,13 +33,20 @@ export const labelsApiService = {
     return response.data;
   },
 
-  updateLabel: async (labelId: string, data: { name?: string; color?: string }): Promise<IServerResponse<ITaskLabel>> => {
-    const response = await apiClient.put<IServerResponse<ITaskLabel>>(`${rootUrl}/team/${labelId}`, data);
+  updateLabel: async (
+    labelId: string,
+    data: { name?: string; color?: string }
+  ): Promise<IServerResponse<ITaskLabel>> => {
+    const response = await apiClient.put<IServerResponse<ITaskLabel>>(
+      `${rootUrl}/team/${labelId}`,
+      data
+    );
     return response.data;
   },
 
-  deleteById: async (labelId: string): Promise<IServerResponse<void>> => {
-    const response = await apiClient.delete<IServerResponse<void>>(`${rootUrl}/team/${labelId}`);
+  deleteById: async (labelId: string, force: boolean = false): Promise<IServerResponse<void>> => {
+    const url = force ? `${rootUrl}/team/${labelId}?force=true` : `${rootUrl}/team/${labelId}`;
+    const response = await apiClient.delete<IServerResponse<void>>(url);
     return response.data;
   },
 };

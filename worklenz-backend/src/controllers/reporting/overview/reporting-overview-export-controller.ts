@@ -13,7 +13,8 @@ export default class ReportingOverviewExportController extends ReportingOverview
 
   @HandleExceptions()
   public static async getProjects(req: IWorkLenzRequest, res: IWorkLenzResponse): Promise<IWorkLenzResponse> {
-    const { searchQuery, sortField, sortOrder, size, offset } = this.toPaginationOptions(req.query, ["p.name"]);
+    // teamId is $1, size is $2, offset is $3, so search params start at $4
+    const { searchQuery, searchParams, sortField, sortOrder, size, offset } = this.toPaginationOptions(req.query, ["p.name"], false, 4);
     const archived = req.query.archived === "true";
 
     const teamId = req.query.team as string;
@@ -24,7 +25,7 @@ export default class ReportingOverviewExportController extends ReportingOverview
 
     const teamFilterClause = `p.team_id = $1`;
 
-    const result = await ReportingControllerBase.getProjectsByTeam(teamId, size, offset, searchQuery, sortField as string, sortOrder, "", "", "", archivedClause, teamFilterClause, "");
+    const result = await ReportingControllerBase.getProjectsByTeam(teamId, size, offset, searchQuery, sortField, sortOrder, "", "", "", archivedClause, teamFilterClause, "", searchParams);
 
     for (const project of result.projects) {
       project.team_color = getColor(project.team_name) + TASK_PRIORITY_COLOR_ALPHA;
@@ -416,7 +417,7 @@ export default class ReportingOverviewExportController extends ReportingOverview
     const teamMemberName = (req.query.team_member_name as string)?.trim() || null;
     const teamName = (req.query.team_name as string)?.trim() || "";
 
-    const { duration, date_range, only_single_member, archived } = req.query;
+    const { duration, date_range, only_single_member, archived} = req.query;
 
     const includeArchived = req.query.archived === "true";
 
@@ -506,7 +507,7 @@ export default class ReportingOverviewExportController extends ReportingOverview
 
     const includeArchived = req.query.archived === "true";
 
-    const results = await ReportingExportModel.getMemberTasks(teamMemberId as string, projectId, "false", "", [], includeArchived, req.user?.id as string);
+    const results = await ReportingExportModel.getMemberTasks(teamMemberId as string, projectId,  "false", "", [], includeArchived, req.user?.id as string);
 
     // excel file
     const exportDate = moment().format("MMM-DD-YYYY");

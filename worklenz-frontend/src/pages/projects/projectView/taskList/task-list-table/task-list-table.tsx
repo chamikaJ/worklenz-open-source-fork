@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import DatePicker from 'antd/es/date-picker';
 import Checkbox from 'antd/es/checkbox';
 import Tag from 'antd/es/tag';
@@ -26,18 +26,30 @@ import {
   KeyboardSensor,
   TouchSensor,
 } from '@dnd-kit/core';
+import { restrictToHorizontalAxis } from '@dnd-kit/modifiers';
 import {
   SortableContext,
   verticalListSortingStrategy,
   sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  arrayMove,
 } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
 import { DragOverEvent } from '@dnd-kit/core';
 import { List, Card, Avatar, Dropdown, Empty, Divider, Button } from '@/shared/antd-imports';
 import dayjs from 'dayjs';
 
+import './task-list-table.css';
+
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
+import {
+  setSelectedTaskId,
+  setShowTaskDrawer,
+  fetchTask as fetchTaskDrawer,
+  setNavigationContext,
+} from '@/features/task-drawer/task-drawer.slice';
+import { getTaskIdsFromGroups } from '@/utils/task-navigation-helper';
 
 import { colors } from '@/styles/colors';
 import TaskContextMenu from './context-menu/task-context-menu';
@@ -84,6 +96,9 @@ import PhaseDropdown from '@/components/taskListCommon/phase-dropdown/phase-drop
 import CustomColumnModal from './custom-columns/custom-column-modal/custom-column-modal';
 import { toggleProjectMemberDrawer } from '@/features/projects/singleProject/members/projectMembersSlice';
 import SingleAvatar from '@/components/common/single-avatar/single-avatar';
+import { DragEndEvent } from '@/types/task-management.types';
+import { useColumnResize } from '@/hooks/useColumnResize';
+import '../../../project-view-1/taskList/taskListTable/column-resize.css';
 
 interface TaskListTableProps {
   taskList: IProjectTask[] | null;
@@ -119,7 +134,11 @@ const DraggableRow = ({ task, children, groupId }: DraggableRowProps) => {
   }
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    // Only apply transform when actually dragging to avoid breaking sticky positioning
+    transform:
+      transform && (transform.x !== 0 || transform.y !== 0)
+        ? CSS.Transform.toString(transform)
+        : undefined,
     transition: isDragging ? 'none' : transition, // Disable transition during drag
     opacity: isDragging ? 0.3 : 1,
     position: 'relative' as const,
@@ -170,6 +189,45 @@ const CustomColumnHeader: React.FC<{
         }}
       />
     </Flex>
+  );
+};
+
+const SortableColumnHeader: React.FC<{
+  column: any;
+  isDropTarget: boolean;
+  className: string;
+  style: React.CSSProperties;
+  children: (params: {
+    attributes: any;
+    listeners: any;
+    setActivatorNodeRef: (el: HTMLElement | null) => void;
+    isDragging: boolean;
+  }) => React.ReactNode;
+}> = ({ column, isDropTarget, className, style, children }) => {
+  const {
+    setNodeRef,
+    setActivatorNodeRef,
+    attributes,
+    listeners,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.id || column.key || '' });
+
+  const dragStyle = {
+    transform: transform ? CSS.Transform.toString(transform) : undefined,
+    transition,
+  };
+
+  return (
+    <th
+      ref={setNodeRef}
+      className={`${className} ${isDropTarget ? 'column-drop-target' : ''}`}
+      style={{ ...style, ...dragStyle }}
+      data-column-id={column.id || column.key || ''}
+    >
+      {children({ attributes, listeners, setActivatorNodeRef, isDragging })}
+    </th>
   );
 };
 
@@ -283,6 +341,15 @@ const CustomColumnCell: React.FC<{
   // If columnType is not provided, try to determine it from columnObj
   const fieldType = columnType || columnObj?.fieldType;
 
+  console.log('[CustomColumnCell] Debug info:', {
+    columnKey,
+    columnType,
+    columnObjFieldType: columnObj?.fieldType,
+    finalFieldType: fieldType,
+    columnObj: columnObj,
+    taskId: task.id,
+  });
+
   if (!fieldType) {
     return <span className="text-gray-400">No field type</span>;
   }
@@ -305,6 +372,15 @@ const CustomColumnCell: React.FC<{
       return (
         <PeopleFieldCell
           selectedMemberIds={selectedMemberIds}
+          task={task}
+          columnKey={columnKey}
+          updateValue={updateTaskCustomColumnValue}
+        />
+      );
+    case 'text':
+      return (
+        <TextFieldCell
+          value={customValue || ''}
           task={task}
           columnKey={columnKey}
           updateValue={updateTaskCustomColumnValue}
@@ -357,6 +433,15 @@ const CustomColumnCell: React.FC<{
         <SelectionFieldCell
           selectionsList={columnObj?.selectionsList || []}
           value={customValue || ''}
+          task={task}
+          columnKey={columnKey}
+          updateValue={updateTaskCustomColumnValue}
+        />
+      );
+    case 'text':
+      return (
+        <TextFieldCell
+          value={customValue}
           task={task}
           columnKey={columnKey}
           updateValue={updateTaskCustomColumnValue}
@@ -532,6 +617,71 @@ const PeopleFieldCell: React.FC<{
         />
       </Flex>
     </Dropdown>
+  );
+};
+
+const TextFieldCell: React.FC<{
+  value: string;
+  task: IProjectTask;
+  columnKey: string;
+  updateValue: (taskId: string, columnKey: string, value: string) => void;
+}> = ({ value, task, columnKey, updateValue }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [localValue, setLocalValue] = useState(value || '');
+  const inputRef = useRef<InputRef>(null);
+
+  useEffect(() => {
+    setLocalValue(value || '');
+  }, [value]);
+
+  const handleSave = () => {
+    if (task.id) {
+      updateValue(task.id, columnKey, localValue);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setLocalValue(value || '');
+    setIsEditing(false);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <Input
+        ref={inputRef}
+        value={localValue}
+        onChange={e => setLocalValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyPress}
+        size="small"
+        style={{ fontSize: '12px' }}
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <div
+      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded text-xs min-h-[22px] flex items-center"
+      onClick={() => {
+        setIsEditing(true);
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }}
+      title={value || 'Click to edit'}
+    >
+      <Typography.Text className="text-xs truncate">
+        {value || <span className="text-gray-400 italic">Click to add text</span>}
+      </Typography.Text>
+    </div>
   );
 };
 
@@ -944,8 +1094,6 @@ const SelectionFieldCell: React.FC<{
   columnKey: string;
   updateValue: (taskId: string, columnKey: string, value: string) => void;
 }> = ({ selectionsList, value, task, columnKey, updateValue }) => {
-
-
   return (
     <CustomColumnSelectionCell
       selectionsList={selectionsList}
@@ -972,6 +1120,17 @@ const renderCustomColumnContent = (
 
   // If columnType is not provided, try to determine it from columnObj
   const fieldType = columnType || columnObj?.fieldType;
+
+  console.log('[renderCustomColumnContent] Debug info:', {
+    columnKey,
+    columnType,
+    columnObjFieldType: columnObj?.fieldType,
+    finalFieldType: fieldType,
+    columnObj: columnObj,
+    taskId: task.id,
+    customComponents: Object.keys(customComponents || {}),
+    hasComponent: !!customComponents?.[fieldType as CustomFieldsTypes],
+  });
 
   if (!fieldType) {
     console.warn('No field type provided for custom column', columnKey);
@@ -1244,6 +1403,65 @@ const renderCustomColumnContent = (
         />
       );
     },
+    text: () => {
+      const [isEditing, setIsEditing] = useState(false);
+      const [localValue, setLocalValue] = useState(customValue || '');
+      const inputRef = useRef<InputRef>(null);
+
+      useEffect(() => {
+        setLocalValue(customValue || '');
+      }, [customValue]);
+
+      const handleSave = () => {
+        if (task.id) {
+          updateTaskCustomColumnValue(task.id, columnKey, localValue);
+        }
+        setIsEditing(false);
+      };
+
+      const handleCancel = () => {
+        setLocalValue(customValue || '');
+        setIsEditing(false);
+      };
+
+      const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          handleSave();
+        } else if (e.key === 'Escape') {
+          handleCancel();
+        }
+      };
+
+      if (isEditing) {
+        return (
+          <Input
+            ref={inputRef}
+            value={localValue}
+            onChange={e => setLocalValue(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={handleKeyPress}
+            size="small"
+            style={{ fontSize: '12px' }}
+            autoFocus
+          />
+        );
+      }
+
+      return (
+        <div
+          className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded text-xs min-h-[22px] flex items-center"
+          onClick={() => {
+            setIsEditing(true);
+            setTimeout(() => inputRef.current?.focus(), 0);
+          }}
+          title={customValue || 'Click to edit'}
+        >
+          <Typography.Text className="text-xs truncate">
+            {customValue || <span className="text-gray-400 italic">Click to add text</span>}
+          </Typography.Text>
+        </div>
+      );
+    },
     selection: () => {
       return (
         <SelectionFieldCell
@@ -1257,7 +1475,11 @@ const renderCustomColumnContent = (
     },
   };
 
-  return customComponents[fieldType] ? customComponents[fieldType]() : null;
+  return customComponents[fieldType] ? (
+    customComponents[fieldType]()
+  ) : (
+    <span>Unsupported field type: {fieldType}</span>
+  );
 };
 
 const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, activeId, groupBy }) => {
@@ -1265,6 +1487,27 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
   const dispatch = useAppDispatch();
   const currentSession = useAuthService().getCurrentSession();
   const { socket } = useSocket();
+
+  // Handler for opening task with navigation context
+  const handleOpenTask = (taskId: string) => {
+    // Get all task IDs from current task groups for navigation
+    const allTaskIds = getTaskIdsFromGroups(taskGroups, false);
+    const currentIndex = allTaskIds.indexOf(taskId);
+
+    // Set navigation context
+    dispatch(
+      setNavigationContext({
+        taskIds: allTaskIds,
+        currentIndex: currentIndex >= 0 ? currentIndex : 0,
+        sourceView: 'task-list',
+        projectId: project?.id || null,
+      })
+    );
+
+    dispatch(setSelectedTaskId(taskId));
+    dispatch(fetchTaskDrawer({ taskId, projectId: project?.id || '' }));
+    dispatch(setShowTaskDrawer(true));
+  };
 
   // Add drag state
   const [dragActiveId, setDragActiveId] = useState<string | null>(null);
@@ -1288,12 +1531,122 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
     })
   );
 
+  const columnSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 6,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const themeMode = useAppSelector(state => state.themeReducer.mode);
   const columnList = useAppSelector(state => state.taskReducer.columns);
-  const visibleColumns = columnList.filter(column => column.pinned);
+  const columnStorageKey = React.useMemo(
+    () => `worklenz.taskList.columnOrder.${project?.id || 'default'}.${tableId}`,
+    [project?.id, tableId]
+  );
+  const pinnedColumns = useMemo(() => columnList.filter(column => column.pinned), [columnList]);
+
+  const [columnOrder, setColumnOrder] = useState<string[]>(() => {
+    try {
+      const stored = columnStorageKey ? localStorage.getItem(columnStorageKey) : null;
+      return stored ? (JSON.parse(stored) as string[]) : [];
+    } catch (error) {
+      console.error('Failed to load column order from localStorage:', error);
+      return [];
+    }
+  });
+
+  const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
+  const [overColumnId, setOverColumnId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!columnStorageKey) return;
+    try {
+      const stored = localStorage.getItem(columnStorageKey);
+      setColumnOrder(stored ? (JSON.parse(stored) as string[]) : []);
+    } catch (error) {
+      console.error('Failed to reload column order from localStorage:', error);
+      setColumnOrder([]);
+    }
+  }, [columnStorageKey]);
+
+  useEffect(() => {
+    const reorderableIds = pinnedColumns
+      .filter(column => column.key !== 'KEY')
+      .map(column => column.id || column.key || '');
+
+    setColumnOrder(prev => {
+      const filtered = prev.filter(id => reorderableIds.includes(id));
+      const missing = reorderableIds.filter(id => !filtered.includes(id));
+      const next = [...filtered, ...missing];
+      const hasChanged =
+        next.length !== prev.length || next.some((id, index) => id !== prev[index]);
+      return hasChanged ? next : prev;
+    });
+  }, [pinnedColumns]);
+
+  useEffect(() => {
+    if (columnStorageKey && columnOrder.length) {
+      try {
+        localStorage.setItem(columnStorageKey, JSON.stringify(columnOrder));
+      } catch (error) {
+        console.error('Failed to save column order to localStorage:', error);
+      }
+    }
+  }, [columnOrder, columnStorageKey]);
+
+  const visibleColumns = useMemo(() => {
+    const keyColumn = pinnedColumns.filter(column => column.key === 'KEY');
+    const reorderableColumns = pinnedColumns.filter(column => column.key !== 'KEY');
+
+    const orderedIds = columnOrder.length
+      ? columnOrder
+      : reorderableColumns.map(column => column.id || column.key || '');
+
+    const orderedReorderable = orderedIds
+      .map(id => reorderableColumns.find(column => (column.id || column.key || '') === id))
+      .filter(Boolean) as typeof reorderableColumns;
+
+    const missingColumns = reorderableColumns.filter(
+      column => !orderedIds.includes(column.id || column.key || '')
+    );
+
+    return [...keyColumn, ...orderedReorderable, ...missingColumns];
+  }, [pinnedColumns, columnOrder]);
   const taskGroups = useAppSelector(state => state.taskReducer.taskGroups);
   const { project } = useAppSelector(state => state.projectReducer);
   const { selectedTaskIdsList, selectedTasks } = useAppSelector(state => state.bulkActionReducer);
+
+  // Initialize column widths from columnList
+  const initialWidths = useMemo(() => {
+    const widths: Record<string, number> = { selector: 56, customColumn: 150 };
+    columnList.forEach(col => {
+      if (col.key) {
+        widths[col.key] = col.key === 'TASK' ? 300 : 150;
+      }
+    });
+    return widths;
+  }, [columnList]);
+
+  // Column resize functionality
+  const { columnWidths, handleResizeStart } = useColumnResize({
+    initialWidths,
+    minWidth: 50,
+    maxWidth: 800,
+    storageKey: `worklenz.taskList.columnWidths.${project?.id || 'default'}`,
+  });
+
+  // Helper function to get column width
+  const getColumnWidth = useCallback(
+    (key: string): number => {
+      return columnWidths[key] || initialWidths[key] || 150;
+    },
+    [columnWidths, initialWidths]
+  );
 
   // Function to update custom column values
   const updateTaskCustomColumnValue = (taskId: string, columnKey: string, value: string) => {
@@ -1350,12 +1703,18 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
         // If already expanded, just collapse it
         dispatch(toggleTaskRowExpansion(taskId));
       } else {
-        // Only fetch subtasks if the task has subtasks
-        if (task.sub_tasks && task.sub_tasks.length > 0) {
+        // Fetch subtasks if the task has a subtask count but subtasks haven't been loaded yet
+        if (
+          task.sub_tasks_count &&
+          task.sub_tasks_count > 0 &&
+          (!task.sub_tasks || task.sub_tasks.length === 0)
+        ) {
+          // Fetch subtasks - the thunk will handle expansion when subtasks are loaded
           dispatch(fetchSubTasks({ taskId, projectId: project?.id || '' }));
+        } else {
+          // Subtasks are already loaded, just toggle expansion
+          dispatch(toggleTaskRowExpansion(taskId));
         }
-        // Toggle expansion regardless of whether we fetch subtasks
-        dispatch(toggleTaskRowExpansion(taskId));
       }
     }
   };
@@ -1363,7 +1722,12 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
   const toggleSelectAll = () => {
     if (!taskList) return;
     const allTaskIds = taskList
-      .flatMap(task => [task.id, ...(task.sub_tasks?.map(subtask => subtask.id) || [])])
+      .flatMap(task => [
+        ...(task.is_parent_container ? [] : [task.id]),
+        ...(task.sub_tasks
+          ?.filter(subtask => !subtask.is_parent_container)
+          .map(subtask => subtask.id) || []),
+      ])
       .filter(Boolean) as string[];
 
     if (isSelectAll) {
@@ -1386,6 +1750,7 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
   };
 
   const toggleRowSelection = (task: IProjectTask) => {
+    if (task.is_parent_container) return;
     if (!task.id) return;
     const taskIdsSet = new Set(selectedTaskIdsList);
     const selectedTasksSet = new Set(
@@ -1417,6 +1782,36 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
     setContextMenuVisible(true);
   };
+
+  const handleColumnDragStart = useCallback((event: any) => {
+    setActiveColumnId(event?.active?.id || null);
+  }, []);
+
+  const handleColumnDragOver = useCallback((event: any) => {
+    setOverColumnId(event?.over?.id || null);
+  }, []);
+
+  const handleColumnDragEnd = useCallback(
+    (event: any) => {
+      setActiveColumnId(null);
+      setOverColumnId(null);
+
+      const { active, over } = event || {};
+      if (!active || !over || active.id === over.id) return;
+
+      const reorderableIds = visibleColumns
+        .filter(column => column.key !== 'KEY')
+        .map(column => column.id || column.key || '');
+
+      const oldIndex = reorderableIds.indexOf(String(active.id));
+      const newIndex = reorderableIds.indexOf(String(over.id));
+
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      setColumnOrder(arrayMove(reorderableIds, oldIndex, newIndex));
+    },
+    [visibleColumns]
+  );
 
   useEffect(() => {
     const tableContainer = document.querySelector<HTMLElement>(`.tasklist-container-${tableId}`);
@@ -1453,28 +1848,25 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
     if (!key) return '';
 
     const baseStyles = `border px-2 text-left`;
-    const stickyStyles = (() => {
-      switch (key) {
-        case 'selector':
-          return 'sticky left-0 z-20';
-        case 'TASK':
-          return `sticky left-[48px] z-10 after:content after:absolute after:top-0 after:-right-1 after:h-full after:-z-10 after:w-1.5 after:bg-transparent ${
-            scrollingTables[tableId]
-              ? 'after:bg-linear-to-r after:from-[rgba(0,0,0,0.12)] after:to-transparent'
-              : ''
-          }`;
-        default:
-          return '';
+
+    // Don't add sticky classes here - they're added separately with CSS classes
+    // Only add width styles for TASK column
+    const widthStyles = key === 'TASK' ? 'w-[474px]' : '';
+
+    const heightStyles = isHeader ? 'after:h-[42px]' : 'after:min-h-[40px]';
+
+    // Background colors are handled by inline styles for sticky columns
+    const themeStyles = (() => {
+      // Don't add background for sticky columns (selector, KEY) as it's in inline styles
+      if (key === 'selector' || key === 'KEY') {
+        return isDarkMode ? 'border-[#303030]' : '';
       }
+      return isDarkMode
+        ? `bg-${isHeader ? '[#1d1d1d]' : '[#141414]'} border-[#303030]`
+        : `bg-${isHeader ? '[#fafafa]' : 'white'}`;
     })();
 
-    const widthStyles = key === 'TASK' ? 'w-[474px]' : '';
-    const heightStyles = isHeader ? 'after:h-[42px]' : 'after:min-h-[40px]';
-    const themeStyles = isDarkMode
-      ? `bg-${isHeader ? '[#1d1d1d]' : '[#141414]'} border-[#303030]`
-      : `bg-${isHeader ? '[#fafafa]' : 'white'}`;
-
-    return `${baseStyles} ${stickyStyles} ${heightStyles} ${themeStyles} ${widthStyles}`;
+    return `${baseStyles} ${heightStyles} ${themeStyles} ${widthStyles}`;
   };
 
   const renderColumnContent = (
@@ -1491,6 +1883,7 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
           isSubTask={isSubtask}
           projectId={project?.id || ''}
           toggleTaskExpansion={toggleTaskExpansion}
+          onOpenTask={handleOpenTask}
         />
       ),
       DESCRIPTION: () => <TaskListDescriptionCell description={task.description || ''} />,
@@ -1537,57 +1930,92 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
   // Now update the renderTaskRow function to use our memoized component
   const renderTaskRow = (task: IProjectTask | undefined, isSubtask = false) => {
     if (!task?.id) return null;
+    const isParentContainer = !!task.is_parent_container;
 
     return (
       <DraggableRow key={task.id} task={task} groupId={tableId}>
         {(attributes, listeners) => (
           <>
             <td
-              className={getColumnStyles('selector', false)}
+              className={`${getColumnStyles('selector', false)} sticky-selector-column`}
               style={{
                 width: 56,
+                position: 'sticky' as const,
+                left: '0px',
+                zIndex: 20,
                 backgroundColor: selectedTaskIdsList.includes(task.id || '')
                   ? isDarkMode
                     ? colors.skyBlue
                     : '#dceeff'
                   : isDarkMode
-                    ? '#181818'
-                    : '#fff',
+                    ? '#141414'
+                    : '#ffffff',
               }}
             >
               <Flex gap={8} align="center" justify={isSubtask ? 'flex-end' : 'flex-start'}>
-                {!isSubtask && (
+                {!isSubtask && !isParentContainer && (
                   <div {...attributes} {...listeners}>
                     <HolderOutlined style={{ cursor: 'grab' }} />
                   </div>
                 )}
                 <Checkbox
                   checked={selectedTaskIdsList.includes(task.id || '')}
-                  onChange={() => toggleRowSelection(task)}
+                  onChange={() => {
+                    if (!isParentContainer) {
+                      toggleRowSelection(task);
+                    }
+                  }}
+                  disabled={isParentContainer}
                 />
               </Flex>
             </td>
-            {visibleColumns.map(column => (
-              <td
-                key={column.key}
-                className={getColumnStyles(column.key, false)}
-                style={{
-                  backgroundColor: getRowBackgroundColor(task.id),
-                  minWidth: column.custom_column ? '120px' : undefined,
-                }}
-                data-task-cell
-                onContextMenu={e => handleContextMenu(e, task)}
-              >
-                <CustomCell
-                  column={column}
-                  task={task}
-                  isSubtask={isSubtask}
-                  renderCustomColumnContent={renderCustomColumnContent}
-                  renderColumnContent={renderColumnContent}
-                  updateTaskCustomColumnValue={updateTaskCustomColumnValue}
-                />
-              </td>
-            ))}
+            {visibleColumns.map(column => {
+              const isKeyColumn = column.key === 'KEY';
+              const backgroundColor =
+                isKeyColumn && !selectedTaskIdsList.includes(task.id || '')
+                  ? isDarkMode
+                    ? '#141414'
+                    : '#ffffff'
+                  : getRowBackgroundColor(task.id);
+
+              const cellStyle = isKeyColumn
+                ? {
+                    position: 'sticky' as const,
+                    left: '56px',
+                    zIndex: 20,
+                    backgroundColor,
+                    width: '100px',
+                    minWidth: '100px',
+                    maxWidth: '100px',
+                  }
+                : {
+                    backgroundColor,
+                    minWidth: column.custom_column ? '120px' : undefined,
+                  };
+
+              return (
+                <td
+                  key={column.key}
+                  className={`${getColumnStyles(column.key, false)} ${isKeyColumn ? 'sticky-key-column' : ''}`}
+                  style={cellStyle}
+                  data-task-cell
+                  onContextMenu={e => {
+                    if (!isParentContainer) {
+                      handleContextMenu(e, task);
+                    }
+                  }}
+                >
+                  <CustomCell
+                    column={column}
+                    task={task}
+                    isSubtask={isSubtask}
+                    renderCustomColumnContent={renderCustomColumnContent}
+                    renderColumnContent={renderColumnContent}
+                    updateTaskCustomColumnValue={updateTaskCustomColumnValue}
+                  />
+                </td>
+              );
+            })}
           </>
         )}
       </DraggableRow>
@@ -1707,7 +2135,6 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
         sensors={sensors}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
-        onDragOver={handleDragOver} // Add this line
         autoScroll={false} // Disable auto-scroll animations
       >
         <SortableContext
@@ -1719,48 +2146,162 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
           }
           strategy={verticalListSortingStrategy}
         >
-          <div className={`tasklist-container-${tableId} min-h-0 max-w-full overflow-x-auto`}>
-            <table className="rounded-2 w-full min-w-max border-collapse relative">
-              <thead className="h-[42px]">
+          <div
+            className={`tasklist-container-${tableId} overflow-x-auto`}
+            style={{ position: 'relative' }}
+          >
+            <table
+              className="task-list-table-sticky rounded-2 w-full min-w-max relative"
+              style={{ borderCollapse: 'separate', borderSpacing: 0 }}
+            >
+              <thead className="h-[42px] sticky top-0 z-30">
                 <tr>
                   <th
-                    className={getColumnStyles('selector', true)}
-                    style={{ width: 56, fontWeight: 500 }}
+                    className={`${getColumnStyles('selector', true)} sticky-selector-column`}
+                    style={{
+                      width: 56,
+                      fontWeight: 500,
+                      position: 'sticky' as const,
+                      left: '0px',
+                      zIndex: 40,
+                      backgroundColor: isDarkMode ? '#1d1d1d' : '#fafafa',
+                    }}
                   >
                     <Flex justify="flex-start" style={{ marginInlineStart: 22 }}>
                       <Checkbox checked={isSelectAll} onChange={toggleSelectAll} />
                     </Flex>
                   </th>
-                  {visibleColumns.map(column => (
-                    <th
-                      key={column.key}
-                      className={getColumnStyles(column.key, true)}
-                      style={{ fontWeight: 500 }}
+                  <DndContext
+                    sensors={columnSensors}
+                    modifiers={[restrictToHorizontalAxis]}
+                    onDragStart={handleColumnDragStart}
+                    onDragOver={handleColumnDragOver}
+                    onDragEnd={handleColumnDragEnd}
+                  >
+                    <SortableContext
+                      items={visibleColumns
+                        .filter(column => column.key !== 'KEY')
+                        .map(column => column.id || column.key || '')}
+                      strategy={horizontalListSortingStrategy}
                     >
-                      <Flex align="center" gap={4}>
-                        {column.key === 'PHASE' && (
-                          <Flex
-                            align="center"
-                            gap={4}
-                            justify="space-between"
-                            className="w-full min-w-[120px]"
-                          >
-                            {project?.phase_label}
-                            <ConfigPhaseButton />
-                          </Flex>
-                        )}
-                        {column.key !== 'PHASE' &&
-                          (column.custom_column && column.pinned ? (
-                            <CustomColumnHeader
-                              column={column}
-                              onSettingsClick={() => handleCustomColumnSettings(column.id || '')}
+                      {visibleColumns.map(column => {
+                        const columnId = column.id || column.key || '';
+                        const isKeyColumn = column.key === 'KEY';
+                        const isDropTarget =
+                          overColumnId === columnId && activeColumnId !== columnId;
+                        const stickyStyle = isKeyColumn
+                          ? {
+                              position: 'sticky' as const,
+                              left: '56px',
+                              zIndex: 40,
+                              fontWeight: 500,
+                              backgroundColor: isDarkMode ? '#1d1d1d' : '#fafafa',
+                              width: '100px',
+                              minWidth: '100px',
+                            }
+                          : { fontWeight: 500 };
+
+                        const headerClassName = `${getColumnStyles(column.key, true)} ${
+                          isKeyColumn ? 'sticky-key-column' : ''
+                        }`;
+
+                        const renderHeaderContent = (dragParams?: {
+                          attributes: any;
+                          listeners: any;
+                          setActivatorNodeRef: (el: HTMLElement | null) => void;
+                          isDragging: boolean;
+                        }) => (
+                          <>
+                            <Flex align="center" gap={4} className="column-header-cell">
+                              {column.key === 'PHASE' && (
+                                <Flex className="w-full min-w-[120px]">
+                                  {project?.phase_label}
+                                  <ConfigPhaseButton />
+                                </Flex>
+                              )}
+                              {column.key !== 'PHASE' &&
+                                (column.custom_column && column.pinned ? (
+                                  <CustomColumnHeader
+                                    column={column}
+                                    onSettingsClick={() =>
+                                      handleCustomColumnSettings(column.id || '')
+                                    }
+                                  />
+                                ) : (
+                                  t(`${column.key?.replace('_', '').toLowerCase()}Column`)
+                                ))}
+
+                              {/* Column drag handle */}
+                              {!isKeyColumn && (
+                                <span
+                                  className="column-drag-handle"
+                                  ref={dragParams?.setActivatorNodeRef}
+                                  {...dragParams?.attributes}
+                                  {...dragParams?.listeners}
+                                  aria-label={t('moveColumnHandle')}
+                                  title={t('moveColumnHandle')}
+                                >
+                                  <HolderOutlined style={{ fontSize: 12 }} />
+                                </span>
+                              )}
+                            </Flex>
+
+                            {/* Column Resize Handle */}
+                            <div
+                              className="column-resize-handle"
+                              role="separator"
+                              aria-orientation="vertical"
+                              aria-label={`Resize ${column.name || column.key} column`}
+                              tabIndex={0}
+                              onMouseDown={e => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const th = e.currentTarget.closest('th');
+                                const measured = th ? th.getBoundingClientRect().width : undefined;
+                                // Delegate resize start to shared hook with the live measured width to avoid any jump/lag
+                                handleResizeStart(e, column.key || '', measured);
+                              }}
+                              title={`Drag to resize ${column.name || column.key}`}
                             />
-                          ) : (
-                            t(`${column.key?.replace('_', '').toLowerCase()}Column`)
-                          ))}
-                      </Flex>
-                    </th>
-                  ))}
+                          </>
+                        );
+
+                        if (isKeyColumn) {
+                          return (
+                            <th
+                              key={columnId}
+                              className={headerClassName}
+                              style={stickyStyle}
+                              data-column-id={columnId}
+                            >
+                              {renderHeaderContent()}
+                            </th>
+                          );
+                        }
+
+                        return (
+                          <SortableColumnHeader
+                            key={columnId}
+                            column={column}
+                            isDropTarget={isDropTarget}
+                            className={headerClassName}
+                            style={stickyStyle}
+                          >
+                            {({ attributes, listeners, setActivatorNodeRef, isDragging }) => (
+                              <div style={isDragging ? { opacity: 0.85 } : undefined}>
+                                {renderHeaderContent({
+                                  attributes,
+                                  listeners,
+                                  setActivatorNodeRef,
+                                  isDragging,
+                                })}
+                              </div>
+                            )}
+                          </SortableColumnHeader>
+                        );
+                      })}
+                    </SortableContext>
+                  </DndContext>
                   <th className={getColumnStyles('customColumn', true)}>
                     <Flex justify="flex-start" style={{ marginInlineStart: 22 }}>
                       <AddCustomColumnButton />
@@ -1793,7 +2334,7 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
                               {updatedTask?.sub_tasks?.map(subtask =>
                                 subtask?.id ? renderTaskRow(subtask, true) : null
                               )}
-                              {showAddSubtaskFor !== updatedTask.id && (
+                              {!updatedTask.is_parent_container && showAddSubtaskFor !== updatedTask.id && (
                                 <tr key={`add-subtask-link-${updatedTask.id}`}>
                                   <td colSpan={visibleColumns.length + 1}>
                                     <div
@@ -1804,21 +2345,17 @@ const TaskListTable: React.FC<TaskListTableProps> = ({ taskList, tableId, active
                                         fontWeight: 500,
                                         background: '#f6f8fa',
                                       }}
-                                      onClick={() => setShowAddSubtaskFor(updatedTask.id)}
+                                      onClick={() => setShowAddSubtaskFor(updatedTask.id || null)}
                                     >
                                       + Add Sub Task
                                     </div>
                                   </td>
                                 </tr>
                               )}
-                              {showAddSubtaskFor === updatedTask.id && (
+                              {!updatedTask.is_parent_container && showAddSubtaskFor === updatedTask.id && (
                                 <tr key={`add-subtask-input-${updatedTask.id}`}>
                                   <td colSpan={visibleColumns.length + 1}>
-                                    <AddTaskListRow
-                                      groupId={tableId}
-                                      parentTask={updatedTask.id}
-                                      onCancel={() => setShowAddSubtaskFor(null)}
-                                    />
+                                    <AddTaskListRow groupId={tableId} parentTask={updatedTask.id} />
                                   </td>
                                 </tr>
                               )}

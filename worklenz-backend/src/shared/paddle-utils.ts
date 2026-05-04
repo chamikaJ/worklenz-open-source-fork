@@ -1,5 +1,8 @@
 import db from "../config/db";
 import { log_error } from "./utils";
+import { AppSumoService } from "../services/appsumo-service";
+
+const APPSUMO_BUSINESS_UNLOCK_CODE_COUNT = 5;
 
 export async function getTeamMemberCount(userId: string) {
   if (!userId) return;
@@ -43,14 +46,50 @@ export async function checkTeamSubscriptionStatus(team_id: string) {
                       subscription_status,
                       subscription_id,
                       quantity::INT,
+                      ud.business_plan_override,
+                      ud.team_member_limit_override,
                       (SELECT key FROM sys_license_types WHERE id = ud.license_type_id) AS subscription_type,
+                      (SELECT tier_name FROM licensing_plan_trials pt
+                       JOIN licensing_plan_tiers lpt ON pt.plan_tier_id = lpt.id
+                       WHERE pt.user_id = ud.user_id AND pt.is_active = true AND pt.trial_end_date > NOW()
+                       LIMIT 1) AS active_plan_trial,
+                      COALESCE(
+                        (SELECT name FROM licensing_pricing_plans lpp
+                         JOIN licensing_user_subscriptions lus2 ON lpp.id = lus2.plan_id
+                         WHERE lus2.user_id = ud.user_id AND lus2.status IN ('active', 'trialing')
+                         ORDER BY CASE WHEN lus2.status = 'trialing' THEN 1 ELSE 2 END
+                         LIMIT 1),
+                        (SELECT CASE
+                           WHEN tier_name = 'BUSINESS_LARGE' THEN 'business'
+                           WHEN tier_name = 'ENTERPRISE' THEN 'enterprise'
+                           ELSE LOWER(tier_name)
+                         END
+                         FROM licensing_plan_trials pt
+                         JOIN licensing_plan_tiers lpt ON pt.plan_tier_id = lpt.id
+                         WHERE pt.user_id = ud.user_id AND pt.is_active = true AND pt.trial_end_date > NOW()
+                         LIMIT 1)
+                      ) AS plan_name,
+                      COALESCE(
+                        (SELECT user_limit FROM licensing_pricing_plans lpp 
+                         JOIN licensing_user_subscriptions lus2 ON lpp.id = lus2.plan_id 
+                         WHERE lus2.user_id = ud.user_id AND lus2.status IN ('active', 'trialing')
+                         ORDER BY CASE WHEN lus2.status = 'trialing' THEN 1 ELSE 2 END
+                         LIMIT 1),
+                        (SELECT max_users FROM licensing_plan_trials pt
+                         JOIN licensing_plan_tiers lpt ON pt.plan_tier_id = lpt.id
+                         WHERE pt.user_id = ud.user_id AND pt.is_active = true AND pt.trial_end_date > NOW()
+                         LIMIT 1)
+                      ) AS base_user_limit,
                       (SELECT EXISTS(SELECT id FROM licensing_custom_subs lcs WHERE lcs.user_id = ud.user_id)) AS is_custom,
                       (SELECT EXISTS(SELECT id FROM licensing_credit_subs lcs WHERE lcs.user_id = ud.user_id)) AS is_credit,
                       (SELECT EXISTS(SELECT id FROM licensing_coupon_codes WHERE redeemed_by = ud.user_id)) AS is_ltd,
                       (SELECT SUM(team_members_limit) FROM licensing_coupon_codes WHERE redeemed_by = ud.user_id) AS ltd_users,
-                      (SELECT COUNT(DISTINCT email)
+                      (SELECT COUNT(*)::INT FROM licensing_coupon_codes WHERE redeemed_by = ud.user_id AND is_redeemed = TRUE) AS redeemed_codes_count,
+                      (SELECT COUNT(DISTINCT tmiv.email)
                         FROM team_member_info_view tmiv
-                        WHERE tmiv.team_id IN
+                        JOIN team_members tm ON tmiv.team_member_id = tm.id
+                        WHERE tm.active = true
+                          AND tmiv.team_id IN
                               (SELECT id
                               FROM teams
                               WHERE teams.user_id = ud.user_id)) AS current_count
@@ -59,6 +98,49 @@ export async function checkTeamSubscriptionStatus(team_id: string) {
         WHERE ud.user_id = (SELECT user_id FROM teams WHERE id = $1);`;
     const result = await db.query(q, [team_id]);
     const [data] = result.rows;
+
+    // AppSumo LTD users with < 5 redeemed codes should never have Business trial access
+    if (
+      data &&
+      data.is_ltd === true &&
+      (data.redeemed_codes_count ?? 0) < APPSUMO_BUSINESS_UNLOCK_CODE_COUNT &&
+      data.active_plan_trial === "BUSINESS_LARGE"
+    ) {
+      data.active_plan_trial = null;
+    }
+
+    // Resolve effective subscription_type to account for active plan trials,
+    // mirroring the logic in deserialize_user so server-side checks are consistent.
+    if (data && data.active_plan_trial) {
+      if (data.active_plan_trial === "BUSINESS_LARGE") {
+        data.subscription_type = "BUSINESS_TRIAL";
+      } else if (data.active_plan_trial === "ENTERPRISE") {
+        data.subscription_type = "ENTERPRISE_TRIAL";
+      } else {
+        data.subscription_type = "PLAN_TRIAL";
+      }
+    }
+
+    // Check if AppSumo LTD user with 5+ redeemed codes should get business plan access
+    if (data && data.redeemed_codes_count >= APPSUMO_BUSINESS_UNLOCK_CODE_COUNT && data.is_ltd) {
+      data.appsumo_business_eligible = true;
+    }
+
+    // If this is a business plan, check if AppSumo user gets special limit
+    if (data && data.subscription_type === "PADDLE" && data.plan_name) {
+      const appSumoLimit = AppSumoService.getBusinessPlanUserLimit(
+        data.subscription_type,
+        data.plan_name,
+        data.base_user_limit || 25
+      );
+      data.effective_user_limit = appSumoLimit;
+    } else if (data && data.subscription_type === "ANNUAL_BUSINESS") {
+      // ANNUAL_BUSINESS license type has business plan features with default business limit
+      data.effective_user_limit = data.base_user_limit || 100; // Default business plan limit
+    } else {
+      data.effective_user_limit = data.base_user_limit || 25;
+    }
+    
     return data;
   } catch (error) {
     log_error(error);

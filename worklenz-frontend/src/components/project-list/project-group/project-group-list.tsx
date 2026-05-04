@@ -12,6 +12,7 @@ import {
   Space,
   theme,
   Divider,
+  Popconfirm,
 } from '@/shared/antd-imports';
 import {
   TeamOutlined,
@@ -34,6 +35,7 @@ import {
 import {
   toggleArchiveProject,
   toggleArchiveProjectForAll,
+  fetchGroupedProjects,
 } from '@/features/projects/projectsSlice';
 import { useAuthService } from '@/hooks/useAuth';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
@@ -53,6 +55,7 @@ const ProjectGroupList: React.FC<ProjectGroupListProps> = ({
   loading,
   t,
 }) => {
+  const { groupedRequestParams } = useAppSelector(state => state.projectsReducer);
   // Preload project view components on hover for smoother navigation
   const handleProjectHover = React.useCallback((project_id: string) => {
     if (project_id) {
@@ -124,39 +127,36 @@ const ProjectGroupList: React.FC<ProjectGroupListProps> = ({
     e.stopPropagation();
     console.log('Opening project drawer from project group for project:', projectId);
     trackMixpanelEvent(evt_projects_settings_click);
-    
+
     // Set project ID first
     dispatch(setProjectId(projectId));
-    
+
     // Then fetch project data
     dispatch(fetchProjectData(projectId))
       .unwrap()
-      .then((projectData) => {
+      .then(projectData => {
         console.log('Project data fetched successfully from project group:', projectData);
         // Open drawer after data is fetched
         dispatch(toggleProjectDrawer());
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('Failed to fetch project data from project group:', error);
         // Still open drawer even if fetch fails, so user can see error state
         dispatch(toggleProjectDrawer());
       });
   };
 
-  const handleArchiveClick = async (
-    e: React.MouseEvent,
-    projectId: string,
-    isArchived: boolean
-  ) => {
-    e.stopPropagation();
+  const handleArchiveClick = async (projectId: string, isArchived: boolean) => {
     try {
       if (isOwnerOrAdmin) {
         trackMixpanelEvent(evt_projects_archive_all);
-        await dispatch(toggleArchiveProjectForAll(projectId));
+        await dispatch(toggleArchiveProjectForAll(projectId)).unwrap();
       } else {
         trackMixpanelEvent(evt_projects_archive);
-        await dispatch(toggleArchiveProject(projectId));
+        await dispatch(toggleArchiveProject(projectId)).unwrap();
       }
+      // Refetch grouped projects after archiving to update the UI
+      await dispatch(fetchGroupedProjects(groupedRequestParams)).unwrap();
     } catch (error) {
       logger.error('Failed to archive project:', error);
     }
@@ -405,7 +405,7 @@ const ProjectGroupList: React.FC<ProjectGroupListProps> = ({
             }
           }}
           onClick={() => onProjectSelect(project.id || '')}
-          bodyStyle={{ padding: 0 }}
+          styles={{ body: { padding: 0 } }}
         >
           {/* Action buttons */}
           <div className="action-buttons" style={styles.actionButtons}>
@@ -431,27 +431,65 @@ const ProjectGroupList: React.FC<ProjectGroupListProps> = ({
                 <SettingOutlined />
               </button>
             </Tooltip>
-            <Tooltip title={project.archived ? t('unarchive') : t('archive')}>
-              <button
-                style={styles.actionButton}
-                onClick={e => handleArchiveClick(e, project.id, project.archived)}
-                onMouseEnter={e => {
-                  Object.assign(e.currentTarget.style, {
-                    background: getThemeAwareColor(token.colorPrimary, token.colorPrimaryActive),
-                    color: getThemeAwareColor('#fff', token.colorTextLightSolid),
-                    transform: 'scale(1.1)',
-                  });
+            <Tooltip
+              title={
+                isOwnerOrAdmin
+                  ? project.archived
+                    ? t('unarchive')
+                    : t('archive')
+                  : t('noPermission')
+              }
+            >
+              <Popconfirm
+                title={project.archived ? t('unarchive') : t('archive')}
+                description={project.archived ? t('unarchiveConfirm') : t('archiveConfirm')}
+                onConfirm={e => {
+                  e?.stopPropagation();
+                  handleArchiveClick(project.id, project.archived);
                 }}
-                onMouseLeave={e => {
-                  Object.assign(e.currentTarget.style, {
-                    background: getThemeAwareColor('rgba(255,255,255,0.9)', 'rgba(0,0,0,0.7)'),
-                    color: getThemeAwareColor(token.colorTextSecondary, token.colorTextTertiary),
-                    transform: 'scale(1)',
-                  });
-                }}
+                onCancel={e => e?.stopPropagation()}
+                okText={t('yes')}
+                cancelText={t('no')}
+                disabled={!isOwnerOrAdmin}
               >
-                <InboxOutlined />
-              </button>
+                <button
+                  style={{
+                    ...styles.actionButton,
+                    cursor: isOwnerOrAdmin ? 'pointer' : 'not-allowed',
+                    opacity: isOwnerOrAdmin ? 1 : 0.5,
+                  }}
+                  onClick={e => {
+                    e.stopPropagation();
+                  }}
+                  onMouseEnter={e => {
+                    if (isOwnerOrAdmin) {
+                      Object.assign(e.currentTarget.style, {
+                        background: getThemeAwareColor(
+                          token.colorPrimary,
+                          token.colorPrimaryActive
+                        ),
+                        color: getThemeAwareColor('#fff', token.colorTextLightSolid),
+                        transform: 'scale(1.1)',
+                      });
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (isOwnerOrAdmin) {
+                      Object.assign(e.currentTarget.style, {
+                        background: getThemeAwareColor('rgba(255,255,255,0.9)', 'rgba(0,0,0,0.7)'),
+                        color: getThemeAwareColor(
+                          token.colorTextSecondary,
+                          token.colorTextTertiary
+                        ),
+                        transform: 'scale(1)',
+                      });
+                    }
+                  }}
+                  disabled={!isOwnerOrAdmin}
+                >
+                  <InboxOutlined />
+                </button>
+              </Popconfirm>
             </Tooltip>
           </div>
           {/* Project color indicator bar */}

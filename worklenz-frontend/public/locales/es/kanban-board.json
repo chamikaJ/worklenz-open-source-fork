@@ -1,5 +1,6 @@
 {
   "rename": "Renombrar",
+  "renameStatus": "Renombrar Estado",
   "delete": "Eliminar",
   "addTask": "Agregar tarea",
   "addSectionButton": "Agregar sección",
@@ -41,7 +42,7 @@
   "noSubtasks": "Sin subtareas",
   "showSubtasks": "Mostrar subtareas",
   "hideSubtasks": "Ocultar subtareas",
-  
+
   "errorLoadingTasks": "Error al cargar tareas",
   "noTasksFound": "No se encontraron tareas",
   "loadingFilters": "Cargando filtros...",

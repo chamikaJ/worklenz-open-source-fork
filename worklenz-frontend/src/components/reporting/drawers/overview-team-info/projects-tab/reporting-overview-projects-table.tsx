@@ -1,24 +1,31 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Button, ConfigProvider, Flex, PaginationProps, Table, TableColumnsType } from '@/shared/antd-imports';
+import {
+  Button,
+  ConfigProvider,
+  Flex,
+  PaginationProps,
+  Table,
+  TableColumnsType,
+} from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { ExpandAltOutlined } from '@/shared/antd-imports';
 
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
-import ProjectCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/project-cell/project-cell';
-import EstimatedVsActualCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/estimated-vs-actual-cell/estimated-vs-actual-cell';
-import TasksProgressCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/tasks-progress-cell/tasks-progress-cell';
-import LastActivityCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/last-activity-cell/last-activity-cell';
-import ProjectStatusCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/project-status-cell/project-status-cell';
-import ProjectClientCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/project-client-cell/project-client-cell';
-import ProjectTeamCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/project-team-cell/project-team-cell';
-import ProjectManagerCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/project-manager-cell/project-manager-cell';
-import ProjectDatesCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/project-dates-cell/project-dates-cell';
-import ProjectHealthCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/project-health-cell/project-health-cell';
-import ProjectCategoryCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/project-category-cell/project-category-cell';
-import ProjectDaysLeftAndOverdueCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/project-days-left-and-overdue-cell/project-days-left-and-overdue-cell';
-import ProjectUpdateCell from '@/pages/reporting/projects-reports/projects-reports-table/table-cells/project-update-cell/project-update-cell';
+import ProjectCell from '@/components/reporting/table-cells/ProjectCell';
+import EstimatedVsActualCell from '@/pages/reporting/projects-reports/components/projects-reports-table/table-cells/estimated-vs-actual-cell/estimated-vs-actual-cell';
+import TasksProgressCell from '@/pages/reporting/projects-reports/components/projects-reports-table/table-cells/tasks-progress-cell/tasks-progress-cell';
+import LastActivityCell from '@/pages/reporting/projects-reports/components/projects-reports-table/table-cells/last-activity-cell/last-activity-cell';
+import ProjectStatusCell from '@/pages/reporting/projects-reports/components/projects-reports-table/table-cells/project-status-cell/project-status-cell';
+import ProjectClientCell from '@/components/reporting/table-cells/ProjectClientCell';
+import ProjectTeamCell from '@/components/reporting/table-cells/ProjectTeamCell';
+import ProjectManagerCell from '@/pages/reporting/projects-reports/components/projects-reports-table/table-cells/project-manager-cell/project-manager-cell';
+import ProjectDatesCell from '@/pages/reporting/projects-reports/components/projects-reports-table/table-cells/project-dates-cell/project-dates-cell';
+import ProjectHealthCell from '@/pages/reporting/projects-reports/components/projects-reports-table/table-cells/project-health-cell/project-health-cell';
+import ProjectCategoryCell from '@/pages/reporting/projects-reports/components/projects-reports-table/table-cells/project-category-cell/project-category-cell';
+import ProjectDaysLeftAndOverdueCell from '@/pages/reporting/projects-reports/components/projects-reports-table/table-cells/project-days-left-and-overdue-cell/project-days-left-and-overdue-cell';
+import ProjectUpdateCell from '@/pages/reporting/projects-reports/components/projects-reports-table/table-cells/project-update-cell/project-update-cell';
 import {
   resetProjectReports,
   setField,

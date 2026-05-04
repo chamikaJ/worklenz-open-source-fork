@@ -15,7 +15,7 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { Card, Spin, Empty, Alert } from '@/shared/antd-imports';
-import { RootState } from '@/app/store';
+import { RootState , store  } from '@/app/store';
 import {
   selectAllTasks,
   selectLoading,
@@ -25,10 +25,10 @@ import {
   fetchTasksV3,
   selectTaskGroupsV3,
   fetchSubTasks,
+  setSort,
+  updateTask,
 } from '@/features/task-management/task-management.slice';
-import {
-  selectCurrentGrouping,
-} from '@/features/task-management/grouping.slice';
+import { selectCurrentGrouping } from '@/features/task-management/grouping.slice';
 import {
   selectSelectedTaskIds,
   clearSelection,
@@ -60,12 +60,14 @@ import {
   evt_project_task_list_bulk_change_status,
   evt_project_task_list_bulk_delete,
   evt_project_task_list_bulk_update_labels,
+  evt_project_task_list_bulk_change_due_date,
 } from '@/shared/worklenz-analytics-events';
 import {
   IBulkTasksLabelsRequest,
   IBulkTasksPhaseChangeRequest,
   IBulkTasksPriorityChangeRequest,
   IBulkTasksStatusChangeRequest,
+  IBulkTasksDueDateChangeRequest,
 } from '@/types/tasks/bulk-action-bar.types';
 import { IProjectTask } from '@/types/project/projectTasksViewModel.types';
 import { checkTaskDependencyStatus } from '@/utils/check-task-dependency-status';
@@ -238,14 +240,21 @@ const TaskListBoard: React.FC<TaskListBoardProps> = ({ projectId, className = ''
   }, []);
 
   // Fetch task groups when component mounts or dependencies change
+  // AFTER
   useEffect(() => {
     if (projectId && !hasInitialized.current) {
       hasInitialized.current = true;
 
-      // Measure task loading performance
+      // Read sort from URL if passed from insights "See All"
+      const urlParams = new URLSearchParams(window.location.search);
+      const sortField = urlParams.get('sort_field');
+      const sortOrder = urlParams.get('sort_order') as 'ASC' | 'DESC' | null;
+
+      if (sortField && sortOrder) {
+        dispatch(setSort({ field: sortField, order: sortOrder }));
+      }
+
       CustomPerformanceMeasurer.mark('task-load-time');
-      
-      // Fetch real tasks from V3 API (minimal processing needed)
       dispatch(fetchTasksV3(projectId)).finally(() => {
         CustomPerformanceMeasurer.measure('task-load-time');
       });
@@ -270,7 +279,9 @@ const TaskListBoard: React.FC<TaskListBoardProps> = ({ projectId, className = ''
       const taskId = active.id as string;
 
       // Find the task and its group
-      const activeTask = Array.isArray(tasks) ? tasks.find((t: Task) => t.id === taskId) || null : null;
+      const activeTask = Array.isArray(tasks)
+        ? tasks.find((t: Task) => t.id === taskId) || null
+        : null;
       let activeGroupId: string | null = null;
 
       if (activeTask) {
@@ -302,7 +313,9 @@ const TaskListBoard: React.FC<TaskListBoardProps> = ({ projectId, className = ''
       const overId = over.id as string;
 
       // Check if we're hovering over a task or a group container
-      const targetTask = Array.isArray(tasks) ? tasks.find((t: Task) => t.id === overId) : undefined;
+      const targetTask = Array.isArray(tasks)
+        ? tasks.find((t: Task) => t.id === overId)
+        : undefined;
       let targetGroupId = overId;
 
       if (targetTask) {
@@ -352,7 +365,9 @@ const TaskListBoard: React.FC<TaskListBoardProps> = ({ projectId, className = ''
       let targetIndex = -1;
 
       // Check if dropping on a task or a group
-      const targetTask = Array.isArray(tasks) ? tasks.find((t: Task) => t.id === overId) : undefined;
+      const targetTask = Array.isArray(tasks)
+        ? tasks.find((t: Task) => t.id === overId)
+        : undefined;
       if (targetTask) {
         // Dropping on a task, find which group contains this task
         for (const group of taskGroups) {
@@ -435,40 +450,42 @@ const TaskListBoard: React.FC<TaskListBoardProps> = ({ projectId, className = ''
       const newSelectedIds = Array.from(currentSelectedIds);
 
       // Map selected tasks to the required format
-      const newSelectedTasks = Array.isArray(tasks) ? tasks
-        .filter((t: Task) => newSelectedIds.includes(t.id))
-        .map(
-          (task: Task): IProjectTask => ({
-            id: task.id,
-            name: task.title,
-            task_key: task.task_key,
-            status: task.status,
-            status_id: task.status,
-            priority: task.priority,
-            phase_id: task.phase,
-            phase_name: task.phase,
-            description: task.description,
-            start_date: task.startDate,
-            end_date: task.dueDate,
-            total_hours: task.timeTracking?.estimated || 0,
-            total_minutes: task.timeTracking?.logged || 0,
-            progress: task.progress,
-            sub_tasks_count: task.sub_tasks_count || 0,
-            assignees: task.assignees?.map((assigneeId: string) => ({
-              id: assigneeId,
-              name: '',
-              email: '',
-              avatar_url: '',
-              team_member_id: assigneeId,
-              project_member_id: assigneeId,
-            })),
-            labels: task.labels,
-            manual_progress: false,
-            created_at: (task as any).createdAt || (task as any).created_at,
-            updated_at: (task as any).updatedAt || (task as any).updated_at,
-            sort_order: task.order,
-          })
-        ) : [];
+      const newSelectedTasks = Array.isArray(tasks)
+        ? tasks
+            .filter((t: Task) => newSelectedIds.includes(t.id))
+            .map(
+              (task: Task): IProjectTask => ({
+                id: task.id,
+                name: task.title,
+                task_key: task.task_key,
+                status: task.status,
+                status_id: task.status,
+                priority: task.priority,
+                phase_id: task.phase,
+                phase_name: task.phase,
+                description: task.description,
+                start_date: task.startDate,
+                end_date: task.dueDate,
+                total_hours: task.timeTracking?.estimated || 0,
+                total_minutes: task.timeTracking?.logged || 0,
+                progress: task.progress,
+                sub_tasks_count: task.sub_tasks_count || 0,
+                assignees: task.assignees?.map((assigneeId: string) => ({
+                  id: assigneeId,
+                  name: '',
+                  email: '',
+                  avatar_url: '',
+                  team_member_id: assigneeId,
+                  project_member_id: assigneeId,
+                })),
+                labels: task.labels,
+                manual_progress: false,
+                created_at: (task as any).createdAt || (task as any).created_at,
+                updated_at: (task as any).updatedAt || (task as any).updated_at,
+                sort_order: task.order,
+              })
+            )
+        : [];
 
       // Dispatch both actions to update the Redux state
       dispatch(selectTasks(newSelectedTasks));
@@ -743,9 +760,65 @@ const TaskListBoard: React.FC<TaskListBoardProps> = ({ projectId, className = ''
 
   const handleBulkSetDueDate = useCallback(
     async (date: string) => {
-      // This would need to be implemented in the API service
+      if (!projectId) return;
+      try {
+        const body: IBulkTasksDueDateChangeRequest = {
+          tasks: selectedTaskIds,
+          end_date: date || null,
+        };
+        const res = await taskListBulkActionsApiService.changeDueDate(body, projectId);
+        if (res.done) {
+          trackMixpanelEvent(evt_project_task_list_bulk_change_due_date);
+          dispatch(deselectAllBulk());
+          dispatch(clearSelection());
+          dispatch(fetchTasksV3(projectId));
+          // alertService.success(
+          //   date ? 'Due date updated' : 'Due date cleared',
+          //   date ? 'Due date has been set for selected tasks' : 'Due date has been cleared for selected tasks'
+          // );
+        }
+      } catch (error) {
+        logger.error('Error changing due date:', error);
+        alertService.error('Error', 'Failed to update due date');
+      }
     },
-    [selectedTaskIds]
+    [selectedTaskIds, projectId, trackMixpanelEvent, dispatch]
+  );
+
+  const handleBulkSetStartDate = useCallback(
+    async (date: string) => {
+      if (!projectId) return;
+      try {
+        const body: IBulkTasksDueDateChangeRequest = {
+          tasks: selectedTaskIds,
+          start_date: date || null,
+        };
+        const res = await taskListBulkActionsApiService.changeStartDate(body, projectId);
+        if (res.done) {
+          trackMixpanelEvent(evt_project_task_list_bulk_change_due_date);
+
+          // Mirror exactly what socket handleStartDateChange does
+          selectedTaskIds.forEach(id => {
+            const currentTask = store.getState().taskManagement.entities[id];
+            if (currentTask) {
+              dispatch(updateTask({
+                ...currentTask,
+                startDate: date || undefined,
+                updatedAt: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              }));
+            }
+          });
+
+          dispatch(deselectAllBulk());
+          dispatch(clearSelection());
+        }
+      } catch (error) {
+        logger.error('Error changing start date:', error);
+        alertService.error('Error', 'Failed to update start date');
+      }
+    },
+    [selectedTaskIds, projectId, trackMixpanelEvent, dispatch]
   );
 
   // Cleanup effect
@@ -878,6 +951,7 @@ const TaskListBoard: React.FC<TaskListBoardProps> = ({ projectId, className = ''
         onBulkDuplicate={handleBulkDuplicate}
         onBulkExport={handleBulkExport}
         onBulkSetDueDate={handleBulkSetDueDate}
+        onBulkSetStartDate={handleBulkSetStartDate}
       />
 
       <style>{`

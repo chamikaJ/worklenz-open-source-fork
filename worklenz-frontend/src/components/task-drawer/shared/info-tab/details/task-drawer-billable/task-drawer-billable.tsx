@@ -2,7 +2,15 @@ import { SocketEvents } from '@/shared/socket-events';
 import { useSocket } from '@/socket/socketContext';
 import { ITaskViewModel } from '@/types/tasks/task.types';
 import logger from '@/utils/errorLogger';
-import { Switch } from 'antd/es';
+import { Switch, Tooltip } from '@/shared/antd-imports';
+import { CrownOutlined } from '@ant-design/icons';
+import { useAuthService } from '@/hooks/useAuth';
+import { shouldRestrictProjectHealth } from '@/utils/subscription-utils';
+import { useTranslation } from 'react-i18next';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { toggleUpgradeModal } from '@/features/admin-center/admin-center.slice';
+import { useEffect, useState } from 'react';
 
 interface TaskDrawerBillableProps {
   task?: ITaskViewModel | null;
@@ -10,9 +18,38 @@ interface TaskDrawerBillableProps {
 
 const TaskDrawerBillable = ({ task = null }: TaskDrawerBillableProps) => {
   const { socket, connected } = useSocket();
+  const authService = useAuthService();
+  const currentSession = authService.getCurrentSession();
+  const { t } = useTranslation('common');
+  const dispatch = useAppDispatch();
+  const isRestricted = shouldRestrictProjectHealth(currentSession);
+
+  // Read billable status directly from Redux to ensure real-time updates
+  const billableFromRedux = useAppSelector(
+    state => state.taskDrawerReducer?.taskFormViewModel?.task?.billable
+  );
+
+  // Use local state to track the billable value for immediate UI feedback
+  const [localBillable, setLocalBillable] = useState<boolean>(false);
+
+  // Sync local state with Redux or prop value
+  useEffect(() => {
+    const billableValue = billableFromRedux !== undefined ? billableFromRedux : task?.billable;
+    if (billableValue !== undefined) {
+      setLocalBillable(billableValue);
+    }
+  }, [billableFromRedux, task?.billable]);
 
   const handleBillableChange = (checked: boolean) => {
+    if (isRestricted) {
+      dispatch(toggleUpgradeModal());
+      return;
+    }
+
     if (!connected) return;
+
+    // Optimistically update local state for immediate UI feedback
+    setLocalBillable(checked);
 
     try {
       socket?.emit(SocketEvents.TASK_BILLABLE_CHANGE.toString(), {
@@ -21,10 +58,26 @@ const TaskDrawerBillable = ({ task = null }: TaskDrawerBillableProps) => {
       });
     } catch (error) {
       logger.error('Error updating billable status', error);
+      // Revert on error
+      setLocalBillable(!checked);
     }
   };
 
-  return <Switch defaultChecked={task?.billable} onChange={handleBillableChange} />;
+  if (isRestricted) {
+    return (
+      <Tooltip title={t('upgrade-plan')} placement="top">
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
+          onClick={() => dispatch(toggleUpgradeModal())}
+        >
+          <Switch defaultChecked={false} disabled />
+          <CrownOutlined style={{ fontSize: '14px', color: '#faad14' }} />
+        </div>
+      </Tooltip>
+    );
+  }
+
+  return <Switch checked={localBillable} onChange={handleBillableChange} />;
 };
 
 export default TaskDrawerBillable;

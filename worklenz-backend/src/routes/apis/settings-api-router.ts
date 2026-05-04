@@ -2,12 +2,14 @@ import express from "express";
 import NotificationController from "../../controllers/notification-controller";
 
 import ProfileSettingsController from "../../controllers/profile-settings-controller";
+import ClientPortalSettingsController from "../../controllers/client-portal/client-portal-settings-controller";
 
 import idParamValidator from "../../middlewares/validators/id-param-validator";
 import profileSettingsBodyValidator from "../../middlewares/validators/profile-settings-body-validator";
 import setupValidator from "../../middlewares/validators/setup-validator";
 import teamSettingsBodyValidator from "../../middlewares/validators/team-settings-body-validator";
 import safeControllerFunction from "../../shared/safe-controller-function";
+import { featureFlags } from "../../config/feature-flags";
 
 const settingsApiRouter = express.Router();
 
@@ -20,5 +22,13 @@ settingsApiRouter.get("/profile", safeControllerFunction(ProfileSettingsControll
 settingsApiRouter.put("/profile", profileSettingsBodyValidator, safeControllerFunction(ProfileSettingsController.update));
 
 settingsApiRouter.put("/team-name/:id", idParamValidator, teamSettingsBodyValidator, safeControllerFunction(ProfileSettingsController.update_team_name));
+
+// Client Portal Settings (for organization-side management)
+if (featureFlags.enableClientPortal) {
+  settingsApiRouter.get("/client-portal", safeControllerFunction(ClientPortalSettingsController.getSettings));
+  settingsApiRouter.put("/client-portal", safeControllerFunction(ClientPortalSettingsController.updateSettings));
+  settingsApiRouter.post("/client-portal/upload-logo", safeControllerFunction(ClientPortalSettingsController.uploadLogo));
+  settingsApiRouter.get("/client-portal/base-url", safeControllerFunction(ClientPortalSettingsController.getClientPortalBaseUrl));
+}
 
 export default settingsApiRouter;

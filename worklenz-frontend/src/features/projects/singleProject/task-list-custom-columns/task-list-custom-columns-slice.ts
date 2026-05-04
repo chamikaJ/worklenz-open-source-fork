@@ -5,6 +5,7 @@ import { SelectionType } from '../../../../pages/projects/projectView/taskList/t
 
 export type CustomFieldsTypes =
   | 'people'
+  | 'text'
   | 'number'
   | 'date'
   | 'selection'
@@ -42,7 +43,7 @@ const initialState: TaskListCustomColumnsState = {
   customColumnId: null,
   currentColumnData: null,
 
-  customFieldType: 'people',
+  customFieldType: 'text',
   customFieldNumberType: 'formatted',
   decimals: 0,
   label: 'LKR',
@@ -64,7 +65,11 @@ const taskListCustomColumnsSlice = createSlice({
     },
     setCustomColumnModalAttributes: (
       state,
-      action: PayloadAction<{ modalType: 'create' | 'edit'; columnId: string | null; columnData?: any }>
+      action: PayloadAction<{
+        modalType: 'create' | 'edit';
+        columnId: string | null;
+        columnData?: any;
+      }>
     ) => {
       state.customColumnModalType = action.payload.modalType;
       state.customColumnId = action.payload.columnId;

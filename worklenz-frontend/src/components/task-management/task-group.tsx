@@ -11,13 +11,19 @@ import {
   DownOutlined,
 } from '@/shared/antd-imports';
 import { TaskGroup as TaskGroupType, Task } from '@/types/task-management.types';
-import { taskManagementSelectors, selectAllTasks } from '@/features/task-management/task-management.slice';
+import {
+  taskManagementSelectors,
+  selectAllTasks,
+} from '@/features/task-management/task-management.slice';
 import { RootState } from '@/app/store';
 import TaskRow from './task-row';
 import AddTaskListRow from '@/pages/projects/projectView/taskList/task-list-table/task-list-table-rows/add-task-list-row';
 import { TaskListField } from '@/features/task-management/taskListFields.slice';
 import { Checkbox } from '@/components';
-import { selectIsGroupCollapsed, toggleGroupCollapsed } from '@/features/task-management/grouping.slice';
+import {
+  selectIsGroupCollapsed,
+  toggleGroupCollapsed,
+} from '@/features/task-management/grouping.slice';
 import { selectIsTaskSelected } from '@/features/task-management/selection.slice';
 import { Draggable } from 'react-beautiful-dnd';
 
@@ -80,7 +86,7 @@ const TaskGroup: React.FC<TaskGroupProps> = React.memo(
 
     // Get field visibility from taskListFields slice
     const taskListFields = useSelector(
-      (state: RootState) => state.taskManagementFields
+      (state: RootState) => state.taskManagementFields?.fields || []
     ) as TaskListField[];
 
     // Define all possible columns

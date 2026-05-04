@@ -24,14 +24,22 @@ export const useTaskRowActions = ({
   const { socket, connected } = useSocket();
 
   // Handle checkbox change
-  const handleCheckboxChange = useCallback((e: any) => {
-    e.stopPropagation(); // Prevent row click when clicking checkbox
-    dispatch(toggleTaskSelection(taskId));
-  }, [dispatch, taskId]);
+  const handleCheckboxChange = useCallback(
+    (e: any) => {
+      e.stopPropagation(); // Prevent row click when clicking checkbox
+      if (task.is_parent_container) return;
+      dispatch(toggleTaskSelection(taskId));
+    },
+    [dispatch, taskId, task.is_parent_container]
+  );
 
   // Handle task name save
   const handleTaskNameSave = useCallback(() => {
-    if (taskName?.trim() !== '' && connected && taskName.trim() !== (task.title || task.name || '').trim()) {
+    if (
+      taskName?.trim() !== '' &&
+      connected &&
+      taskName.trim() !== (task.title || task.name || '').trim()
+    ) {
       socket?.emit(
         SocketEvents.TASK_NAME_CHANGE.toString(),
         JSON.stringify({
@@ -42,12 +50,22 @@ export const useTaskRowActions = ({
       );
     }
     setEditTaskName(false);
-  }, [taskName, connected, socket, task.id, task.parent_task_id, task.title, task.name, setEditTaskName]);
+  }, [
+    taskName,
+    connected,
+    socket,
+    task.id,
+    task.parent_task_id,
+    task.title,
+    task.name,
+    setEditTaskName,
+  ]);
 
   // Handle task name edit start
   const handleTaskNameEdit = useCallback(() => {
+    if (task.is_parent_container) return;
     setEditTaskName(true);
-  }, [setEditTaskName]);
+  }, [setEditTaskName, task.is_parent_container]);
 
   // Handle task name change
   const handleTaskNameChange = useCallback((name: string) => {
@@ -60,4 +78,4 @@ export const useTaskRowActions = ({
     handleTaskNameEdit,
     handleTaskNameChange,
   };
-}; 
+};

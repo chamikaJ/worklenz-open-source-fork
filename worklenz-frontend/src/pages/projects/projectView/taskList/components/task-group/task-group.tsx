@@ -8,7 +8,12 @@ import Dropdown from 'antd/es/dropdown';
 import Input from 'antd/es/input';
 import Typography from 'antd/es/typography';
 import { MenuProps } from 'antd/es/menu';
-import { EditOutlined, EllipsisOutlined, RetweetOutlined, RightOutlined } from '@/shared/antd-imports';
+import {
+  EditOutlined,
+  EllipsisOutlined,
+  RetweetOutlined,
+  RightOutlined,
+} from '@/shared/antd-imports';
 
 import { colors } from '@/styles/colors';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -182,7 +187,7 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroup, groupBy, color, active
     <div ref={setNodeRef}>
       <Flex vertical>
         {/* Group Header */}
-        <Flex style={{ transform: 'translateY(6px)' }}>
+        <Flex style={{ marginTop: '6px' }}>
           <Button
             className="custom-collapse-button"
             style={{

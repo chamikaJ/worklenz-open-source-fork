@@ -1,0 +1,5 @@
+/* Rich Text Editor Container */
+.rich-text-editor {
+  border-radius: 6px;
+  overflow: hidden;
+}

@@ -1,13 +1,22 @@
-import { CaretDownFilled, SortAscendingOutlined, SortDescendingOutlined } from '@/shared/antd-imports';
+import {
+  CaretDownFilled,
+  SortAscendingOutlined,
+  SortDescendingOutlined,
+} from '@/shared/antd-imports';
 import { Badge, Button, Card, Checkbox, Dropdown, List, Space } from '@/shared/antd-imports';
 import React, { useState } from 'react';
 import { colors } from '../../../../../styles/colors';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/hooks/useAppSelector';
+import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
+import { evt_project_task_list_search_task } from '@/shared/worklenz-analytics-events';
+import { FilterSortEventProps } from '@/types/mixpanel-events.types';
 
 const SortFilterDropdown = () => {
   const [selectedCount, setSelectedCount] = useState<number>(0);
   const [sortState, setSortState] = useState<Record<string, 'ascending' | 'descending'>>({});
+  const { projectId } = useAppSelector(state => state.projectReducer);
+  const { trackMixpanelEvent } = useMixpanelTracking();
 
   const themeMode = useAppSelector(state => state.themeReducer.mode);
 
@@ -25,6 +34,13 @@ const SortFilterDropdown = () => {
       ...prev,
       [key]: prev[key] === 'ascending' ? 'descending' : 'ascending',
     }));
+    const sort_order = sortState[key] === 'ascending' ? 'desc' : 'asc';
+    const props: FilterSortEventProps = {
+      filter_type: 'custom',
+      sort_order: sort_order,
+      project_id: projectId || undefined,
+    };
+    trackMixpanelEvent(evt_project_task_list_search_task, props);
   };
 
   // sort dropdown items
@@ -38,7 +54,7 @@ const SortFilterDropdown = () => {
     { key: 'status', label: t('statusText') },
     { key: 'priority', label: t('priorityText') },
     { key: 'startDate', label: t('startDateText') },
-    { key: 'endDate', label: t('endDateText') },
+    { key: 'endDate', label: t('dueDateText') },
     { key: 'completedDate', label: t('completedDateText') },
     { key: 'createdDate', label: t('createdDateText') },
     { key: 'lastUpdated', label: t('lastUpdatedText') },

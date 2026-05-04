@@ -11,6 +11,7 @@ import {
 import { IProjectTask } from '@/types/project/projectTasksViewModel.types';
 import { IGroupBy } from '@/features/tasks/tasks.slice';
 import { useTranslation } from 'react-i18next';
+import { safeTextDisplay } from '@/utils/html-entities';
 
 const { Text } = Typography;
 
@@ -57,8 +58,12 @@ const KanbanTaskCard: React.FC<TaskRowProps> = ({
   // Format due date
   const formatDueDate = (dateString?: string) => {
     if (!dateString) return null;
-    const date = new Date(dateString);
+    // Parse date as local date to avoid timezone issues (e.g., "2024-02-10" stays as Feb 10)
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     const now = new Date();
+    // Reset time to midnight for accurate day comparison
+    now.setHours(0, 0, 0, 0);
     const diffTime = date.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     if (diffDays < 0) {
@@ -92,7 +97,7 @@ const KanbanTaskCard: React.FC<TaskRowProps> = ({
           strong
           className={`kanban-task-title${task.complete_ratio === 100 ? ' kanban-task-completed' : ''}`}
         >
-          {task.name}
+          {safeTextDisplay(task.name)}
         </Text>
         {task.sub_tasks_count && task.sub_tasks_count > 0 && (
           <Button
@@ -198,14 +203,24 @@ const KanbanTaskCard: React.FC<TaskRowProps> = ({
               </span>
             )}
             {task.comments_count && task.comments_count > 1 && (
-              <Tooltip title={t(`indicators.tooltips.comments${task.comments_count === 1 ? '' : '_plural'}`, { count: task.comments_count })}>
+              <Tooltip
+                title={t(
+                  `indicators.tooltips.comments${task.comments_count === 1 ? '' : '_plural'}`,
+                  { count: task.comments_count }
+                )}
+              >
                 <span className="kanban-task-indicator">
                   <MessageOutlined /> {task.comments_count}
                 </span>
               </Tooltip>
             )}
             {task.attachments_count && task.attachments_count > 1 && (
-              <Tooltip title={t(`indicators.tooltips.attachments${task.attachments_count === 1 ? '' : '_plural'}`, { count: task.attachments_count })}>
+              <Tooltip
+                title={t(
+                  `indicators.tooltips.attachments${task.attachments_count === 1 ? '' : '_plural'}`,
+                  { count: task.attachments_count }
+                )}
+              >
                 <span className="kanban-task-indicator">
                   <PaperClipOutlined /> {task.attachments_count}
                 </span>

@@ -9,7 +9,12 @@ import Dropdown from 'antd/es/dropdown';
 import Input from 'antd/es/input';
 import Typography from 'antd/es/typography';
 import { MenuProps } from 'antd/es/menu';
-import { EditOutlined, EllipsisOutlined, RetweetOutlined, RightOutlined } from '@/shared/antd-imports';
+import {
+  EditOutlined,
+  EllipsisOutlined,
+  RetweetOutlined,
+  RightOutlined,
+} from '@/shared/antd-imports';
 import { colors } from '@/styles/colors';
 import './task-list-table-wrapper.css';
 import TaskListTable from '../task-list-table';
@@ -35,6 +40,7 @@ import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
 import { evt_project_board_column_setting_click } from '@/shared/worklenz-analytics-events';
 import { ALPHA_CHANNEL } from '@/shared/constants';
 import useIsProjectManager from '@/hooks/useIsProjectManager';
+import { getContrastColor } from '@/utils/colorUtils';
 
 interface TaskListTableWrapperProps {
   taskList: IProjectTask[];
@@ -65,6 +71,8 @@ const TaskListTableWrapper = ({
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [currentCategory, setCurrentCategory] = useState<string | null>(statusCategory);
+  const groupHeaderTextColor =
+    groupBy === IGroupBy.PRIORITY ? '#ffffff' : getContrastColor(color || '#d8d7d8');
 
   const { t } = useTranslation('task-list-table');
   const { statusCategories } = useAppSelector(state => state.taskStatusReducer);
@@ -207,7 +215,7 @@ const TaskListTableWrapper = ({
         }}
       >
         <Flex vertical>
-          <Flex style={{ transform: 'translateY(6px)' }}>
+          <Flex style={{ marginTop: '6px' }}>
             {groupBy !== IGroupBy.PRIORITY &&
               !showRenameInput &&
               isEditable &&
@@ -227,7 +235,7 @@ const TaskListTableWrapper = ({
                 border: 'none',
                 borderBottomLeftRadius: isExpanded ? 0 : 4,
                 borderBottomRightRadius: isExpanded ? 0 : 4,
-                color: colors.darkGray,
+                color: groupHeaderTextColor,
               }}
               icon={<RightOutlined rotate={isExpanded ? 90 : 0} />}
               onClick={handlToggleExpand}
@@ -249,6 +257,7 @@ const TaskListTableWrapper = ({
                   style={{
                     fontSize: 14,
                     fontWeight: 600,
+                    color: groupHeaderTextColor,
                   }}
                 >
                   {t(tableName)} ({taskList.length})

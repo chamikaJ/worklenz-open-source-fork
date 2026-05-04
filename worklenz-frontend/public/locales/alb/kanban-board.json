@@ -1,5 +1,6 @@
 {
   "rename": "Riemërto",
+  "renameStatus": "Riemërto Statusin",
   "delete": "Fshi",
   "addTask": "Shto Detyrë",
   "addSectionButton": "Shto Seksion",
@@ -41,7 +42,6 @@
   "noSubtasks": "Pa nëndetyra",
   "showSubtasks": "Shfaq nëndetyrat",
   "hideSubtasks": "Fshih nëndetyrat",
-  
   "errorLoadingTasks": "Gabim gjatë ngarkimit të detyrave",
   "noTasksFound": "Nuk u gjetën detyra",
   "loadingFilters": "Duke ngarkuar filtra...",

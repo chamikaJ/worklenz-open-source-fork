@@ -25,6 +25,11 @@ import {
 import './template-drawer.css';
 import { SearchOutlined } from '@/shared/antd-imports';
 import logger from '@/utils/errorLogger';
+import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
+import {
+  evt_project_import_from_template_click,
+  evt_project_import_tasks_click,
+} from '@/shared/worklenz-analytics-events';
 
 const { Title, Text } = Typography;
 
@@ -39,12 +44,12 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   templateSelected = (templateId: string) => {
     if (!templateId) return;
   },
-  selectedTemplateType = (type: 'worklenz' | 'custom') => {
-  },
+  selectedTemplateType = (type: 'worklenz' | 'custom') => {},
 }) => {
   const themeMode = useSelector((state: RootState) => state.themeReducer.mode);
   const { token } = theme.useToken();
   const { t } = useTranslation('template-drawer');
+  const { trackMixpanelEvent } = useMixpanelTracking();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [templates, setTemplates] = useState<IWorklenzTemplate[]>([]);
@@ -104,6 +109,8 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
 
   useEffect(() => {
     getTemplates();
+    // Track opening of the template drawer
+    trackMixpanelEvent(evt_project_import_from_template_click, { source: 'template_drawer' });
   }, []);
 
   const menuItems: MenuProps['items'] = templates.map(template => ({
@@ -115,6 +122,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   const handleMenuClick = (templateId: string) => {
     templateSelected(templateId);
     getSelectedTemplate(templateId);
+    // Track Worklenz template selection
+    trackMixpanelEvent(evt_project_import_tasks_click, {
+      selected_template_id: templateId,
+      template_type: 'worklenz',
+    });
   };
 
   const filteredCustomTemplates = customTemplates.filter(template =>
@@ -149,11 +161,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
                 <Tag
                   key={phase.name}
                   color={phase.color_code}
-                  style={{ 
-                    color: token.colorText, 
+                  style={{
+                    color: token.colorText,
                     marginBottom: '8px',
                     backgroundColor: phase.color_code ? undefined : token.colorBgContainer,
-                    borderColor: phase.color_code ? undefined : token.colorBorder
+                    borderColor: phase.color_code ? undefined : token.colorBorder,
                   }}
                 >
                   {phase.name}
@@ -176,11 +188,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
                 <Tag
                   key={status.name}
                   color={status.color_code}
-                  style={{ 
-                    color: token.colorText, 
+                  style={{
+                    color: token.colorText,
                     marginBottom: '8px',
                     backgroundColor: status.color_code ? undefined : token.colorBgContainer,
-                    borderColor: status.color_code ? undefined : token.colorBorder
+                    borderColor: status.color_code ? undefined : token.colorBorder,
                   }}
                 >
                   {status.name}
@@ -203,11 +215,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
                 <Tag
                   key={priority.name}
                   color={priority.color_code}
-                  style={{ 
-                    color: token.colorText, 
+                  style={{
+                    color: token.colorText,
                     marginBottom: '8px',
                     backgroundColor: priority.color_code ? undefined : token.colorBgContainer,
-                    borderColor: priority.color_code ? undefined : token.colorBorder
+                    borderColor: priority.color_code ? undefined : token.colorBorder,
                   }}
                 >
                   {priority.name}
@@ -230,11 +242,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
                 <Tag
                   key={label.name}
                   color={label.color_code}
-                  style={{ 
-                    color: token.colorText, 
+                  style={{
+                    color: token.colorText,
                     marginBottom: '8px',
                     backgroundColor: label.color_code ? undefined : token.colorBgContainer,
-                    borderColor: label.color_code ? undefined : token.colorBorder
+                    borderColor: label.color_code ? undefined : token.colorBorder,
                   }}
                 >
                   {label.name}
@@ -271,23 +283,25 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   };
 
   const menuContent = (
-    <div style={{ display: 'flex', backgroundColor: token.colorBgContainer }}>
+    <div style={{ display: 'flex', height: '100%', backgroundColor: token.colorBgContainer }}>
       {/* Menu Area */}
-      <div style={{ 
-        minWidth: '250px', 
-        overflowY: 'auto', 
-        height: '100%',
-        backgroundColor: token.colorBgContainer,
-        borderRight: `1px solid ${token.colorBorder}`
-      }}>
+      <div
+        style={{
+          minWidth: '250px',
+          overflowY: 'auto',
+          height: '100%',
+          backgroundColor: token.colorBgContainer,
+          borderRight: `1px solid ${token.colorBorder}`,
+        }}
+      >
         <Skeleton loading={loadingTemplates} active>
           <Menu
             className="template-menu"
             onClick={({ key }) => handleMenuClick(key)}
-            style={{ 
+            style={{
               width: 256,
               backgroundColor: token.colorBgContainer,
-              borderColor: token.colorBorder
+              borderColor: token.colorBorder,
             }}
             defaultSelectedKeys={[templates[0]?.id || '']}
             mode="inline"
@@ -300,13 +314,16 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
         className="temp-details"
         style={{
           flex: 1,
-          maxHeight: 'calc(100vh - 200px)',
+          // ✅ FIXED: was 'calc(100vh - 200px)' which caused overflow/extra scroll space
+          maxHeight: '100%',
           padding: '16px',
           backgroundColor: token.colorBgContainer,
-          color: token.colorText
+          color: token.colorText,
         }}
       >
-        <Title level={4} style={{ color: token.colorText }}>Details</Title>
+        <Title level={4} style={{ color: token.colorText }}>
+          Details
+        </Title>
         <Skeleton loading={loadingSelectedTemplate} active>
           {selectedTemplate?.image_url && (
             <Image preview={false} src={selectedTemplate.image_url} alt={selectedTemplate.name} />
@@ -326,6 +343,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
     setCustomTemplates(updatedCustomTemplates);
     templateSelected(templateId);
     selectedTemplateType('custom');
+    // Track Custom template selection
+    trackMixpanelEvent(evt_project_import_tasks_click, {
+      selected_template_id: templateId,
+      template_type: 'custom',
+    });
   };
 
   const customTemplatesContent = (
@@ -334,11 +356,11 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
         <Input
           placeholder={t('searchTemplates')}
           suffix={<SearchOutlined style={{ color: token.colorTextTertiary }} />}
-          style={{ 
+          style={{
             maxWidth: '300px',
             backgroundColor: token.colorBgContainer,
             borderColor: token.colorBorder,
-            color: token.colorText
+            color: token.colorText,
           }}
           onChange={e => setSearchQuery(e.target.value)}
         />
@@ -351,7 +373,7 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
         loading={loadingCustomTemplates}
         style={{
           backgroundColor: token.colorBgContainer,
-          borderColor: token.colorBorder
+          borderColor: token.colorBorder,
         }}
         renderItem={item => (
           <List.Item
@@ -361,7 +383,7 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
               backgroundColor: item.selected ? token.colorPrimaryBg : token.colorBgContainer,
               borderColor: item.selected ? token.colorPrimary : token.colorBorder,
               color: token.colorText,
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
             className={
               item.selected && themeMode === 'dark'
@@ -395,42 +417,39 @@ const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
     if (key === '1') {
       getTemplates();
       selectedTemplateType('worklenz');
+      trackMixpanelEvent(evt_project_import_from_template_click, { template_tab: 'worklenz' });
     } else {
       getCustomTemplates();
       selectedTemplateType('custom');
+      trackMixpanelEvent(evt_project_import_from_template_click, { template_tab: 'custom' });
     }
   };
 
+  // ✅ FIXED: Removed height: '100vh' (overcounts inside modal) and position: 'sticky' wrapper
+  // which left dead space below. Now uses height: '100%' and renders content directly.
   return (
-    <div style={{ 
-      height: '100vh', 
-      overflow: 'hidden',
-      backgroundColor: token.colorBgLayout 
-    }}>
-      <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          backgroundColor: token.colorBgContainer,
-          overflow: 'hidden',
-          borderBottom: `1px solid ${token.colorBorder}`
-        }}
-      >
-        {showBothTabs ? (
-          <Tabs 
-            type="card" 
-            items={tabs} 
-            onChange={handleTabChange} 
-            destroyInactiveTabPane
-            style={{
-              backgroundColor: token.colorBgContainer
-            }}
-          />
-        ) : (
-          menuContent
-        )}
-      </div>
+    <div
+      className="template-drawer-content"
+      style={{
+        height: '100%',
+        overflow: 'hidden',
+        backgroundColor: token.colorBgLayout,
+      }}
+    >
+      {showBothTabs ? (
+        <Tabs
+          type="card"
+          items={tabs}
+          onChange={handleTabChange}
+          destroyOnHidden
+          style={{
+            height: '100%',
+            backgroundColor: token.colorBgContainer,
+          }}
+        />
+      ) : (
+        menuContent
+      )}
     </div>
   );
 };

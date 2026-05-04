@@ -11,7 +11,7 @@ import {
   TableProps,
   Tooltip,
   Typography,
-  Input
+  Input,
 } from '@/shared/antd-imports';
 
 // Icons
@@ -40,6 +40,7 @@ import EmptyListPlaceholder from '../../../../components/EmptyListPlaceholder';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { evt_project_members_visit } from '@/shared/worklenz-analytics-events';
 import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
+import { getRoleColor } from '@/types/roles/role.types';
 
 interface PaginationType {
   current: number;
@@ -151,8 +152,10 @@ const ProjectViewMembers = () => {
   ]);
 
   useEffect(() => {
-    trackMixpanelEvent(evt_project_members_visit);
-  }, []);
+    trackMixpanelEvent(evt_project_members_visit, {
+      project_id: projectId || '',
+    });
+  }, [trackMixpanelEvent, projectId]);
 
   // Table Configuration
   const columns: TableProps['columns'] = [
@@ -239,7 +242,11 @@ const ProjectViewMembers = () => {
             ? 'descend'
             : null,
       render: (_, record: IProjectMemberViewModel) => (
-        <Typography.Text style={{ textTransform: 'capitalize' }}>{record.access}</Typography.Text>
+        <Typography.Text
+          style={{ textTransform: 'capitalize', color: getRoleColor(record.access || '') }}
+        >
+          {record.access}
+        </Typography.Text>
       ),
     },
     {
@@ -280,7 +287,7 @@ const ProjectViewMembers = () => {
           <Flex gap={8} align="center">
             <Input.Search
               allowClear
-              placeholder={t('searchPlaceholder')}
+              placeholder={t('search', { defaultValue: 'Search' })}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               onSearch={value => {

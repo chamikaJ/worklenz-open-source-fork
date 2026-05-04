@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ProjectViewType, ProjectGroupBy } from '@/types/project/project.types';
 import { setViewMode, setGroupBy } from '@features/project/project-view-slice';
-import debounce from 'lodash/debounce';
+import debounce from 'lodash-es/debounce';
 import {
   Button,
   Card,
@@ -17,7 +17,7 @@ import {
   TablePaginationConfig,
   Tooltip,
 } from '@/shared/antd-imports';
-import { PageHeader } from '@ant-design/pro-components';
+import WorklenzPageHeader from '@/components/common/WorklenzPageHeader';
 import {
   SearchOutlined,
   SyncOutlined,
@@ -26,7 +26,7 @@ import {
 } from '@/shared/antd-imports';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 
-import ProjectDrawer from '@/components/projects/project-drawer/project-drawer';
+import { ProjectDrawer } from '@/components/projects/project-drawer/project-drawer';
 import CreateProjectButton from '@/components/projects/project-create-button/project-create-button';
 import { ColumnsType } from 'antd/es/table';
 import { ColumnFilterItem } from 'antd/es/table/interface';
@@ -67,7 +67,7 @@ import {
 import { fetchProjectStatuses } from '@/features/projects/lookups/projectStatuses/projectStatusesSlice';
 import { fetchProjectCategories } from '@/features/projects/lookups/projectCategories/projectCategoriesSlice';
 import { fetchProjectHealth } from '@/features/projects/lookups/projectHealth/projectHealthSlice';
-import { setProjectId, setStatuses } from '@/features/project/project.slice';
+import { setProjectId } from '@/features/project/project.slice';
 import { setProject } from '@/features/project/project.slice';
 import { createPortal } from 'react-dom';
 import {
@@ -86,17 +86,39 @@ const SurveyPromptModal = React.lazy(() =>
 const createFilters = (items: { id: string; name: string }[]) =>
   items.map(item => ({ text: item.name, value: item.id })) as ColumnFilterItem[];
 
+const SEARCH_DEBOUNCE_MS = 500;
+const MAX_SEARCH_LENGTH = 100;
+const DEFAULT_PROJECT_SORT_FIELD = 'name';
+const DEFAULT_PROJECT_SORT_ORDER = 'ascend';
+const SEARCH_QUERY_PARAM = 'search';
+const PAGE_QUERY_PARAM = 'page';
+const SIZE_QUERY_PARAM = 'size';
+
+const parsePositiveIntegerParam = (value: string | null): number | null => {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return parsed;
+};
+
 const ProjectList: React.FC = () => {
   const [filteredInfo, setFilteredInfo] = useState<Record<string, FilterValue | null>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastQueryParamsRef = useRef<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const hasHydratedSearchFromUrl = useRef(false);
+  const hasHydratedPaginationFromUrl = useRef(false);
 
   const { t } = useTranslation('all-project-list');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [urlSearchParams, setUrlSearchParams] = useSearchParams();
   useDocumentTitle('Projects');
   const isOwnerOrAdmin = useAuthService().isOwnerOrAdmin();
   const { trackMixpanelEvent } = useMixpanelTracking();
@@ -111,9 +133,8 @@ const ProjectList: React.FC = () => {
   const { projectCategories } = useAppSelector(state => state.projectCategoriesReducer);
   const { filteredCategories, filteredStatuses } = useAppSelector(state => state.projectsReducer);
 
-  // Optimize query parameters to prevent unnecessary re-renders
-  const optimizedQueryParams = useMemo(() => {
-    const params = {
+  const optimizedQueryParams = useMemo(
+    () => ({
       index: requestParams.index,
       size: requestParams.size,
       field: requestParams.field,
@@ -122,20 +143,9 @@ const ProjectList: React.FC = () => {
       filter: requestParams.filter,
       statuses: requestParams.statuses,
       categories: requestParams.categories,
-    };
-    
-    // Create a stable key for comparison
-    const paramsKey = JSON.stringify(params);
-    
-    // Only return new params if they've actually changed
-    if (paramsKey !== lastQueryParamsRef.current) {
-      lastQueryParamsRef.current = paramsKey;
-      return params;
-    }
-    
-    // Return the previous params to maintain reference stability
-    return JSON.parse(lastQueryParamsRef.current || '{}');
-  }, [requestParams]);
+    }),
+    [requestParams]
+  );
 
   // Use the optimized query with better error handling and caching
   const {
@@ -153,60 +163,53 @@ const ProjectList: React.FC = () => {
     skip: viewMode === ProjectViewType.GROUP,
   });
 
+  const buildGroupedParams = useCallback(
+    (overrides: Partial<typeof groupedRequestParams> = {}) => ({
+      ...groupedRequestParams,
+      ...overrides,
+      groupBy:
+        overrides.groupBy || groupedRequestParams.groupBy || groupBy || ProjectGroupBy.CATEGORY,
+    }),
+    [groupedRequestParams, groupBy]
+  );
 
+  const debouncedSearch = useMemo(
+    () =>
+      debounce(
+        (
+          searchTerm: string,
+          currentGroupedParams: typeof groupedRequestParams,
+          currentGroupBy: string
+        ) => {
+          setErrorMessage(null);
 
-  // Add performance monitoring
-  const performanceRef = useRef<{ startTime: number | null }>({ startTime: null });
-
-  // Monitor query performance
-  useEffect(() => {
-    if (loadingProjects && !performanceRef.current.startTime) {
-      performanceRef.current.startTime = performance.now();
-    } else if (!loadingProjects && performanceRef.current.startTime) {
-      performanceRef.current.startTime = null;
-    }
-  }, [loadingProjects]);
-
-  // Optimized debounced search with better cleanup and performance
-  const debouncedSearch = useCallback(
-    debounce((searchTerm: string) => {      
-      // Clear any error messages when starting a new search
-      setErrorMessage(null);
-      
-      if (viewMode === ProjectViewType.LIST) {
-        dispatch(setRequestParams({ 
-          search: searchTerm, 
-          index: 1 // Reset to first page on search
-        }));
-      } else if (viewMode === ProjectViewType.GROUP) {
-        const newGroupedParams = {
-          ...groupedRequestParams,
-          search: searchTerm,
-          index: 1,
-        };
-        dispatch(setGroupedRequestParams(newGroupedParams));
-        
-        // Add timeout for grouped search to prevent rapid API calls
-        if (searchTimeoutRef.current) {
-          clearTimeout(searchTimeoutRef.current);
-        }
-        
-        searchTimeoutRef.current = setTimeout(() => {
-          dispatch(fetchGroupedProjects(newGroupedParams));
-        }, 100);
-      }
-    }, 500), // Increased debounce time for better performance
-    [dispatch, viewMode, groupedRequestParams]
+          if (viewMode === ProjectViewType.LIST) {
+            dispatch(
+              setRequestParams({
+                search: searchTerm,
+                index: 1, // Reset to first page on search
+              })
+            );
+          } else if (viewMode === ProjectViewType.GROUP) {
+            const newGroupedParams = {
+              ...(currentGroupedParams || {}),
+              search: searchTerm,
+              index: 1,
+              groupBy: currentGroupedParams?.groupBy || currentGroupBy || ProjectGroupBy.CATEGORY,
+            };
+            dispatch(setGroupedRequestParams(newGroupedParams));
+            dispatch(fetchGroupedProjects(newGroupedParams));
+          }
+        },
+        SEARCH_DEBOUNCE_MS
+      ),
+    [dispatch, viewMode]
   );
 
   // Enhanced cleanup with better timeout management
   useEffect(() => {
     return () => {
       debouncedSearch.cancel();
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-        searchTimeoutRef.current = null;
-      }
     };
   }, [debouncedSearch]);
 
@@ -214,25 +217,17 @@ const ProjectList: React.FC = () => {
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newSearchValue = e.target.value;
-      
-      // Validate input length to prevent excessive API calls
-      if (newSearchValue.length > 100) {
-        return; // Prevent extremely long search terms
+
+      if (newSearchValue.length > MAX_SEARCH_LENGTH) {
+        return;
       }
-      
+
       setSearchValue(newSearchValue);
       trackMixpanelEvent(evt_projects_search);
-      
-      // Clear any existing timeout
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-        searchTimeoutRef.current = null;
-      }
-      
-      // Debounce the actual search execution
-      debouncedSearch(newSearchValue);
+
+      debouncedSearch(newSearchValue, groupedRequestParams, groupBy);
     },
-    [debouncedSearch, trackMixpanelEvent]
+    [debouncedSearch, trackMixpanelEvent, groupedRequestParams, groupBy]
   );
 
   const getFilterIndex = useCallback(() => {
@@ -262,10 +257,10 @@ const ProjectList: React.FC = () => {
       {
         value: ProjectViewType.LIST,
         label: (
-          <Tooltip title={t('listView')}>
+          <Tooltip title={t('listView', { defaultValue: 'List View' })}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <UnorderedListOutlined />
-              <span>{t('list')}</span>
+              <span>{t('list', { defaultValue: 'List' })}</span>
             </div>
           </Tooltip>
         ),
@@ -273,10 +268,10 @@ const ProjectList: React.FC = () => {
       {
         value: ProjectViewType.GROUP,
         label: (
-          <Tooltip title={t('groupView')}>
+          <Tooltip title={t('groupView', { defaultValue: 'Group View' })}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <AppstoreOutlined />
-              <span>{t('group')}</span>
+              <span>{t('group', { defaultValue: 'Group' })}</span>
             </div>
           </Tooltip>
         ),
@@ -289,11 +284,11 @@ const ProjectList: React.FC = () => {
     () => [
       {
         value: ProjectGroupBy.CATEGORY,
-        label: t('groupBy.category'),
+        label: t('groupBy.category', { defaultValue: 'Category' }),
       },
       {
         value: ProjectGroupBy.CLIENT,
-        label: t('groupBy.client'),
+        label: t('groupBy.client', { defaultValue: 'Client' }),
       },
     ],
     [t]
@@ -375,11 +370,13 @@ const ProjectList: React.FC = () => {
   // Handle query errors
   useEffect(() => {
     if (projectsError) {
-      setErrorMessage('Failed to load projects. Please try again.');
+      setErrorMessage(
+        t('errors.loadFailed', { defaultValue: 'Failed to load projects. Please try again.' })
+      );
     } else {
       setErrorMessage(null);
     }
-  }, [projectsError]);
+  }, [projectsError, t]);
 
   // Optimized refresh handler with better error handling
   const handleRefresh = useCallback(async () => {
@@ -387,24 +384,26 @@ const ProjectList: React.FC = () => {
       trackMixpanelEvent(evt_projects_refresh_click);
       setIsLoading(true);
       setErrorMessage(null);
-      
+
       if (viewMode === ProjectViewType.LIST) {
         await refetchProjects();
       } else if (viewMode === ProjectViewType.GROUP && groupBy) {
         await dispatch(fetchGroupedProjects(groupedRequestParams)).unwrap();
       }
     } catch (error) {
-      setErrorMessage('Failed to refresh projects. Please try again.');
+      setErrorMessage(
+        t('errors.refreshFailed', { defaultValue: 'Failed to refresh projects. Please try again.' })
+      );
     } finally {
       setIsLoading(false);
     }
-  }, [trackMixpanelEvent, refetchProjects, viewMode, groupBy, dispatch, groupedRequestParams]);
+  }, [trackMixpanelEvent, refetchProjects, viewMode, groupBy, dispatch, groupedRequestParams, t]);
 
   // Enhanced empty text with error handling
   const emptyContent = useMemo(() => {
     if (errorMessage) {
       return (
-        <Empty 
+        <Empty
           description={
             <div>
               <p>{errorMessage}</p>
@@ -412,11 +411,11 @@ const ProjectList: React.FC = () => {
                 Retry
               </Button>
             </div>
-          } 
+          }
         />
       );
     }
-    return <Empty description={t('noProjects')} />;
+    return <Empty description={t('noProjects', { defaultValue: 'No Projects' })} />;
   }, [errorMessage, handleRefresh, isLoading, t]);
 
   // Memoize the pagination show total function
@@ -461,15 +460,22 @@ const ProjectList: React.FC = () => {
       const newOrder = Array.isArray(sorter) ? sorter[0].order : sorter.order;
       const newField = (Array.isArray(sorter) ? sorter[0].columnKey : sorter.columnKey) as string;
 
-      if (newOrder && newField && (newOrder !== requestParams.order || newField !== requestParams.field)) {
-        updates.order = newOrder ?? 'ascend';
-        updates.field = newField ?? 'name';
+      if (
+        newOrder &&
+        newField &&
+        (newOrder !== requestParams.order || newField !== requestParams.field)
+      ) {
+        updates.order = newOrder ?? DEFAULT_PROJECT_SORT_ORDER;
+        updates.field = newField ?? DEFAULT_PROJECT_SORT_FIELD;
         setSortingValues(updates.field, updates.order);
         hasChanges = true;
       }
 
       // Handle pagination
-      if (newPagination.current !== requestParams.index || newPagination.pageSize !== requestParams.size) {
+      if (
+        newPagination.current !== requestParams.index ||
+        newPagination.pageSize !== requestParams.size
+      ) {
         updates.index = newPagination.current || 1;
         updates.size = newPagination.pageSize || DEFAULT_PAGE_SIZE;
         hasChanges = true;
@@ -478,19 +484,12 @@ const ProjectList: React.FC = () => {
       // Only dispatch if there are actual changes
       if (hasChanges) {
         dispatch(setRequestParams(updates));
-
-        // Also update grouped request params to keep them in sync
-        dispatch(
-          setGroupedRequestParams({
-            ...groupedRequestParams,
-            ...updates,
-          })
-        );
+        dispatch(setGroupedRequestParams(buildGroupedParams(updates)));
       }
 
       setFilteredInfo(filters);
     },
-    [dispatch, setSortingValues, groupedRequestParams, filteredInfo, requestParams]
+    [dispatch, setSortingValues, filteredInfo, requestParams, buildGroupedParams]
   );
 
   // Optimized grouped table change handler
@@ -500,13 +499,18 @@ const ProjectList: React.FC = () => {
         index: newPagination.current || 1,
         size: newPagination.pageSize || DEFAULT_PAGE_SIZE,
       };
-      
+
       // Only update if values actually changed
-      if (newParams.index !== groupedRequestParams.index || newParams.size !== groupedRequestParams.size) {
-        dispatch(setGroupedRequestParams(newParams));
+      if (
+        newParams.index !== groupedRequestParams.index ||
+        newParams.size !== groupedRequestParams.size
+      ) {
+        const updatedParams = buildGroupedParams(newParams);
+        dispatch(setGroupedRequestParams(updatedParams));
+        dispatch(fetchGroupedProjects(updatedParams));
       }
     },
-    [dispatch, groupedRequestParams]
+    [dispatch, groupedRequestParams, buildGroupedParams]
   );
 
   // Optimized segment change handler with better state management
@@ -517,58 +521,46 @@ const ProjectList: React.FC = () => {
 
       // Batch updates to reduce re-renders
       const baseUpdates = { filter: newFilterIndex, index: 1 };
-      
-      dispatch(setRequestParams(baseUpdates));
-      dispatch(setGroupedRequestParams({
-        ...groupedRequestParams,
-        ...baseUpdates,
-      }));
 
-      // Only trigger data fetch for group view (list view will auto-refetch via query)
+      dispatch(setRequestParams(baseUpdates));
+      dispatch(setGroupedRequestParams(buildGroupedParams(baseUpdates)));
+
       if (viewMode === ProjectViewType.GROUP && groupBy) {
-        dispatch(fetchGroupedProjects({
-          ...groupedRequestParams,
-          ...baseUpdates,
-        }));
+        dispatch(fetchGroupedProjects(buildGroupedParams(baseUpdates)));
       }
     },
-    [filters, setFilterIndex, dispatch, groupedRequestParams, viewMode, groupBy]
+    [filters, setFilterIndex, dispatch, viewMode, groupBy, buildGroupedParams]
   );
 
   const handleViewToggle = useCallback(
     (value: ProjectViewType) => {
       dispatch(setViewMode(value));
       if (value === ProjectViewType.GROUP) {
-        // Initialize grouped request params when switching to group view
-        const newGroupedParams = {
-          ...groupedRequestParams,
+        const newGroupedParams = buildGroupedParams({
           groupBy: groupBy || ProjectGroupBy.CATEGORY,
           search: requestParams.search,
           filter: requestParams.filter,
           statuses: requestParams.statuses,
           categories: requestParams.categories,
-        };
+        });
         dispatch(setGroupedRequestParams(newGroupedParams));
-        // Fetch grouped data immediately
         dispatch(fetchGroupedProjects(newGroupedParams));
       }
     },
-    [dispatch, groupBy, groupedRequestParams, requestParams]
+    [dispatch, groupBy, requestParams, buildGroupedParams]
   );
 
   const handleGroupByChange = useCallback(
     (value: ProjectGroupBy) => {
       dispatch(setGroupBy(value));
-      const newGroupedParams = {
-        ...groupedRequestParams,
+      const newGroupedParams = buildGroupedParams({
         groupBy: value,
-        index: 1, // Reset to first page when changing grouping
-      };
+        index: 1,
+      });
       dispatch(setGroupedRequestParams(newGroupedParams));
-      // Fetch new grouped data
       dispatch(fetchGroupedProjects(newGroupedParams));
     },
-    [dispatch, groupedRequestParams]
+    [dispatch, buildGroupedParams]
   );
 
   const handleDrawerClose = useCallback(() => {
@@ -619,7 +611,7 @@ const ProjectList: React.FC = () => {
         key: 'name',
         sorter: true,
         showSorterTooltip: false,
-        defaultSortOrder: 'ascend',
+        defaultSortOrder: DEFAULT_PROJECT_SORT_ORDER,
         render: (text: string, record: IProjectViewModel) => (
           <ProjectNameCell navigate={navigate} key={record.id} t={t} record={record} />
         ),
@@ -703,28 +695,109 @@ const ProjectList: React.FC = () => {
   useEffect(() => {
     const filterIndex = getFilterIndex();
     const initialParams = { filter: filterIndex };
-    
+
     // Only update if values are different
     if (requestParams.filter !== filterIndex) {
       dispatch(setRequestParams(initialParams));
     }
-    
-    // Initialize grouped request params with proper groupBy value
+
     if (!groupedRequestParams.groupBy) {
       const initialGroupBy = groupBy || ProjectGroupBy.CATEGORY;
-      dispatch(setGroupedRequestParams({
-        filter: filterIndex,
-        index: 1,
-        size: DEFAULT_PAGE_SIZE,
-        field: 'name',
-        order: 'ascend',
-        search: '',
-        groupBy: initialGroupBy,
-        statuses: null,
-        categories: null,
-      }));
+      dispatch(
+        setGroupedRequestParams({
+          filter: filterIndex,
+          index: 1,
+          size: DEFAULT_PAGE_SIZE,
+          field: DEFAULT_PROJECT_SORT_FIELD,
+          order: DEFAULT_PROJECT_SORT_ORDER,
+          search: '',
+          groupBy: initialGroupBy,
+          statuses: null,
+          categories: null,
+        })
+      );
     }
-  }, [dispatch, getFilterIndex, groupBy]); // Add groupBy to deps to handle initial state
+  }, [dispatch, getFilterIndex, groupBy, groupedRequestParams.groupBy, requestParams.filter]);
+
+  // Hydrate search from URL once on initial load
+  useEffect(() => {
+    if (hasHydratedSearchFromUrl.current) {
+      return;
+    }
+    hasHydratedSearchFromUrl.current = true;
+
+    const searchFromUrl = (urlSearchParams.get(SEARCH_QUERY_PARAM) || '').trim();
+
+    if (!searchFromUrl) {
+      return;
+    }
+
+    if (requestParams.search !== searchFromUrl) {
+      dispatch(
+        setRequestParams({
+          search: searchFromUrl,
+          index: 1,
+        })
+      );
+    }
+
+    if (groupedRequestParams.search !== searchFromUrl) {
+      dispatch(
+        setGroupedRequestParams(
+          buildGroupedParams({
+            search: searchFromUrl,
+            index: 1,
+          })
+        )
+      );
+    }
+
+    setSearchValue(prevValue => (prevValue === searchFromUrl ? prevValue : searchFromUrl));
+  }, [
+    dispatch,
+    urlSearchParams,
+    requestParams.search,
+    groupedRequestParams.search,
+    buildGroupedParams,
+  ]);
+
+  // Hydrate pagination from URL once on initial load
+  useEffect(() => {
+    if (hasHydratedPaginationFromUrl.current) {
+      return;
+    }
+    hasHydratedPaginationFromUrl.current = true;
+
+    const pageFromUrl = parsePositiveIntegerParam(urlSearchParams.get(PAGE_QUERY_PARAM));
+    const sizeFromUrl = parsePositiveIntegerParam(urlSearchParams.get(SIZE_QUERY_PARAM));
+
+    const listUpdates: Partial<typeof requestParams> = {};
+    const groupedUpdates: Partial<typeof groupedRequestParams> = {};
+
+    if (pageFromUrl && pageFromUrl !== requestParams.index) {
+      listUpdates.index = pageFromUrl;
+      groupedUpdates.index = pageFromUrl;
+    }
+
+    if (sizeFromUrl && sizeFromUrl !== requestParams.size) {
+      listUpdates.size = sizeFromUrl;
+      groupedUpdates.size = sizeFromUrl;
+    }
+
+    if (Object.keys(listUpdates).length > 0) {
+      dispatch(setRequestParams(listUpdates));
+    }
+
+    if (Object.keys(groupedUpdates).length > 0) {
+      dispatch(setGroupedRequestParams(buildGroupedParams(groupedUpdates)));
+    }
+  }, [
+    dispatch,
+    urlSearchParams,
+    requestParams.index,
+    requestParams.size,
+    buildGroupedParams,
+  ]);
 
   // Separate effect for tracking page visits - only run once
   useEffect(() => {
@@ -733,37 +806,31 @@ const ProjectList: React.FC = () => {
 
   // Enhanced effect for grouped projects - fetch data when in group view
   useEffect(() => {
-    // Fetch grouped projects when:
-    // 1. View mode is GROUP
-    // 2. We have a groupBy value (either from Redux or default)
     if (viewMode === ProjectViewType.GROUP && groupBy) {
-      // Always ensure grouped request params are properly set with current groupBy
-      const shouldUpdateParams = !groupedRequestParams.groupBy || groupedRequestParams.groupBy !== groupBy;
-      
+      const shouldUpdateParams =
+        !groupedRequestParams.groupBy || groupedRequestParams.groupBy !== groupBy;
+
       if (shouldUpdateParams) {
-        const updatedParams = {
-          ...groupedRequestParams,
+        const updatedParams = buildGroupedParams({
           groupBy: groupBy,
-          // Ensure we have all required params for the API call
           index: groupedRequestParams.index || 1,
           size: groupedRequestParams.size || DEFAULT_PAGE_SIZE,
-          field: groupedRequestParams.field || 'name',
-          order: groupedRequestParams.order || 'ascend',
-        };
+          field: groupedRequestParams.field || DEFAULT_PROJECT_SORT_FIELD,
+          order: groupedRequestParams.order || DEFAULT_PROJECT_SORT_ORDER,
+        });
         dispatch(setGroupedRequestParams(updatedParams));
         dispatch(fetchGroupedProjects(updatedParams));
-      } else if (groupedRequestParams.groupBy === groupBy && !groupedProjects.data) {
-        // Params are set correctly but we don't have data yet - fetch it
+      } else if (!groupedProjects.data) {
         dispatch(fetchGroupedProjects(groupedRequestParams));
       }
     }
-  }, [dispatch, viewMode, groupBy, groupedRequestParams, groupedProjects.data]);
+  }, [dispatch, viewMode, groupBy, groupedRequestParams, groupedProjects.data, buildGroupedParams]);
 
   // Optimize lookups loading - only fetch once
   useEffect(() => {
     const loadLookups = async () => {
       const promises = [];
-      
+
       if (projectStatuses.length === 0) {
         promises.push(dispatch(fetchProjectStatuses()));
       }
@@ -773,34 +840,111 @@ const ProjectList: React.FC = () => {
       if (projectHealths.length === 0) {
         promises.push(dispatch(fetchProjectHealth()));
       }
-      
+
       // Load all lookups in parallel
       if (promises.length > 0) {
         await Promise.allSettled(promises);
       }
     };
-    
-    loadLookups();
-  }, [dispatch]); // Remove length dependencies to avoid re-runs
 
-  // Sync search input value with Redux state
+    loadLookups();
+  }, [dispatch, projectStatuses.length, projectCategories.length, projectHealths.length]);
+
+  // Sync search input only when Redux search changes (e.g. external resets/view switches)
   useEffect(() => {
-    const currentSearch = viewMode === ProjectViewType.LIST ? requestParams.search : groupedRequestParams.search;
-    if (searchValue !== (currentSearch || '')) {
-      setSearchValue(currentSearch || '');
+    const currentSearch =
+      viewMode === ProjectViewType.LIST ? requestParams.search : groupedRequestParams.search;
+
+    setSearchValue(prevValue => {
+      const normalizedSearch = currentSearch || '';
+      return prevValue === normalizedSearch ? prevValue : normalizedSearch;
+    });
+  }, [requestParams.search, groupedRequestParams.search, viewMode]);
+
+  // Keep URL search query in sync with the active view search
+  useEffect(() => {
+    const activeSearch =
+      (viewMode === ProjectViewType.LIST ? requestParams.search : groupedRequestParams.search) || '';
+    const normalizedSearch = activeSearch.trim();
+    const currentUrlSearch = (urlSearchParams.get(SEARCH_QUERY_PARAM) || '').trim();
+
+    if (currentUrlSearch === normalizedSearch) {
+      return;
     }
-  }, [requestParams.search, groupedRequestParams.search, viewMode]); // Remove searchValue from deps to prevent loops
+
+    setUrlSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams);
+
+        if (normalizedSearch) {
+          nextParams.set(SEARCH_QUERY_PARAM, normalizedSearch);
+        } else {
+          nextParams.delete(SEARCH_QUERY_PARAM);
+        }
+
+        return nextParams;
+      },
+      { replace: true }
+    );
+  }, [
+    viewMode,
+    requestParams.search,
+    groupedRequestParams.search,
+    urlSearchParams,
+    setUrlSearchParams,
+  ]);
+
+  // Keep URL pagination query in sync with active view pagination
+  useEffect(() => {
+    const activeIndex =
+      viewMode === ProjectViewType.LIST ? requestParams.index : groupedRequestParams.index;
+    const activeSize = viewMode === ProjectViewType.LIST ? requestParams.size : groupedRequestParams.size;
+
+    const normalizedPage = activeIndex || 1;
+    const normalizedSize = activeSize || DEFAULT_PAGE_SIZE;
+
+    const desiredPage = normalizedPage.toString();
+    const desiredSize = normalizedSize.toString();
+    const currentUrlPage = urlSearchParams.get(PAGE_QUERY_PARAM) || '';
+    const currentUrlSize = urlSearchParams.get(SIZE_QUERY_PARAM) || '';
+
+    const isSamePage = currentUrlPage === desiredPage;
+    const isSameSize = currentUrlSize === desiredSize;
+
+    if (isSamePage && isSameSize) {
+      return;
+    }
+
+    setUrlSearchParams(
+      prevParams => {
+        const nextParams = new URLSearchParams(prevParams);
+        nextParams.set(PAGE_QUERY_PARAM, desiredPage);
+        nextParams.set(SIZE_QUERY_PARAM, desiredSize);
+
+        return nextParams;
+      },
+      { replace: true }
+    );
+  }, [
+    viewMode,
+    requestParams.index,
+    requestParams.size,
+    groupedRequestParams.index,
+    groupedRequestParams.size,
+    urlSearchParams,
+    setUrlSearchParams,
+  ]);
 
   // Optimize loading state management
   useEffect(() => {
     let newLoadingState = false;
-    
+
     if (viewMode === ProjectViewType.LIST) {
       newLoadingState = loadingProjects || isFetchingProjects;
     } else {
       newLoadingState = groupedProjects.loading;
     }
-    
+
     // Only update if loading state actually changed
     if (isLoading !== newLoadingState) {
       setIsLoading(newLoadingState);
@@ -809,18 +953,18 @@ const ProjectList: React.FC = () => {
 
   return (
     <div style={{ minHeight: '90vh' }}>
-      <PageHeader
+      <WorklenzPageHeader
         className="site-page-header"
-        title={`${projectCount} ${t('projects')}`}
+        title={`${projectCount} ${t('projects', { defaultValue: 'Projects' })}`}
         style={{ padding: '16px 0' }}
         extra={
           <Flex gap={8} align="center">
-            <Tooltip title={t('refreshProjects')}>
+            <Tooltip title={t('refreshProjects', { defaultValue: 'Refresh projects' })}>
               <Button
                 shape="circle"
-                icon={<SyncOutlined spin={isFetchingProjects} />}
+                icon={<SyncOutlined spin={isFetchingProjects || groupedProjects.loading} />}
                 onClick={handleRefresh}
-                aria-label="Refresh projects"
+                aria-label={t('refreshProjects', { defaultValue: 'Refresh projects' })}
               />
             </Tooltip>
             <Segmented<IProjectFilter>
@@ -838,16 +982,16 @@ const ProjectList: React.FC = () => {
               />
             )}
             <Input
-              placeholder={t('placeholder')}
+              placeholder={t('placeholder', { defaultValue: 'Search projects' })}
               suffix={<SearchOutlined />}
               type="text"
               value={searchValue}
               onChange={handleSearchChange}
-              aria-label="Search projects"
+              aria-label={t('searchProjects', { defaultValue: 'Search projects' })}
               allowClear
               onClear={() => {
                 setSearchValue('');
-                debouncedSearch('');
+                debouncedSearch('', groupedRequestParams, groupBy);
               }}
             />
             {isOwnerOrAdmin && <CreateProjectButton />}

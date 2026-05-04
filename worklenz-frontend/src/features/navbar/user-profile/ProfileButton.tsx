@@ -1,10 +1,20 @@
-import { UserOutlined } from '@/shared/antd-imports';
-import { Button, Card, Dropdown, Flex, MenuProps, Tooltip, Typography } from '@/shared/antd-imports';
+import { DashboardOutlined, LogoutOutlined, UserOutlined } from '@/shared/antd-imports';
+import {
+  Button,
+  Card,
+  Dropdown,
+  Flex,
+  MenuProps,
+  Tooltip,
+  Typography,
+} from '@/shared/antd-imports';
 
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { memo } from 'react';
 
 import { useAppSelector } from '@/hooks/useAppSelector';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { RootState } from '@/app/store';
 
 import { getRole } from '@/utils/session-helper';
@@ -14,7 +24,7 @@ import './profile-button.css';
 import SingleAvatar from '@/components/common/single-avatar/single-avatar';
 import { useAuthService } from '@/hooks/useAuth';
 import { useAuthStatus } from '@/hooks/useAuthStatus';
-import { useEffect, useState } from 'react';
+import { useMixpanelTracking } from '@/hooks/useMixpanelTracking';
 
 interface ProfileButtonProps {
   isOwnerOrAdmin: boolean;
@@ -22,9 +32,9 @@ interface ProfileButtonProps {
 
 const ProfileButton = ({ isOwnerOrAdmin }: ProfileButtonProps) => {
   const { t } = useTranslation('navbar');
-  const authService = useAuthService();
   const currentSession = useAppSelector((state: RootState) => state.userReducer);
   const { isLicenseExpired } = useAuthStatus();
+  const { trackMixpanelEvent } = useMixpanelTracking();
 
   const role = getRole();
   const themeMode = useAppSelector((state: RootState) => state.themeReducer.mode);
@@ -86,9 +96,23 @@ const ProfileButton = ({ isOwnerOrAdmin }: ProfileButtonProps) => {
           variant="borderless"
           style={{ width: 230 }}
         >
-          {isOwnerOrAdmin && !isLicenseExpired && (
+          {isOwnerOrAdmin && (
             <Link to="/worklenz/admin-center/overview" style={getLinkStyle()}>
               {t('adminCenter')}
+            </Link>
+          )}
+          {isOwnerOrAdmin && (
+            <Link
+              to="/worklenz/admin-center/billing"
+              style={getLinkStyle()}
+              onClick={() => {
+                trackMixpanelEvent('billing_profile_dropdown_click', {
+                  user_type: currentSession?.subscription_type?.toLowerCase(),
+                  is_owner_or_admin: true,
+                });
+              }}
+            >
+              {t('billing', { defaultValue: 'Billing' })}
             </Link>
           )}
           {!isLicenseExpired && (
@@ -138,4 +162,4 @@ const ProfileButton = ({ isOwnerOrAdmin }: ProfileButtonProps) => {
   );
 };
 
-export default ProfileButton;
+export default memo(ProfileButton);

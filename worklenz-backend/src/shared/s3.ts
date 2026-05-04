@@ -19,9 +19,7 @@ const s3Client = new S3Client({
   credentials: {
     accessKeyId: S3_ACCESS_KEY_ID || "",
     secretAccessKey: S3_SECRET_ACCESS_KEY || "",
-  },
-  endpoint: S3_URL,
-  forcePathStyle: true,
+  }
 });
 
 export function getRootDir() {

@@ -17,7 +17,12 @@ import {
   DragEndEvent,
   DragStartEvent,
 } from '@dnd-kit/core';
-import { EditOutlined, EllipsisOutlined, RetweetOutlined, RightOutlined } from '@/shared/antd-imports';
+import {
+  EditOutlined,
+  EllipsisOutlined,
+  RetweetOutlined,
+  RightOutlined,
+} from '@/shared/antd-imports';
 
 import { colors } from '@/styles/colors';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -108,9 +113,37 @@ const TaskGroupList = ({ taskGroups, groupBy }: TaskGroupListProps) => {
       }
     };
 
+    const handleTaskStatusChange = (response: any) => {
+      if (!response) return;
+
+      // Update local groups state with new completed_at
+      setGroups(prevGroups => {
+        return prevGroups.map(group => {
+          const taskIndex = group.tasks.findIndex(task => task.id === response.id);
+          if (taskIndex === -1) return group;
+
+          const updatedTasks = [...group.tasks];
+          updatedTasks[taskIndex] = {
+            ...updatedTasks[taskIndex],
+            completed_at: response.completed_at,
+            status: response.status_id,
+            status_color: response.color_code,
+          };
+
+          return {
+            ...group,
+            tasks: updatedTasks,
+          };
+        });
+      });
+    };
+
     socket.on(SocketEvents.QUICK_ASSIGNEES_UPDATE.toString(), handleAssigneesUpdate);
+    socket.on(SocketEvents.TASK_STATUS_CHANGE.toString(), handleTaskStatusChange);
+
     return () => {
       socket.off(SocketEvents.QUICK_ASSIGNEES_UPDATE.toString(), handleAssigneesUpdate);
+      socket.off(SocketEvents.TASK_STATUS_CHANGE.toString(), handleTaskStatusChange);
     };
   }, [socket, currentSession?.team_id, loadingAssignees, groups]);
 
@@ -178,7 +211,7 @@ const TaskGroupList = ({ taskGroups, groupBy }: TaskGroupListProps) => {
           {groups.map(group => (
             <div key={group.id}>
               <Flex vertical>
-                <Flex style={{ transform: 'translateY(6px)' }}>
+                <Flex style={{ marginTop: '6px' }}>
                   <Button
                     className="custom-collapse-button"
                     style={{

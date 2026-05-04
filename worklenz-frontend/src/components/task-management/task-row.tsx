@@ -28,6 +28,7 @@ import {
 } from '@/shared/antd-imports';
 import { useTranslation } from 'react-i18next';
 import { Task } from '@/types/task-management.types';
+import { safeTextDisplay } from '@/utils/html-entities';
 import { RootState } from '@/app/store';
 import {
   AvatarGroup,
@@ -423,7 +424,7 @@ const TaskRow: React.FC<TaskRowProps> = React.memo(
 
     // Edit task name state
     const [editTaskName, setEditTaskName] = useState(false);
-    const [taskName, setTaskName] = useState(task.title || '');
+    const [taskName, setTaskName] = useState(safeTextDisplay(task.title || ''));
     const [showAddSubtask, setShowAddSubtask] = useState(false);
     const [newSubtaskName, setNewSubtaskName] = useState('');
     const inputRef = useRef<InputRef>(null);
@@ -647,8 +648,8 @@ const TaskRow: React.FC<TaskRowProps> = React.memo(
     // Optimized date handling with better memoization
     const dateValues = useMemo(
       () => ({
-        start: task.startDate ? dayjs(task.startDate) : undefined,
-        due: task.dueDate ? dayjs(task.dueDate) : undefined,
+        start: task.startDate ? dayjs(task.startDate, 'YYYY-MM-DD') : undefined,
+        due: task.dueDate ? dayjs(task.dueDate, 'YYYY-MM-DD') : undefined,
       }),
       [task.startDate, task.dueDate]
     );
@@ -770,10 +771,10 @@ const TaskRow: React.FC<TaskRowProps> = React.memo(
                     <div style={{ width: 20, display: 'inline-block' }} />
                     <div className="flex-1 min-w-0 flex items-center gap-2">
                       <Typography.Text
-                        ellipsis={{ tooltip: task.title }}
+                        ellipsis={{ tooltip: safeTextDisplay(task.title) }}
                         className={styleClasses.taskName}
                       >
-                        {task.title}
+                        {safeTextDisplay(task.title)}
                       </Typography.Text>
                       {(task as any).sub_tasks_count > 0 && (
                         <div
@@ -986,12 +987,12 @@ const TaskRow: React.FC<TaskRowProps> = React.memo(
                       ) : (
                         <>
                           <Typography.Text
-                            ellipsis={{ tooltip: task.title }}
+                            ellipsis={{ tooltip: safeTextDisplay(task.title) }}
                             onClick={() => setEditTaskName(true)}
                             className={styleClasses.taskName}
                             style={{ cursor: 'pointer' }}
                           >
-                            {task.title}
+                            {safeTextDisplay(task.title)}
                           </Typography.Text>
                           {(task as any).sub_tasks_count > 0 && (
                             <div
@@ -1017,7 +1018,12 @@ const TaskRow: React.FC<TaskRowProps> = React.memo(
                       <div className="task-indicators flex items-center gap-2">
                         {/* Comments indicator */}
                         {(task as any).comments_count > 0 && (
-                          <Tooltip title={t(`task-management:indicators.tooltips.comments${(task as any).comments_count === 1 ? '' : '_plural'}`, { count: (task as any).comments_count })}>
+                          <Tooltip
+                            title={t(
+                              `task-management:indicators.tooltips.comments${(task as any).comments_count === 1 ? '' : '_plural'}`,
+                              { count: (task as any).comments_count }
+                            )}
+                          >
                             <MessageOutlined
                               style={{ fontSize: 14, color: isDarkMode ? '#b0b3b8' : '#888' }}
                             />
@@ -1025,7 +1031,12 @@ const TaskRow: React.FC<TaskRowProps> = React.memo(
                         )}
                         {/* Attachments indicator */}
                         {(task as any).attachments_count > 0 && (
-                          <Tooltip title={t(`task-management:indicators.tooltips.attachments${(task as any).attachments_count === 1 ? '' : '_plural'}`, { count: (task as any).attachments_count })}>
+                          <Tooltip
+                            title={t(
+                              `task-management:indicators.tooltips.attachments${(task as any).attachments_count === 1 ? '' : '_plural'}`,
+                              { count: (task as any).attachments_count }
+                            )}
+                          >
                             <PaperClipOutlined
                               style={{ fontSize: 14, color: isDarkMode ? '#b0b3b8' : '#888' }}
                             />
@@ -1336,8 +1347,8 @@ const TaskRow: React.FC<TaskRowProps> = React.memo(
                         handleDateChange(null, 'startDate');
                       }}
                       className={`absolute right-1 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-4 h-4 flex items-center justify-center rounded-full text-xs ${
-                        isDarkMode 
-                          ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' 
+                        isDarkMode
+                          ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
                           : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                       }`}
                       title="Clear start date"
@@ -1375,8 +1386,8 @@ const TaskRow: React.FC<TaskRowProps> = React.memo(
                         handleDateChange(null, 'dueDate');
                       }}
                       className={`absolute right-1 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-4 h-4 flex items-center justify-center rounded-full text-xs ${
-                        isDarkMode 
-                          ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' 
+                        isDarkMode
+                          ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
                           : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                       }`}
                       title="Clear due date"
@@ -1396,7 +1407,7 @@ const TaskRow: React.FC<TaskRowProps> = React.memo(
                 style={{ width: col.width }}
               >
                 <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  {task.dueDate ? dayjs(task.dueDate).format('HH:mm') : '-'}
+                  {task.dueDate ? dayjs(task.dueDate, 'YYYY-MM-DD').format('HH:mm') : '-'}
                 </span>
               </div>
             );

@@ -26,8 +26,12 @@ export interface Task {
   sub_tasks?: Task[];
   sub_tasks_count?: number;
   show_sub_tasks?: boolean;
+  has_filtered_children?: boolean; // Flag to auto-expand when filtered descendants exist
   parent_task_id?: string;
+  parent_task_container_id?: string;
   is_sub_task?: boolean; // Add this property
+  is_parent_container?: boolean;
+  parent_task_not_archived?: boolean;
   progress?: number;
   weight?: number;
   color?: string;
@@ -46,7 +50,8 @@ export interface Task {
   phase_sort_order?: number; // Sort order when grouped by phase
   member_sort_order?: number; // Sort order when grouped by members
   reporter?: string; // Reporter field
-  timeTracking?: { // Time tracking information
+  timeTracking?: {
+    // Time tracking information
     logged?: number;
     estimated?: number;
     activeTimer?: number; // Active timer start timestamp
@@ -54,6 +59,7 @@ export interface Task {
   custom_column_values?: Record<string, any>; // Custom column values
   isTemporary?: boolean; // Temporary task indicator
   // Add any other task properties as needed
+  complete_ratio?: number;
 }
 
 export interface TaskGroup {
@@ -105,6 +111,7 @@ export interface TaskManagementState {
   entities: Record<string, Task>;
   loading: boolean;
   error: string | null;
+  loadedProjectId: string | null;
   groups: TaskGroup[];
   grouping: string | undefined;
   selectedPriorities: string[];
@@ -117,6 +124,13 @@ export interface TaskManagementState {
   // Add sort-related state
   sortField: string;
   sortOrder: 'ASC' | 'DESC';
+  isOpenDuplicateTaskModal: boolean;
+  duplicateTask: DuplicateTask;
+}
+
+export interface DuplicateTask {
+  taskId?: string;
+  title?: string;
 }
 
 export interface TaskGroupsState {

@@ -43,8 +43,8 @@ import {
 import { themeWiseColor } from '@/utils/themeWiseColor';
 import KeyTypeColumn from './key-type-column/key-type-column';
 import logger from '@/utils/errorLogger';
-import { 
-  fetchTasksV3, 
+import {
+  fetchTasksV3,
   fetchTaskListColumns,
   addCustomColumn,
   deleteCustomColumn as deleteCustomColumnFromTaskManagement,
@@ -91,8 +91,6 @@ const CustomColumnModal = () => {
   // Use the column data passed from TaskListV2
   const openedColumn = currentColumnData;
 
-
-
   // Function to reset all form and Redux state
   const resetModalData = () => {
     mainForm.resetFields();
@@ -104,11 +102,12 @@ const CustomColumnModal = () => {
   const handleDeleteColumn = async () => {
     // The customColumnId should now be the UUID passed from TaskListV2
     // But also check the column data as a fallback, prioritizing uuid over id
-    const columnUUID = customColumnId || 
-                      openedColumn?.uuid || 
-                      openedColumn?.id || 
-                      openedColumn?.custom_column_obj?.uuid ||
-                      openedColumn?.custom_column_obj?.id;
+    const columnUUID =
+      customColumnId ||
+      openedColumn?.uuid ||
+      openedColumn?.id ||
+      openedColumn?.custom_column_obj?.uuid ||
+      openedColumn?.custom_column_obj?.id;
 
     if (!customColumnId || !columnUUID) {
       message.error('Cannot delete column: Missing UUID');
@@ -149,6 +148,12 @@ const CustomColumnModal = () => {
       disabled: false,
     },
     {
+      key: 'text',
+      value: 'text',
+      label: t('customColumns.fieldTypes.text'),
+      disabled: false,
+    },
+    {
       key: 'number',
       value: 'number',
       label: t('customColumns.fieldTypes.number'),
@@ -165,30 +170,6 @@ const CustomColumnModal = () => {
       value: 'selection',
       label: t('customColumns.fieldTypes.selection'),
       disabled: false,
-    },
-    {
-      key: 'checkbox',
-      value: 'checkbox',
-      label: t('customColumns.fieldTypes.checkbox'),
-      disabled: true,
-    },
-    {
-      key: 'labels',
-      value: 'labels',
-      label: t('customColumns.fieldTypes.labels'),
-      disabled: true,
-    },
-    {
-      key: 'key',
-      value: 'key',
-      label: t('customColumns.fieldTypes.key'),
-      disabled: true,
-    },
-    {
-      key: 'formula',
-      value: 'formula',
-      label: t('customColumns.fieldTypes.formula'),
-      disabled: true,
     },
   ];
 
@@ -260,10 +241,10 @@ const CustomColumnModal = () => {
             dispatch(addCustomColumn(newColumn));
             dispatch(toggleCustomColumnModalOpen(false));
             resetModalData();
-            
+
             // Show success message
             message.success(t('customColumns.modal.createSuccessMessage'));
-            
+
             // Refresh tasks and columns to include the new custom column values
             if (projectId) {
               dispatch(fetchTaskListColumns(projectId));
@@ -301,11 +282,12 @@ const CustomColumnModal = () => {
           : null;
 
         // Get the correct UUID for the update operation, prioritizing uuid over id
-        const updateColumnUUID = customColumnId || 
-                                openedColumn?.uuid || 
-                                openedColumn?.id || 
-                                openedColumn?.custom_column_obj?.uuid ||
-                                openedColumn?.custom_column_obj?.id;
+        const updateColumnUUID =
+          customColumnId ||
+          openedColumn?.uuid ||
+          openedColumn?.id ||
+          openedColumn?.custom_column_obj?.uuid ||
+          openedColumn?.custom_column_obj?.id;
 
         if (updatedColumn && updateColumnUUID) {
           try {
@@ -377,7 +359,7 @@ const CustomColumnModal = () => {
 
   return (
     <Modal
-      title={customColumnModalType === 'create' ? t('customColumns.modal.addFieldTitle') : t('customColumns.modal.editFieldTitle')}
+      title={t('customColumns.modal.addFieldTitle')}
       centered
       open={isCustomColumnModalOpen}
       onCancel={() => {
@@ -490,7 +472,10 @@ const CustomColumnModal = () => {
             ]}
             required={false}
           >
-            <Input placeholder={t('customColumns.modal.columnTitlePlaceholder')} style={{ minWidth: '100%', width: 300 }} />
+            <Input
+              placeholder={t('customColumns.modal.columnTitlePlaceholder')}
+              style={{ minWidth: '100%', width: 300 }}
+            />
           </Form.Item>
 
           <Form.Item
@@ -541,10 +526,14 @@ const CustomColumnModal = () => {
           )}
 
           <Flex gap={8}>
-            <Button onClick={() => {
-              dispatch(toggleCustomColumnModalOpen(false));
-              resetModalData();
-            }}>{t('customColumns.modal.cancelButton')}</Button>
+            <Button
+              onClick={() => {
+                dispatch(toggleCustomColumnModalOpen(false));
+                resetModalData();
+              }}
+            >
+              {t('customColumns.modal.cancelButton')}
+            </Button>
             {customColumnModalType === 'create' ? (
               <Button type="primary" htmlType="submit">
                 {t('customColumns.modal.createButton')}

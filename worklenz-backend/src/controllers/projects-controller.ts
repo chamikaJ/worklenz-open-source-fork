@@ -88,6 +88,14 @@ export default class ProjectsController extends WorklenzControllerBase {
     req.body.project_member_added_log = LOG_DESCRIPTIONS.PROJECT_MEMBER_ADDED;
     req.body.project_manager_id = req.body.project_manager ? req.body.project_manager.id : null;
 
+    // FIX: Format dates consistently like tasks - parse as date-only strings to avoid timezone issues
+    if (req.body.start_date) {
+      req.body.start_date = req.body.start_date.toString().split('T')[0]; // Ensure YYYY-MM-DD format
+    }
+    if (req.body.end_date) {
+      req.body.end_date = req.body.end_date.toString().split('T')[0]; // Ensure YYYY-MM-DD format
+    }
+
     const keys = await this.getAllKeysByTeamId(req.user?.team_id as string);
     req.body.key = generateProjectKey(req.body.name, keys) || null;
 
@@ -246,8 +254,28 @@ export default class ProjectsController extends WorklenzControllerBase {
       'start_date': 'start_date',
       'end_date': 'end_date',
       'status': 'status_id',
-      'category': 'category_id',
-      'client_name': 'client_id',
+      'status_id': 'status_id',
+      // For category sorting, use natural sort by extracting and padding numbers
+      // This ensures "Category 2" comes before "Category 10"
+      'category': `(
+        SELECT 
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '([0-9]+)', LPAD('\\1', 20, '0'), 'g'),
+            '\\s+', ' ', 'g'
+          )
+        FROM project_categories 
+        WHERE id = projects.category_id
+      )`,
+      'category_id': `(
+        SELECT 
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '([0-9]+)', LPAD('\\1', 20, '0'), 'g'),
+            '\\s+', ' ', 'g'
+          )
+        FROM project_categories 
+        WHERE id = projects.category_id
+      )`,
+      'client_name': `(SELECT name FROM clients WHERE id = projects.client_id)`, // fix bug 751
       'project_owner': 'owner_id',
     };
 
@@ -497,7 +525,7 @@ export default class ProjectsController extends WorklenzControllerBase {
                (SELECT COUNT(*) FROM tasks WHERE archived IS FALSE AND project_id = project_members.project_id AND id IN (SELECT task_id FROM tasks_assignees WHERE tasks_assignees.project_member_id = project_members.id)) AS all_tasks_count,
                (SELECT COUNT(*) FROM tasks WHERE archived IS FALSE AND project_id = project_members.project_id AND id IN (SELECT task_id FROM tasks_assignees WHERE tasks_assignees.project_member_id = project_members.id) AND status_id IN (SELECT id FROM task_statuses WHERE category_id = (SELECT id FROM sys_task_status_categories WHERE is_done IS TRUE))) AS completed_tasks_count,
                EXISTS(SELECT email FROM email_invitations WHERE team_member_id = project_members.team_member_id AND email_invitations.team_id = $2) AS pending_invitation,
-               (SELECT project_access_levels.name FROM project_access_levels WHERE project_access_levels.id = project_members.project_access_level_id) AS access,
+               COALESCE((SELECT name FROM roles WHERE id = tm.role_id), 'Member') AS access,
                (SELECT name FROM job_titles WHERE id = tm.job_title_id) AS job_title
         FROM project_members
         INNER JOIN team_members tm ON project_members.team_member_id = tm.id
@@ -560,6 +588,7 @@ export default class ProjectsController extends WorklenzControllerBase {
              projects.use_manual_progress,
              projects.use_weighted_progress,
              projects.use_time_progress,
+             projects.auto_assign_task_creator,
 
              (SELECT COALESCE(ROW_TO_JSON(pm), '{}'::JSON)
                     FROM (SELECT team_member_id AS id,
@@ -595,6 +624,16 @@ export default class ProjectsController extends WorklenzControllerBase {
       data.project_manager.color_code = getColor(data.project_manager.name);
     }
 
+    // FIX: Format dates consistently like tasks to avoid timezone issues
+    if (data) {
+      if (data.start_date) {
+        data.start_date = moment(data.start_date).format('YYYY-MM-DD');
+      }
+      if (data.end_date) {
+        data.end_date = moment(data.end_date).format('YYYY-MM-DD');
+      }
+    }
+
     return res.status(200).send(new ServerResponse(true, data));
   }
 
@@ -624,6 +663,14 @@ export default class ProjectsController extends WorklenzControllerBase {
     req.body.project_member_added_log = LOG_DESCRIPTIONS.PROJECT_MEMBER_ADDED;
     req.body.project_member_removed_log = LOG_DESCRIPTIONS.PROJECT_MEMBER_REMOVED;
     req.body.team_member_id = req.body.project_manager ? req.body.project_manager.id : null;
+
+    // FIX: Format dates consistently like tasks - parse as date-only strings to avoid timezone issues
+    if (req.body.start_date) {
+      req.body.start_date = req.body.start_date.toString().split('T')[0]; // Ensure YYYY-MM-DD format
+    }
+    if (req.body.end_date) {
+      req.body.end_date = req.body.end_date.toString().split('T')[0]; // Ensure YYYY-MM-DD format
+    }
 
     const result = await db.query(q, [JSON.stringify(req.body)]);
     const [data] = result.rows;
@@ -1019,14 +1066,13 @@ export default class ProjectsController extends WorklenzControllerBase {
 
     const q2 = `SELECT update_existing_phase_sort_order($1)`;
     await db.query(q2, [JSON.stringify(body)]);
-    // return phases;
 
   }
 
   @HandleExceptions()
   public static async getGrouped(req: IWorkLenzRequest, res: IWorkLenzResponse): Promise<IWorkLenzResponse> {
     // Use qualified field name for projects to avoid ambiguity
-    const {searchQuery, searchParams = [], sortField, sortOrder, size, offset} = this.toPaginationOptions(req.query, ["projects.name"], false, 1);
+    const {searchQuery, searchParams = [], sortField, sortOrder, size, offset} = this.toPaginationOptions(req.query, ["projects.name"], false, 2);
     const groupBy = req.query.groupBy as string || "category";
     const userId = req.user?.id;
     

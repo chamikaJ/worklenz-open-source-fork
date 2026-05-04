@@ -137,7 +137,7 @@ const ClientsSettings: React.FC = () => {
                     shape="default"
                     icon={<DeleteOutlined />}
                     size="small"
-                    onClick={() => deleteClientHandler(record.id)}
+                    // ✅ REMOVED onClick handler - Popconfirm will handle the confirmation
                   />
                 </Tooltip>
               </Popconfirm>
@@ -157,7 +157,7 @@ const ClientsSettings: React.FC = () => {
             <Input
               value={searchQuery}
               onChange={e => setSearchQuery(e.currentTarget.value)}
-              placeholder={t('searchPlaceholder')}
+              placeholder={t('search', { defaultValue: 'Search' })}
               style={{ maxWidth: 232 }}
               suffix={<SearchOutlined />}
             />

@@ -185,6 +185,36 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
 
       dispatch(updateTaskStatus(response));
       dispatch(deselectAll());
+
+      // Also update completed_at in the task management slice for the new task list
+      dispatch(
+        updateTask({
+          id: response.id,
+          completed_at: response.completed_at,
+          completedAt: response.completed_at,
+        } as any)
+      );
+
+      // CRITICAL: Update the local groups state (old task list uses local state, not Redux)
+      setGroups(prevGroups => {
+        return prevGroups.map(group => {
+          const taskIndex = group.tasks.findIndex(task => task.id === response.id);
+          if (taskIndex === -1) return group;
+
+          const updatedTasks = [...group.tasks];
+          updatedTasks[taskIndex] = {
+            ...updatedTasks[taskIndex],
+            completed_at: response.completed_at,
+            status: response.status_id,
+            status_color: response.color_code,
+          };
+
+          return {
+            ...group,
+            tasks: updatedTasks,
+          };
+        });
+      });
     },
     [dispatch]
   );
@@ -539,7 +569,7 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
         const updatedTasks = [...sourceGroup.tasks];
         updatedTasks.splice(fromIndex, 1);
         updatedTasks.splice(toIndex, 0, task);
-        
+
         updatedTasks.forEach((task, index) => {
           taskUpdates.push({
             task_id: task.id,
@@ -550,7 +580,7 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
         // Different groups - update both source and target
         const updatedSourceTasks = sourceGroup.tasks.filter((_, i) => i !== fromIndex);
         const updatedTargetTasks = [...targetGroup.tasks];
-        
+
         if (isTargetGroupEmpty) {
           updatedTargetTasks.push(task);
         } else if (toIndex >= 0 && toIndex <= updatedTargetTasks.length) {
@@ -573,7 +603,7 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
             task_id: task.id,
             sort_order: index + 1,
           };
-          
+
           // Add group-specific updates
           if (groupBy === IGroupBy.STATUS) {
             update.status_id = targetGroup.id;
@@ -582,7 +612,7 @@ const TaskGroupWrapper = ({ taskGroups, groupBy }: TaskGroupWrapperProps) => {
           } else if (groupBy === IGroupBy.PHASE) {
             update.phase_id = targetGroup.id;
           }
-          
+
           taskUpdates.push(update);
         });
       }

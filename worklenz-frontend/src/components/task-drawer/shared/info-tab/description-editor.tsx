@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import DOMPurify from 'dompurify';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useSocket } from '@/socket/socketContext';
 import { SocketEvents } from '@/shared/socket-events';
 
 // Lazy load TinyMCE editor to reduce initial bundle size
-const LazyTinyMCEEditor = lazy(() => 
+const LazyTinyMCEEditor = lazy(() =>
   import('@tinymce/tinymce-react').then(module => ({ default: module.Editor }))
 );
 
@@ -16,6 +17,7 @@ interface DescriptionEditorProps {
 }
 
 const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEditorProps) => {
+  const { t } = useTranslation('task-drawer/task-drawer-info-tab');
   const { socket } = useSocket();
   const [isHovered, setIsHovered] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
@@ -27,7 +29,7 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
   const wrapperRef = useRef<HTMLDivElement>(null);
   const themeMode = useAppSelector(state => state.themeReducer.mode);
 
-  // CSS styles for description content links
+  // CSS styles for description content links and mentions
   const descriptionStyles = `
     .description-content a {
       color: ${themeMode === 'dark' ? '#4dabf7' : '#1890ff'} !important;
@@ -37,12 +39,36 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
     .description-content a:hover {
       color: ${themeMode === 'dark' ? '#74c0fc' : '#40a9ff'} !important;
     }
+    .description-content .mentions {
+      font-weight: 500;
+      border-radius: 4px;
+      padding: 1px 4px;
+      margin: 0 1px;
+      background-color: ${themeMode === 'dark' ? '#2a3a4a' : '#f0f2f5'};
+      color: ${themeMode === 'dark' ? '#40a9ff' : '#1890ff'};
+      border: 1px solid ${themeMode === 'dark' ? '#40a9ff' : '#1890ff'};
+    }
   `;
+
+  // Helper function to check if content already has processed mentions
+  const hasProcessedMentions = (content: string): boolean => {
+    return content.includes('class="mentions"');
+  };
+
+  // Helper function to process @mentions in content
+  const processMentions = (content: string): string => {
+    if (!content || hasProcessedMentions(content)) return content;
+
+    // Match standalone @username patterns (letters, numbers, underscores, hyphens)
+    // and avoid matching the "@domain" part of email addresses like name@example.com.
+    const mentionRegex = /(^|[^\w.+-])@([\w-]+)/g;
+    return content.replace(mentionRegex, '$1<span class="mentions">@$2</span>');
+  };
 
   // Load TinyMCE script only when editor is opened
   const loadTinyMCE = async () => {
     if (isTinyMCELoaded) return;
-    
+
     setIsEditorLoading(true);
     try {
       // Load TinyMCE script dynamically
@@ -51,7 +77,7 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
           resolve();
           return;
         }
-        
+
         const script = document.createElement('script');
         script.src = '/tinymce/tinymce.min.js';
         script.async = true;
@@ -59,7 +85,7 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
         script.onerror = () => reject(new Error('Failed to load TinyMCE'));
         document.head.appendChild(script);
       });
-      
+
       setIsTinyMCELoaded(true);
     } catch (error) {
       console.error('Failed to load TinyMCE:', error);
@@ -87,7 +113,9 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
       const isClickedInsideWrapper = wrapper && wrapper.contains(target);
       const isClickedInsideEditor = document.querySelector('.tox-tinymce')?.contains(target);
       const isClickedInsideToolbarPopup = document
-        .querySelector('.tox-menu, .tox-pop, .tox-collection, .tox-dialog, .tox-dialog-wrap, .tox-silver-sink')
+        .querySelector(
+          '.tox-menu, .tox-pop, .tox-collection, .tox-dialog, .tox-dialog-wrap, .tox-silver-sink'
+        )
         ?.contains(target);
 
       if (
@@ -111,7 +139,8 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
 
   const handleEditorChange = (content: string) => {
     const sanitizedContent = DOMPurify.sanitize(content);
-    setContent(sanitizedContent);
+    const processedContent = processMentions(sanitizedContent);
+    setContent(processedContent);
     if (editorRef.current) {
       const count = editorRef.current.plugins.wordcount.getCount();
       setWordCount(count);
@@ -133,7 +162,7 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
 
   const handleContentClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
-    
+
     // Check if clicked element is a link
     if (target.tagName === 'A' || target.closest('a')) {
       event.preventDefault(); // Prevent default link behavior
@@ -148,7 +177,7 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
       }
       return;
     }
-    
+
     // If not a link, open the editor
     handleOpenEditor();
   };
@@ -192,11 +221,15 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
                 color: themeMode === 'dark' ? '#ffffff' : '#000000',
               }}
             >
-              <div>Loading editor...</div>
+              <div>{t('description.loadingEditor', { defaultValue: 'Loading editor...' })}</div>
             </div>
           )}
           {isTinyMCELoaded && (
-            <Suspense fallback={<div>Loading editor...</div>}>
+            <Suspense
+              fallback={
+                <div>{t('description.loadingEditor', { defaultValue: 'Loading editor...' })}</div>
+              }
+            >
               <LazyTinyMCEEditor
                 tinymceScriptSrc="/tinymce/tinymce.min.js"
                 value={content}
@@ -269,8 +302,8 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
                 ? '#2a2a2a'
                 : '#fafafa'
               : themeMode === 'dark'
-              ? '#1e1e1e'
-              : '#ffffff',
+                ? '#1e1e1e'
+                : '#ffffff',
             color: themeMode === 'dark' ? '#ffffff' : '#000000',
             transition: 'all 0.2s ease',
           }}
@@ -278,7 +311,7 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
           {content ? (
             <div
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(content),
+                __html: processMentions(DOMPurify.sanitize(content)),
               }}
               className="description-content"
             />
@@ -289,7 +322,7 @@ const DescriptionEditor = ({ description, taskId, parentTaskId }: DescriptionEdi
                 fontStyle: 'italic',
               }}
             >
-              Click to add description...
+              {t('description.clickToAdd', { defaultValue: 'Click to add description...' })}
             </div>
           )}
         </div>

@@ -59,8 +59,23 @@ export const getProject = createAsyncThunk(
     try {
       const response = await projectsApiService.getProject(projectId);
       return response.body;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch project');
+    } catch (error: any) {
+      // Check if it's a 403 Forbidden error (no access to project)
+      if (error?.response?.status === 403) {
+        const errorData = error?.response?.data;
+        return rejectWithValue({
+          message: errorData?.message || 'You do not have permission to access this project',
+          statusCode: 403,
+          requiresTeamSwitch: errorData?.body?.requiresTeamSwitch || false,
+          projectTeamId: errorData?.body?.projectTeamId || null,
+          isOwnerOfProjectTeam: errorData?.body?.isOwnerOfProjectTeam || false,
+          isAdminOfProjectTeam: errorData?.body?.isAdminOfProjectTeam || false,
+        });
+      }
+      return rejectWithValue({
+        message: error instanceof Error ? error.message : 'Failed to fetch project',
+        statusCode: error?.response?.status || 500,
+      });
     }
   }
 );
@@ -116,6 +131,11 @@ const projectSlice = createSlice({
         state.project.phase_label = action.payload;
       }
     },
+    updateProjectCurrency: (state, action: PayloadAction<string>) => {
+      if (state.project) {
+        state.project.currency = action.payload;
+      }
+    },
     addTask: (
       state,
       action: PayloadAction<{ task: IProjectTask; groupId: string; insert?: boolean }>
@@ -143,7 +163,6 @@ const projectSlice = createSlice({
       } else {
         insert ? group.tasks.unshift(task) : group.tasks.push(task);
       }
-      console.log('addTask', group.tasks);
     },
     deleteTask: (state, action: PayloadAction<{ taskId: string; index?: number }>) => {
       const { taskId, index } = action.payload;
@@ -189,7 +208,8 @@ const projectSlice = createSlice({
       })
       .addCase(getProject.rejected, (state, action) => {
         state.projectLoading = false;
-        state.error = action.payload as string;
+        const payload = action.payload as { message: string; statusCode?: number } | undefined;
+        state.error = payload?.message || 'Failed to fetch project';
       });
   },
 });
@@ -215,6 +235,7 @@ export const {
   setProjectView,
   updatePhaseLabel,
   setRefreshTimestamp,
+  updateProjectCurrency,
 } = projectSlice.actions;
 
 export default projectSlice.reducer;

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Card, Flex, Spin, Typography } from 'antd/es';
+import { Card, Flex, Spin, Typography } from '@/shared/antd-imports';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthService } from '@/hooks/useAuth';
@@ -21,31 +21,30 @@ const LoggingOutPage = () => {
       try {
         // Track logout event
         trackMixpanelEvent(evt_common_logout);
-        
+
         // Reset Mixpanel identity
         reset();
-        
+
         // Clear local session
         await auth.signOut();
-        
+
         // Call backend logout
         await authApiService.logout();
-        
+
         // Clear all caches using the utility
         await CacheCleanup.clearAllCaches();
-        
+
         // Force a hard reload to ensure fresh state
         setTimeout(() => {
           CacheCleanup.forceReload('/auth/login');
         }, 1000);
-        
       } catch (error) {
         console.error('Logout error:', error);
         // Fallback: force reload to login page
         CacheCleanup.forceReload('/auth/login');
       }
     };
-    
+
     void logout();
   }, [auth]);
 
